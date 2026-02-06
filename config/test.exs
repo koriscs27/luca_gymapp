@@ -1,14 +1,43 @@
 import Config
 
+env_path =
+  ["../.env.test", "../.env.dev"]
+  |> Enum.map(&Path.expand(&1, __DIR__))
+  |> Enum.find(&File.exists?/1)
+
+if env_path do
+  env_path
+  |> File.stream!()
+  |> Enum.each(fn line ->
+    line = String.trim(line)
+
+    if line != "" and not String.starts_with?(line, "#") do
+      case String.split(line, "=", parts: 2) do
+        [key, value] ->
+          value =
+            value
+            |> String.trim()
+            |> String.trim("\"'")
+
+          System.put_env(key, value)
+
+        _ ->
+          :ok
+      end
+    end
+  end)
+end
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :luca_gymapp, LucaGymapp.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
+  username: System.get_env("DB_USER") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOST") || "localhost",
+  port: String.to_integer(System.get_env("DB_PORT") || "5432"),
   database: "luca_gymapp_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2

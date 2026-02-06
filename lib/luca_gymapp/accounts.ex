@@ -16,6 +16,19 @@ defmodule LucaGymapp.Accounts do
     |> Repo.insert()
   end
 
+  def register_user(attrs) when is_map(attrs) do
+    password = get_in(attrs, ["password"]) || get_in(attrs, [:password])
+    password = if is_binary(password), do: String.trim(password), else: nil
+
+    attrs =
+      attrs
+      |> Map.delete("password")
+      |> Map.delete(:password)
+      |> maybe_put_password_hash(password)
+
+    create_user(attrs)
+  end
+
   def authenticate_user(email, password) when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
 
@@ -57,5 +70,12 @@ defmodule LucaGymapp.Accounts do
   defp valid_password?(%User{password_hash: password_hash}, password) do
     password_hash
     |> Plug.Crypto.secure_compare(hash_password(password))
+  end
+
+  defp maybe_put_password_hash(attrs, nil), do: Map.put(attrs, :password_hash, nil)
+  defp maybe_put_password_hash(attrs, ""), do: Map.put(attrs, :password_hash, nil)
+
+  defp maybe_put_password_hash(attrs, password) do
+    Map.put(attrs, :password_hash, hash_password(password))
   end
 end

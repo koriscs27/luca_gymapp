@@ -1,0 +1,61 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto w-full max-w-2xl rounded-3xl border border-neutral-200 bg-white px-6 py-10 shadow-lg shadow-neutral-200/40">
+    <div class="flex flex-col gap-2">
+      <p class="text-xs uppercase tracking-[0.35em] text-neutral-400">Regisztráció</p>
+      <h1 class="text-3xl font-semibold text-neutral-900">Hozd létre a fiókodat</h1>
+      <p class="text-neutral-500">
+        Az e-mail és a jelszó kötelező, a többi mező opcionális.
+      </p>
+    </div>
+
+    <.form for={@form} id="register-form" action={~p"/register"} class="mt-8 space-y-4">
+      <.input field={@form[:email]} type="email" label="E-mail" required />
+      <.input field={@form[:password]} type="password" label="Jelszó" required />
+      <.input field={@form[:name]} type="text" label="Név" />
+      <.input field={@form[:phone_number]} type="tel" label="Telefonszám" />
+      <.input field={@form[:age]} type="number" label="Életkor" min="0" />
+      <.input
+        field={@form[:sex]}
+        type="select"
+        label="Nem"
+        options={[
+          {"", ""},
+          {"Nő", "no"},
+          {"Férfi", "ferfi"},
+          {"Egyéb", "egyeb"}
+        ]}
+      />
+      <.input field={@form[:birth_date]} type="date" label="Születési dátum" />
+
+      <button
+        id="register-submit"
+        type="submit"
+        class="mt-2 w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+      >
+        Regisztrálok
+      </button>
+    </.form>
+
+    <div class="mt-6 flex items-center justify-between text-sm">
+      <span class="text-neutral-500">Már van fiókod?</span>
+      <.link
+        href={~p"/#login-modal"}
+        class="font-semibold text-amber-600 transition hover:text-amber-500"
+      >
+        Bejelentkezés
+      </.link>
+    </div>
+
+    <%= if info = Phoenix.Flash.get(@flash, :info) do %>
+      <p class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        {info}
+      </p>
+    <% end %>
+
+    <%= if error = Phoenix.Flash.get(@flash, :error) do %>
+      <p class="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {error}
+      </p>
+    <% end %>
+  </section>
+</Layouts.app>
