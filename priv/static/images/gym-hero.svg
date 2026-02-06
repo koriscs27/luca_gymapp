@@ -1,0 +1,28 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0B0F" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <linearGradient id="glow" x1="500" y1="200" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A59" stop-opacity="0.7" />
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0.2" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" />
+  <circle cx="1200" cy="260" r="220" fill="url(#glow)" opacity="0.7" />
+  <circle cx="420" cy="620" r="260" fill="url(#glow)" opacity="0.35" />
+  <g opacity="0.25" stroke="#F8FAFC" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M300 480H1300" />
+    <rect x="260" y="430" width="60" height="100" rx="16" fill="#F8FAFC" />
+    <rect x="1320" y="430" width="60" height="100" rx="16" fill="#F8FAFC" />
+    <rect x="200" y="410" width="50" height="140" rx="18" fill="#F8FAFC" />
+    <rect x="1370" y="410" width="50" height="140" rx="18" fill="#F8FAFC" />
+    <rect x="340" y="448" width="80" height="64" rx="14" fill="#F8FAFC" />
+    <rect x="1180" y="448" width="80" height="64" rx="14" fill="#F8FAFC" />
+  </g>
+  <g opacity="0.08" stroke="#F8FAFC" stroke-width="2">
+    <path d="M0 760C320 640 640 600 960 640C1280 680 1440 760 1600 860" />
+    <path d="M0 700C300 560 620 520 940 560C1260 600 1440 680 1600 820" />
+  </g>
+</svg>

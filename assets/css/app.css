@@ -103,3 +103,19 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+html { scroll-behavior: smooth; }
+
+.gym-hero {
+  position: relative;
+  background-image: url("/images/gym-hero.svg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.gym-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(3, 7, 18, 0.9) 0%, rgba(15, 23, 42, 0.55) 45%, rgba(2, 6, 23, 0.95) 100%);
+  pointer-events: none;
+}
