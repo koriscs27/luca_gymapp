@@ -25,7 +25,7 @@ defmodule LucaGymappWeb.SessionControllerTest do
   test "rejects invalid credentials", %{conn: conn, user: user} do
     conn = post(conn, ~p"/login", user: %{email: user.email, password: "rossz-jelszo"})
 
-    assert get_flash(conn, :error) == "Hibás e-mail vagy jelszó."
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Hibás e-mail vagy jelszó."
     assert redirected_to(conn) == "/#login-modal"
   end
 end

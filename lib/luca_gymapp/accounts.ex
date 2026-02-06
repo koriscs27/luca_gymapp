@@ -72,10 +72,18 @@ defmodule LucaGymapp.Accounts do
     |> Plug.Crypto.secure_compare(hash_password(password))
   end
 
-  defp maybe_put_password_hash(attrs, nil), do: Map.put(attrs, :password_hash, nil)
-  defp maybe_put_password_hash(attrs, ""), do: Map.put(attrs, :password_hash, nil)
-
   defp maybe_put_password_hash(attrs, password) do
-    Map.put(attrs, :password_hash, hash_password(password))
+    key = if has_string_keys?(attrs), do: "password_hash", else: :password_hash
+    Map.put(attrs, key, password_hash_or_nil(password))
+  end
+
+  defp password_hash_or_nil(nil), do: nil
+  defp password_hash_or_nil(""), do: nil
+  defp password_hash_or_nil(password), do: hash_password(password)
+
+  defp has_string_keys?(attrs) do
+    attrs
+    |> Map.keys()
+    |> Enum.any?(&is_binary/1)
   end
 end

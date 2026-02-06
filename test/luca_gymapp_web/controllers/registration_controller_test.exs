@@ -26,7 +26,9 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
   test "rejects registration without password", %{conn: conn} do
     conn = post(conn, ~p"/register", user: %{email: "nincs@jelszo.hu"})
 
-    assert get_flash(conn, :error) == "A regisztráció sikertelen. Ellenőrizd az adatokat."
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A regisztráció sikertelen. Ellenőrizd az adatokat."
+
     assert html_response(conn, 200) =~ "Regisztráció"
   end
 end
