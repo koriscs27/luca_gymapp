@@ -24,4 +24,11 @@ defmodule LucaGymappWeb.SessionController do
     |> put_flash(:error, "Hibás e-mail vagy jelszó.")
     |> redirect(to: "/#login-modal")
   end
+
+  def delete(conn, _params) do
+    conn
+    |> configure_session(drop: true)
+    |> put_flash(:info, "Sikeres kijelentkezés.")
+    |> redirect(to: ~p"/")
+  end
 end

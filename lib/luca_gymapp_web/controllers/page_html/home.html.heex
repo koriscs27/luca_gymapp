@@ -1,5 +1,11 @@
-<div class="gym-hero min-h-screen text-white">
-  <div class="gym-hero-scrim"></div>
+﻿<div class={[
+  "gym-hero min-h-screen text-white",
+  @current_user && "gym-hero--authed"
+]}>
+  <div class={[
+  "gym-hero-scrim",
+  @current_user && "gym-hero-scrim--authed"
+]}></div>
   <div class="relative">
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pb-6 pt-6 sm:px-8 lg:px-10">
       <div class="flex items-center gap-3">
@@ -8,26 +14,38 @@
         </div>
         <div class="leading-tight">
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Luca Gym</p>
-          <p class="text-lg font-semibold">Mozgás. Erő. Egyensúly.</p>
+          <p class="text-lg font-semibold">MozgĂˇs. ErĹ‘. EgyensĂşly.</p>
         </div>
       </div>
 
       <nav class="hidden items-center gap-8 text-sm font-medium md:flex">
-        <.link href="#berletek" class="transition hover:text-white/80">Bérletek</.link>
-        <.link href="#foglalas" class="transition hover:text-white/80">Foglalás</.link>
-        <.link href="#rolam" class="transition hover:text-white/80">Rólam</.link>
-        <.link
-          href="#login-modal"
-          class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
-        >
-          Bejelentkezés
-        </.link>
+        <.link href="#berletek" class="transition hover:text-white/80">BĂ©rletek</.link>
+        <.link href="#foglalas" class="transition hover:text-white/80">FoglalĂˇs</.link>
+        <.link href="#rolam" class="transition hover:text-white/80">RĂłlam</.link>
+        <%= if @current_user do %>
+          <.form for={%{}} id="logout-form" action={~p"/logout"} method="delete">
+            <button
+              id="logout-button"
+              type="submit"
+              class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+            >
+              Kijelentkezés
+            </button>
+          </.form>
+        <% else %>
+          <.link
+            href="#login-modal"
+            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+          >
+            Bejelentkez?s
+          </.link>
+        <% end %>
       </nav>
 
       <.link
         href="#mobile-menu"
         class="md:hidden inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 p-2 text-white transition hover:bg-white/10"
-        aria-label="Menü megnyitása"
+        aria-label="MenĂĽ megnyitĂˇsa"
       >
         <.icon name="hero-bars-3" class="h-6 w-6" />
       </.link>
@@ -37,42 +55,42 @@
       <div class="max-w-2xl">
         <p class="text-sm uppercase tracking-[0.4em] text-white/70">Luca Gym</p>
         <h1 class="mt-4 text-balance text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
-          Egy hely, ahol az edzés fókuszált, a légkör motiváló, a fejlődés biztos.
+          Egy hely, ahol az edzĂ©s fĂłkuszĂˇlt, a lĂ©gkĂ¶r motivĂˇlĂł, a fejlĹ‘dĂ©s biztos.
         </h1>
         <p class="mt-5 text-lg text-white/80">
-          Modern felszerelés, személyre szabott edzéstervek és barátságos közösség. Indulj el ma!
+          Modern felszerelĂ©s, szemĂ©lyre szabott edzĂ©stervek Ă©s barĂˇtsĂˇgos kĂ¶zĂ¶ssĂ©g. Indulj el ma!
         </p>
         <div class="mt-8 flex flex-wrap gap-4">
           <.link
             href="#foglalas"
             class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white/90"
           >
-            Óra foglalása
+            Ă“ra foglalĂˇsa
           </.link>
           <.link
             href="#berletek"
             class="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/10"
           >
-            Bérletek megtekintése
+            BĂ©rletek megtekintĂ©se
           </.link>
         </div>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Nyitvatartás</p>
-          <p class="mt-2 text-xl font-semibold">H–P 6:00–22:00</p>
-          <p class="text-sm text-white/70">Sz–V 8:00–20:00</p>
+          <p class="text-sm text-white/70">NyitvatartĂˇs</p>
+          <p class="mt-2 text-xl font-semibold">Hâ€“P 6:00â€“22:00</p>
+          <p class="text-sm text-white/70">Szâ€“V 8:00â€“20:00</p>
         </div>
         <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Edzőink</p>
-          <p class="mt-2 text-xl font-semibold">5 szakértő</p>
-          <p class="text-sm text-white/70">Erő, mobilitás, állóképesség</p>
+          <p class="text-sm text-white/70">EdzĹ‘ink</p>
+          <p class="mt-2 text-xl font-semibold">5 szakĂ©rtĹ‘</p>
+          <p class="text-sm text-white/70">ErĹ‘, mobilitĂˇs, ĂˇllĂłkĂ©pessĂ©g</p>
         </div>
         <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Kezdő csomag</p>
-          <p class="mt-2 text-xl font-semibold">7 nap próba</p>
-          <p class="text-sm text-white/70">Felrázunk a rutinból</p>
+          <p class="text-sm text-white/70">KezdĹ‘ csomag</p>
+          <p class="mt-2 text-xl font-semibold">7 nap prĂłba</p>
+          <p class="text-sm text-white/70">FelrĂˇzunk a rutinbĂłl</p>
         </div>
       </div>
     </section>
@@ -80,42 +98,54 @@
 </div>
 
 <section id="mobile-menu" class="scroll-mt-20 bg-white/95 px-5 py-6 text-neutral-900 md:hidden">
-  <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Menü</p>
+  <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">MenĂĽ</p>
   <div class="mt-4 grid gap-3 text-base font-medium">
     <.link href="#berletek" class="rounded-xl border border-neutral-200 px-4 py-3">
-      Bérletek
+      BĂ©rletek
     </.link>
     <.link href="#foglalas" class="rounded-xl border border-neutral-200 px-4 py-3">
-      Foglalás
+      FoglalĂˇs
     </.link>
-    <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">Rólam</.link>
-    <.link href="#login-modal" class="rounded-xl border border-neutral-200 px-4 py-3">
-      Bejelentkezés
-    </.link>
+    <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">RĂłlam</.link>
+    <%= if @current_user do %>
+      <.form for={%{}} id="logout-form-mobile" action={~p"/logout"} method="delete">
+        <button
+          id="logout-button-mobile"
+          type="submit"
+          class="w-full rounded-xl border border-neutral-200 px-4 py-3 text-left"
+        >
+          Kijelentkezés
+        </button>
+      </.form>
+    <% else %>
+      <.link href="#login-modal" class="rounded-xl border border-neutral-200 px-4 py-3">
+        Bejelentkez?s
+      </.link>
+    <% end %>
   </div>
 </section>
 
 <section id="berletek" class="scroll-mt-20 bg-neutral-950 px-5 py-16 text-white sm:px-8 lg:px-10">
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-10">
     <div>
-      <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bérletek</p>
-      <h2 class="mt-3 text-3xl font-semibold">Válassz csomagot, ami illik a ritmusodhoz.</h2>
+      <p class="text-xs uppercase tracking-[0.3em] text-white/60">BĂ©rletek</p>
+      <h2 class="mt-3 text-3xl font-semibold">VĂˇlassz csomagot, ami illik a ritmusodhoz.</h2>
     </div>
     <div class="grid gap-6 md:grid-cols-3">
       <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <p class="text-sm text-white/60">Kezdő</p>
+        <p class="text-sm text-white/60">KezdĹ‘</p>
         <p class="mt-2 text-2xl font-semibold">19 900 Ft</p>
-        <p class="mt-3 text-white/70">8 alkalom, 30 napig érvényes.</p>
+        <p class="mt-3 text-white/70">8 alkalom, 30 napig Ă©rvĂ©nyes.</p>
       </div>
       <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <p class="text-sm text-white/60">Haladó</p>
+        <p class="text-sm text-white/60">HaladĂł</p>
         <p class="mt-2 text-2xl font-semibold">29 900 Ft</p>
-        <p class="mt-3 text-white/70">12 alkalom, személyre szabott tervvel.</p>
+        <p class="mt-3 text-white/70">12 alkalom, szemĂ©lyre szabott tervvel.</p>
       </div>
       <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <p class="text-sm text-white/60">Prémium</p>
+        <p class="text-sm text-white/60">PrĂ©mium</p>
         <p class="mt-2 text-2xl font-semibold">49 900 Ft</p>
-        <p class="mt-3 text-white/70">Korlátlan belépés, privát edzővel.</p>
+        <p class="mt-3 text-white/70">KorlĂˇtlan belĂ©pĂ©s, privĂˇt edzĹ‘vel.</p>
       </div>
     </div>
   </div>
@@ -124,25 +154,27 @@
 <section id="foglalas" class="scroll-mt-20 bg-white px-5 py-16 text-neutral-900 sm:px-8 lg:px-10">
   <div class="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
     <div>
-      <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Foglalás</p>
-      <h2 class="mt-3 text-3xl font-semibold">Foglalj órát egy kattintással.</h2>
+      <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">FoglalĂˇs</p>
+      <h2 class="mt-3 text-3xl font-semibold">Foglalj ĂłrĂˇt egy kattintĂˇssal.</h2>
       <p class="mt-4 text-neutral-600">
-        Válassz edzőt, időpontot, és mi készítünk neked személyre szabott edzéstervet.
+        VĂˇlassz edzĹ‘t, idĹ‘pontot, Ă©s mi kĂ©szĂ­tĂĽnk neked szemĂ©lyre szabott edzĂ©stervet.
       </p>
     </div>
     <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-      <p class="text-sm font-semibold">Következő szabad időpontok</p>
+      <p class="text-sm font-semibold">KĂ¶vetkezĹ‘ szabad idĹ‘pontok</p>
       <ul class="mt-4 space-y-3 text-sm text-neutral-600">
-        <li>Hétfő 18:00 – Erősítő</li>
-        <li>Kedd 19:30 – Funkcionális</li>
-        <li>Szerda 7:00 – Core & mobilitás</li>
+        <li>HĂ©tfĹ‘ 18:00 â€“ ErĹ‘sĂ­tĹ‘</li>
+        <li>Kedd 19:30 â€“ FunkcionĂˇlis</li>
+        <li>Szerda 7:00 â€“ Core & mobilitĂˇs</li>
       </ul>
+      <%= if !@current_user do %>
       <.link
         href="#login-modal"
         class="mt-6 inline-flex rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
       >
-        Foglalás indítása
+        FoglalĂˇs indĂ­tĂˇsa
       </.link>
+      <% end %>
     </div>
   </div>
 </section>
@@ -152,37 +184,38 @@
   class="scroll-mt-20 bg-neutral-100 px-5 py-16 text-neutral-900 sm:px-8 lg:px-10"
 >
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Rólam</p>
-    <h2 class="text-3xl font-semibold">Luca – edző, mentor, motivátor.</h2>
+    <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">RĂłlam</p>
+    <h2 class="text-3xl font-semibold">Luca â€“ edzĹ‘, mentor, motivĂˇtor.</h2>
     <p class="max-w-3xl text-neutral-600">
-      Több mint 8 év tapasztalat, személyre szabott edzéstervek, és egy közösség, ahol mindenki
-      számít. A célom, hogy erősebbnek és magabiztosabbnak érezd magad minden edzés után.
+      TĂ¶bb mint 8 Ă©v tapasztalat, szemĂ©lyre szabott edzĂ©stervek, Ă©s egy kĂ¶zĂ¶ssĂ©g, ahol mindenki
+      szĂˇmĂ­t. A cĂ©lom, hogy erĹ‘sebbnek Ă©s magabiztosabbnak Ă©rezd magad minden edzĂ©s utĂˇn.
     </p>
   </div>
 </section>
 
+<%= if !@current_user do %>
 <section
   id="bejelentkezes"
   class="scroll-mt-20 bg-neutral-950 px-5 py-16 text-white sm:px-8 lg:px-10"
 >
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
     <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bejelentkez?s</p>
-    <h2 class="text-3xl font-semibold">Lépj be a fiókodba.</h2>
+    <h2 class="text-3xl font-semibold">LĂ©pj be a fiĂłkodba.</h2>
     <p class="text-white/70">
-      Foglalásaid és bérleteid kezelése egy helyen.
+      FoglalĂˇsaid Ă©s bĂ©rleteid kezelĂ©se egy helyen.
     </p>
     <div class="mt-4 flex flex-wrap gap-4">
       <.link
         href="#login-modal"
         class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white/90"
       >
-        Bejelentkezés
+        BejelentkezĂ©s
       </.link>
       <.link
         href="#berletek"
         class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/10"
       >
-        Vissza a bárletekhez
+        Vissza a bĂˇrletekhez
       </.link>
     </div>
   </div>
@@ -215,14 +248,14 @@
         type="submit"
         class="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
       >
-        Bejelentkezés
+        BejelentkezĂ©s
       </button>
     </.form>
 
     <div class="mt-4 flex items-center justify-between text-sm">
-      <span class="text-neutral-500">Nincs még fiókod?</span>
+      <span class="text-neutral-500">Nincs mĂ©g fiĂłkod?</span>
       <.link
-        href="#regisztracio"
+        href={~p"/register"}
         class="font-semibold text-amber-600 transition hover:text-amber-500"
       >
         Regisztr?lj
@@ -236,3 +269,5 @@
     <% end %>
   </div>
 </div>
+<% end %>
+

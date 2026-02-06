@@ -19,6 +19,7 @@ defmodule LucaGymappWeb.Router do
 
     get "/", PageController, :home
     post "/login", SessionController, :create
+    delete "/logout", SessionController, :delete
     get "/register", RegistrationController, :new
     post "/register", RegistrationController, :create
   end
