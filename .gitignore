@@ -1,0 +1,25 @@
+# Elixir / Phoenix
+/_build/
+/deps/
+/cover/
+/doc/
+/tmp/
+/.elixir_ls/
+/.lexical/
+
+# Assets
+/assets/node_modules/
+/assets/vendor/
+/priv/static/assets/
+/priv/static/cache_manifest.json
+
+# Logs
+/npm-debug.log
+/yarn-error.log
+
+# Env
+.env*
+
+# Local
+flyfuck.txt
+erl_crash.dump
