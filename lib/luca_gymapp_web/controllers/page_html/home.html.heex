@@ -17,7 +17,7 @@
         <.link href="#foglalas" class="transition hover:text-white/80">Foglalás</.link>
         <.link href="#rolam" class="transition hover:text-white/80">Rólam</.link>
         <.link
-          href="#bejelentkezes"
+          href="#login-modal"
           class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
         >
           Bejelentkezés
@@ -89,7 +89,7 @@
       Foglalás
     </.link>
     <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">Rólam</.link>
-    <.link href="#bejelentkezes" class="rounded-xl border border-neutral-200 px-4 py-3">
+    <.link href="#login-modal" class="rounded-xl border border-neutral-200 px-4 py-3">
       Bejelentkezés
     </.link>
   </div>
@@ -138,7 +138,7 @@
         <li>Szerda 7:00 – Core & mobilitás</li>
       </ul>
       <.link
-        href="#bejelentkezes"
+        href="#login-modal"
         class="mt-6 inline-flex rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
       >
         Foglalás indítása
@@ -166,24 +166,73 @@
   class="scroll-mt-20 bg-neutral-950 px-5 py-16 text-white sm:px-8 lg:px-10"
 >
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
-    <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bejelentkezés</p>
-    <h2 class="text-3xl font-semibold">Jelentkezz be, és kezdjük a munkát!</h2>
+    <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bejelentkez?s</p>
+    <h2 class="text-3xl font-semibold">L?pj be a fi?kodba.</h2>
     <p class="text-white/70">
-      Hamarosan nyílik a tagi felület. Addig is vedd fel velünk a kapcsolatot.
+      Foglal?said ?s b?rleteid kezel?se egy helyen.
     </p>
     <div class="mt-4 flex flex-wrap gap-4">
       <.link
-        href="mailto:hello@lucagym.hu"
+        href="#login-modal"
         class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white/90"
       >
-        Kapcsolat
+        Bejelentkez?s
       </.link>
       <.link
         href="#berletek"
         class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/10"
       >
-        Vissza a bérletekhez
+        Vissza a b?rletekhez
       </.link>
     </div>
   </div>
 </section>
+
+<div id="login-modal" class="login-modal" aria-hidden="true">
+  <a href="#" class="login-modal__overlay" aria-label="Bez?r?s"></a>
+  <div class="login-modal__panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bejelentkez?s</p>
+        <h3 id="login-title" class="mt-1 text-2xl font-semibold text-neutral-900">
+          ?dv ?jra itt!
+        </h3>
+      </div>
+      <.link
+        href="#"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+        aria-label="Bez?r?s"
+      >
+        <.icon name="hero-x-mark" class="h-4 w-4" />
+      </.link>
+    </div>
+
+    <.form for={@form} id="login-form" action={~p"/login"} class="mt-6 space-y-4">
+      <.input field={@form[:email]} type="email" label="E-mail" required />
+      <.input field={@form[:password]} type="password" label="Jelsz?" required />
+      <button
+        id="login-submit"
+        type="submit"
+        class="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+      >
+        Bejelentkez?s
+      </button>
+    </.form>
+
+    <div class="mt-4 flex items-center justify-between text-sm">
+      <span class="text-neutral-500">Nincs m?g fi?kod?</span>
+      <.link
+        href="#regisztracio"
+        class="font-semibold text-amber-600 transition hover:text-amber-500"
+      >
+        Regisztr?lj
+      </.link>
+    </div>
+
+    <%= if error = Phoenix.Flash.get(@flash, :error) do %>
+      <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {error}
+      </p>
+    <% end %>
+  </div>
+</div>

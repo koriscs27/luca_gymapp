@@ -18,6 +18,7 @@ defmodule LucaGymappWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    post "/login", SessionController, :create
   end
 
   # Other scopes may use custom stacks.

@@ -119,3 +119,44 @@ html { scroll-behavior: smooth; }
   background: linear-gradient(120deg, rgba(3, 7, 18, 0.9) 0%, rgba(15, 23, 42, 0.55) 45%, rgba(2, 6, 23, 0.95) 100%);
   pointer-events: none;
 }
+
+.login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.login-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.login-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.35);
+  padding: 1.75rem;
+  transform: translateY(12px) scale(0.98);
+  transition: transform 200ms ease;
+}
+
+.login-modal:target {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.login-modal:target .login-modal__panel {
+  transform: translateY(0) scale(1);
+}
