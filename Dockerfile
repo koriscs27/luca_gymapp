@@ -1,9 +1,5 @@
-ARG ELIXIR_VERSION=1.15.8
-ARG ERLANG_VERSION=26.2
-ARG DEBIAN_VERSION=bullseye-20230926
-
-ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${ERLANG_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG BUILDER_IMAGE="hexpm/elixir:1.15.8-erlang-25.3.2.5-debian-bullseye-20260202"
+ARG RUNNER_IMAGE="debian:bullseye-20260202"
 
 FROM ${BUILDER_IMAGE} AS builder
 
@@ -29,8 +25,8 @@ COPY priv priv
 COPY assets assets
 COPY lib lib
 
-RUN mix assets.deploy
 RUN mix compile
+RUN mix assets.deploy
 RUN mix release
 
 FROM ${RUNNER_IMAGE} AS runner

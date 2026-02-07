@@ -10,7 +10,7 @@ primary_region = 'fra'
   dockerfile = 'Dockerfile'
 
 [deploy]
-  release_command = "eval 'LucaGymapp.Release.migrate'"
+  release_command = "/app/bin/luca_gymapp eval 'LucaGymapp.Release.migrate'"
 
 [env]
   PHX_HOST = 'luca-gymapp.fly.dev'
