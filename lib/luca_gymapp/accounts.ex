@@ -1,4 +1,5 @@
 defmodule LucaGymapp.Accounts do
+  require Logger
   import Ecto.Query, warn: false
 
   alias LucaGymapp.Repo
@@ -82,9 +83,28 @@ defmodule LucaGymapp.Accounts do
       })
       |> Repo.update!()
 
-    user
-    |> UserEmail.confirmation_email(token)
-    |> Mailer.deliver()
+    email = UserEmail.confirmation_email(user, token)
+
+    Logger.info("Sending confirmation email",
+      user_id: user.id,
+      to: user.email,
+      subject: email.subject
+    )
+
+    case Mailer.deliver(email) do
+      {:ok, _} = ok ->
+        Logger.info("Confirmation email sent", user_id: user.id, to: user.email)
+        ok
+
+      {:error, reason} = error ->
+        Logger.error("Confirmation email failed",
+          user_id: user.id,
+          to: user.email,
+          reason: inspect(reason)
+        )
+
+        error
+    end
   end
 
   def confirm_user_email(token) when is_binary(token) do

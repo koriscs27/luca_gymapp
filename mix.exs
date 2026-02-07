@@ -59,6 +59,8 @@ defmodule LucaGymapp.MixProject do
        compile: false,
        depth: 1},
       {:swoosh, "~> 1.16"},
+      {:multipart, "~> 0.4"},
+      {:plug, "~> 1.16"},
       {:req, "~> 0.5"},
       {:ueberauth, "~> 0.10.8"},
       {:ueberauth_google, "~> 0.12.1"},
