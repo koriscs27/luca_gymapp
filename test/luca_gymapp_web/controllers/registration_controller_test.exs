@@ -24,7 +24,8 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
   end
 
   test "shows error when email is already registered", %{conn: conn} do
-    {:ok, _user} = Accounts.register_user(%{"email" => "dup@example.com", "password" => "titkos-123"})
+    {:ok, _user} =
+      Accounts.register_user(%{"email" => "dup@example.com", "password" => "titkos-123"})
 
     conn = post(conn, ~p"/register", user: %{email: "dup@example.com", password: "masik-123"})
 

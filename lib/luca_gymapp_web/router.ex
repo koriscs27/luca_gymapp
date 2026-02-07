@@ -18,6 +18,8 @@ defmodule LucaGymappWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/auth/:provider", OAuthController, :request
+    get "/auth/:provider/callback", OAuthController, :callback
     post "/login", SessionController, :create
     delete "/logout", SessionController, :delete
     get "/register", RegistrationController, :new

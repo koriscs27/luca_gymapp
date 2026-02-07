@@ -29,6 +29,28 @@ defmodule LucaGymapp.Accounts do
     create_user(attrs)
   end
 
+  def get_or_create_user_from_oauth(%Ueberauth.Auth{} = auth) do
+    email = auth.info.email
+    name = oauth_name(auth)
+
+    cond do
+      is_nil(email) or email == "" ->
+        {:error, :missing_email}
+
+      user = Repo.get_by(User, email: email) ->
+        {:ok, user}
+
+      true ->
+        attrs = %{
+          email: email,
+          name: name,
+          password_hash: hash_password(random_password())
+        }
+
+        create_user(attrs)
+    end
+  end
+
   def authenticate_user(email, password) when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
 
@@ -85,5 +107,27 @@ defmodule LucaGymapp.Accounts do
     attrs
     |> Map.keys()
     |> Enum.any?(&is_binary/1)
+  end
+
+  defp oauth_name(%Ueberauth.Auth{info: info}) do
+    info.name
+    |> name_from_parts(info.first_name, info.last_name)
+  end
+
+  defp name_from_parts(nil, first_name, last_name) do
+    [first_name, last_name]
+    |> Enum.filter(&is_binary/1)
+    |> Enum.join(" ")
+    |> case do
+      "" -> nil
+      value -> value
+    end
+  end
+
+  defp name_from_parts(name, _first_name, _last_name), do: name
+
+  defp random_password do
+    :crypto.strong_rand_bytes(32)
+    |> Base.url_encode64(padding: false)
   end
 end
