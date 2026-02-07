@@ -10,6 +10,9 @@ defmodule LucaGymapp.Accounts.User do
     field :sex, :string
     field :password_hash, :string
     field :birth_date, :date
+    field :email_confirmed_at, :utc_datetime
+    field :email_confirmation_token_hash, :binary
+    field :email_confirmation_sent_at, :utc_datetime
 
     timestamps()
   end

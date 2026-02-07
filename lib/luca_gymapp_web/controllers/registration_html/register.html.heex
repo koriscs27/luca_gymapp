@@ -18,6 +18,12 @@
     <.form for={@form} id="register-form" action={~p"/register"} class="mt-8 space-y-4">
       <.input field={@form[:email]} type="email" label="E-mail" required />
       <.input field={@form[:password]} type="password" label="Jelszó" required />
+      <.input
+        field={@form[:password_confirmation]}
+        type="password"
+        label="Jelszó megerősítése"
+        required
+      />
       <.input field={@form[:name]} type="text" label="Név" />
       <.input field={@form[:phone_number]} type="tel" label="Telefonszám" />
       <.input field={@form[:age]} type="number" label="Életkor" min="0" />

@@ -12,6 +12,11 @@ defmodule LucaGymappWeb.SessionController do
         |> put_flash(:info, "Sikeres bejelentkezés.")
         |> redirect(to: ~p"/")
 
+      {:error, :unconfirmed} ->
+        conn
+        |> put_flash(:error, "Kérjük, erősítsd meg az e-mail címedet a belépéshez.")
+        |> redirect(to: "/#login-modal")
+
       :error ->
         conn
         |> put_flash(:error, "Hibás e-mail vagy jelszó.")

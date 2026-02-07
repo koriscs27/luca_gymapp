@@ -9,7 +9,11 @@ defmodule LucaGymappWeb.SessionControllerTest do
     password = "titkos-jelszo-123"
 
     user =
-      %User{email: "teszt@example.com", password_hash: Accounts.hash_password(password)}
+      %User{
+        email: "teszt@example.com",
+        password_hash: Accounts.hash_password(password),
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
       |> Repo.insert!()
 
     {:ok, user: user, password: password}

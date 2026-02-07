@@ -118,3 +118,6 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+config :luca_gymapp, LucaGymapp.Mailer,
+  default_from: System.get_env("MAILGUN_FROM") || "no-reply@localhost"

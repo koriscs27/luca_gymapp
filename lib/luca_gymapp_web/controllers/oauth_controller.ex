@@ -13,24 +13,24 @@ defmodule LucaGymappWeb.OAuthController do
         conn
         |> configure_session(renew: true)
         |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Sikeres bejelentkezés Google-fiókkal.")
+        |> put_flash(:info, "Sikeres bejelentkezĂ©s Google-fiĂłkkal.")
         |> redirect(to: ~p"/")
 
       {:error, :missing_email} ->
         conn
-        |> put_flash(:error, "A Google-fiók nem adott vissza e-mail címet.")
+        |> put_flash(:error, "A Google-fiĂłk nem adott vissza e-mail cĂ­met.")
         |> redirect(to: "/#login-modal")
 
       {:error, _reason} ->
         conn
-        |> put_flash(:error, "A Google bejelentkezés sikertelen.")
+        |> put_flash(:error, "A Google bejelentkezĂ©s sikertelen.")
         |> redirect(to: "/#login-modal")
     end
   end
 
   def callback(%{assigns: %{ueberauth_failure: _failure}} = conn, _params) do
     conn
-    |> put_flash(:error, "A Google bejelentkezés sikertelen.")
+    |> put_flash(:error, "A Google bejelentkezĂ©s sikertelen.")
     |> redirect(to: "/#login-modal")
   end
 end

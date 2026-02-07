@@ -10,17 +10,24 @@ defmodule LucaGymappWeb.RegistrationController do
 
   def create(conn, %{"user" => user_params}) do
     case Accounts.register_user(user_params) do
-      {:ok, _user} ->
+      {:ok, user} ->
+        Accounts.deliver_confirmation_instructions(user)
+
         conn
-        |> put_flash(:info, "Sikeres regisztráció.")
+        |> put_flash(:info, "Sikeres regisztráció. Küldtünk egy megerősítő e-mailt.")
         |> redirect(to: ~p"/")
 
       {:error, changeset} ->
         error_message =
-          if email_already_registered?(changeset) do
-            "Ez az e-mail cím már regisztrálva van."
-          else
-            "A regisztráció sikertelen. Ellenőrizd az adatokat."
+          cond do
+            email_already_registered?(changeset) ->
+              "Ez az e-mail cím már regisztrálva van."
+
+            password_confirmation_error?(changeset) ->
+              "A megadott jelszavak nem egyeznek."
+
+            true ->
+              "A regisztráció sikertelen. Ellenőrizd az adatokat."
           end
 
         form = Phoenix.Component.to_form(user_params, as: :user)
@@ -40,6 +47,13 @@ defmodule LucaGymappWeb.RegistrationController do
   defp email_already_registered?(changeset) do
     Enum.any?(changeset.errors, fn
       {:email, {_message, opts}} -> opts[:constraint] == :unique
+      _ -> false
+    end)
+  end
+
+  defp password_confirmation_error?(changeset) do
+    Enum.any?(changeset.errors, fn
+      {:password_confirmation, {_message, _opts}} -> true
       _ -> false
     end)
   end

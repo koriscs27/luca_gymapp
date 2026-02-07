@@ -20,6 +20,7 @@ defmodule LucaGymappWeb.Router do
     get "/", PageController, :home
     get "/auth/:provider", OAuthController, :request
     get "/auth/:provider/callback", OAuthController, :callback
+    get "/confirm-email", EmailConfirmationController, :show
     post "/login", SessionController, :create
     delete "/logout", SessionController, :delete
     get "/register", RegistrationController, :new
