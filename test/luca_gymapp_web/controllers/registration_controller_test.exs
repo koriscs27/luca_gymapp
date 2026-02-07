@@ -23,6 +23,17 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
     assert user.password_hash == Accounts.hash_password("titkos-jelszo-123")
   end
 
+  test "shows error when email is already registered", %{conn: conn} do
+    {:ok, _user} = Accounts.register_user(%{"email" => "dup@example.com", "password" => "titkos-123"})
+
+    conn = post(conn, ~p"/register", user: %{email: "dup@example.com", password: "masik-123"})
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "Ez az e-mail cím már regisztrálva van."
+
+    assert html_response(conn, 200) =~ "Regisztráció"
+  end
+
   test "rejects registration without password", %{conn: conn} do
     conn = post(conn, ~p"/register", user: %{email: "nincs@jelszo.hu"})
 
