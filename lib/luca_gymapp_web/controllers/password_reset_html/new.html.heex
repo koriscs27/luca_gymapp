@@ -1,0 +1,45 @@
+<Layouts.app flash={@flash} show_nav={false}>
+  <section class="mx-auto w-full max-w-2xl rounded-3xl border border-neutral-200 bg-white px-6 py-10 shadow-lg shadow-neutral-200/40">
+    <div class="flex flex-col gap-2">
+      <p class="text-xs uppercase tracking-[0.35em] text-neutral-400">Jelszó visszaállítás</p>
+      <h1 class="text-3xl font-semibold text-neutral-900">Kérj új jelszót</h1>
+      <p class="text-neutral-500">
+        Add meg az e-mail címedet és elküldjük a visszaállító linket.
+      </p>
+      <.link
+        id="back-home-link"
+        href={~p"/"}
+        class="mt-2 inline-flex w-fit items-center gap-2 text-sm font-semibold text-neutral-700 transition hover:text-neutral-900"
+      >
+        <.icon name="hero-arrow-left" class="h-4 w-4" /> Vissza a főoldalra
+      </.link>
+    </div>
+
+    <.form
+      for={@form}
+      id="password-reset-request-form"
+      action={~p"/password/forgot"}
+      class="mt-8 space-y-4"
+    >
+      <.input field={@form[:email]} type="email" label="E-mail" required />
+
+      <button
+        id="password-reset-request-submit"
+        type="submit"
+        class="mt-2 w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+      >
+        Link küldése
+      </button>
+    </.form>
+
+    <div class="mt-6 flex items-center justify-between text-sm">
+      <span class="text-neutral-500">Mégis bejelentkeznél?</span>
+      <.link
+        href={~p"/#login-modal"}
+        class="font-semibold text-amber-600 transition hover:text-amber-500"
+      >
+        Bejelentkezés
+      </.link>
+    </div>
+  </section>
+</Layouts.app>

@@ -13,6 +13,8 @@ defmodule LucaGymapp.Accounts.User do
     field :email_confirmed_at, :utc_datetime
     field :email_confirmation_token_hash, :binary
     field :email_confirmation_sent_at, :utc_datetime
+    field :password_reset_token_hash, :binary
+    field :password_reset_sent_at, :utc_datetime
 
     timestamps()
   end
@@ -20,7 +22,7 @@ defmodule LucaGymapp.Accounts.User do
   def changeset(user, attrs) do
     user
     |> cast(attrs, [:name, :email, :phone_number, :age, :sex, :password_hash, :birth_date])
-    |> validate_required([:email, :password_hash])
+    |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> unique_constraint(:email)
   end

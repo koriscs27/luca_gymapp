@@ -1,4 +1,4 @@
-<div class={[
+﻿<div class={[
   "gym-hero min-h-screen text-white",
   @current_user && "gym-hero--authed"
 ]}>
@@ -11,7 +11,10 @@
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pb-6 pt-6 sm:px-8 lg:px-10">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
-          <.icon name="hero-bolt" class="h-5 w-5 text-white" />
+          <.icon
+            name="hero-bolt"
+            class="h-5 w-5 text-white"
+          />
         </div>
         <div class="leading-tight">
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Luca Gym</p>
@@ -20,24 +23,35 @@
       </div>
 
       <nav class="hidden items-center gap-8 text-sm font-medium md:flex">
-        <.link href="#berletek" class="transition hover:text-white/80">Bérletek</.link>
+        <.link
+          href="#berletek"
+          class="transition hover:text-white/80"
+        >Bérletek</.link>
         <.link href="#foglalas" class="transition hover:text-white/80">Foglalás</.link>
-        <.link href="#rolam" class="transition hover:text-white/80">Rólam</.link>
+        <.link
+          href="#rolam"
+          class="transition hover:text-white/80"
+        >Rólam</.link>
         <%= if @current_user do %>
-          <.form for={%{}} id="logout-form" action={~p"/logout"} method="delete">
+          <.form
+          for={%{}}
+          id="logout-form"
+          action={~p"/logout"}
+          method="delete"
+        >
             <button
-              id="logout-button"
-              type="submit"
-              class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
-            >
+            id="logout-button"
+            type="submit"
+            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+          >
               Kijelentkezés
             </button>
           </.form>
         <% else %>
           <.link
-            href="#login-modal"
-            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
-          >
+          href="#login-modal"
+          class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+        >
             Bejelentkezés
           </.link>
         <% end %>
@@ -244,6 +258,22 @@
       <.form for={@form} id="login-form" action={~p"/login"} class="mt-6 space-y-4">
         <.input field={@form[:email]} type="email" label="E-mail" required />
         <.input field={@form[:password]} type="password" label="Jelszó" required />
+        <div class="text-right text-sm">
+          <.link
+            href={~p"/password/forgot"}
+            class="font-semibold text-amber-600 transition hover:text-amber-500"
+          >
+            Elfelejtetted a jelszót?
+          </.link>
+        </div>
+        <div class="text-right text-sm">
+          <.link
+            href={~p"/confirm-email/new"}
+            class="font-semibold text-amber-600 transition hover:text-amber-500"
+          >
+            Nem kaptad meg a megerősítő e-mailt?
+          </.link>
+        </div>
         <button
           id="login-submit"
           type="submit"

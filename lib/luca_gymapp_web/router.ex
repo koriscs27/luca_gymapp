@@ -21,10 +21,19 @@ defmodule LucaGymappWeb.Router do
     get "/auth/:provider", OAuthController, :request
     get "/auth/:provider/callback", OAuthController, :callback
     get "/confirm-email", EmailConfirmationController, :show
+    get "/confirm-email/new", EmailConfirmationRequestController, :new
+    post "/confirm-email", EmailConfirmationRequestController, :create
+    get "/password/forgot", PasswordResetController, :new
+    post "/password/forgot", PasswordResetController, :create
+    get "/password/reset", PasswordResetController, :edit
+    patch "/password/reset", PasswordResetController, :update
     post "/login", SessionController, :create
     delete "/logout", SessionController, :delete
     get "/register", RegistrationController, :new
     post "/register", RegistrationController, :create
+    get "/profile", ProfileController, :show
+    patch "/profile", ProfileController, :update_profile
+    patch "/profile/password", ProfileController, :update_password
   end
 
   # Other scopes may use custom stacks.

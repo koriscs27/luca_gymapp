@@ -1,0 +1,98 @@
+<Layouts.app flash={@flash}>
+  <section class="mx-auto w-full max-w-4xl px-6 py-12">
+    <div class="rounded-3xl border border-neutral-200 bg-white p-8 shadow-xl shadow-neutral-200/40">
+      <div class="flex flex-col gap-2">
+        <h1 class="text-2xl font-semibold text-neutral-900">Profil</h1>
+        <p class="text-sm text-neutral-500">
+          Itt frissítheted a profil adataidat és a jelszavadat.
+        </p>
+      </div>
+
+      <div class="mt-8 grid gap-8 lg:grid-cols-2">
+        <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+          <h2 class="text-lg font-semibold text-neutral-900">Profil adatok</h2>
+          <p class="mt-1 text-sm text-neutral-500">Csak a hiányzó adatokat add meg.</p>
+
+          <div class="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
+            <div class="text-xs uppercase tracking-wide text-neutral-500">E-mail</div>
+            <div class="mt-1 text-sm font-medium text-neutral-900">{@user.email}</div>
+          </div>
+
+          <.form
+            for={@profile_form}
+            id="profile-form"
+            action={~p"/profile"}
+            method="patch"
+            class="mt-6 grid gap-4"
+          >
+            <.input field={@profile_form[:name]} type="text" label="Név" />
+            <.input field={@profile_form[:phone_number]} type="text" label="Telefonszám" />
+            <.input field={@profile_form[:age]} type="number" label="Életkor" />
+            <.input field={@profile_form[:sex]} type="text" label="Nem" />
+            <.input field={@profile_form[:birth_date]} type="date" label="Születési dátum" />
+
+            <button
+              id="profile-submit"
+              type="submit"
+              class="mt-2 inline-flex items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            >
+              Mentés
+            </button>
+          </.form>
+        </div>
+
+        <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+          <h2 class="text-lg font-semibold text-neutral-900">
+            <%= if @user.password_hash do %>
+              Jelszó módosítása
+            <% else %>
+              Jelszó létrehozása
+            <% end %>
+          </h2>
+          <p class="mt-1 text-sm text-neutral-500">
+            <%= if @user.password_hash do %>
+              Add meg a jelenlegi jelszavad, majd az újat kétszer.
+            <% else %>
+              Google fiókkal léptél be, itt tudsz jelszót beállítani.
+            <% end %>
+          </p>
+
+          <.form
+            for={@password_form}
+            id="password-form"
+            action={~p"/profile/password"}
+            method="patch"
+            class="mt-6 grid gap-4"
+          >
+            <%= if @user.password_hash do %>
+              <.input
+                field={@password_form[:current_password]}
+                type="password"
+                label="Jelenlegi jelszó"
+              />
+            <% end %>
+
+            <.input
+              field={@password_form[:new_password]}
+              type="password"
+              label="Új jelszó"
+            />
+            <.input
+              field={@password_form[:new_password_confirmation]}
+              type="password"
+              label="Új jelszó megerősítése"
+            />
+
+            <button
+              id="password-submit"
+              type="submit"
+              class="mt-2 inline-flex items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            >
+              Mentés
+            </button>
+          </.form>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layouts.app>

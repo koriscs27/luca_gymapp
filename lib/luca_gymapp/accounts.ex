@@ -42,15 +42,25 @@ defmodule LucaGymapp.Accounts do
     password_present? = is_binary(password) and password != ""
 
     result =
-      if password_present? and not password_confirmation_matches?(password, password_confirmation) do
-        changeset =
-          %User{}
-          |> User.changeset(attrs)
-          |> Ecto.Changeset.add_error(:password_confirmation, "Nem egyezik a jelszóval.")
+      cond do
+        not password_present? ->
+          changeset =
+            %User{}
+            |> User.changeset(attrs)
+            |> Ecto.Changeset.add_error(:password, "A jelszó kötelező.")
 
-        {:error, changeset}
-      else
-        upsert_unconfirmed_user(email, attrs)
+          {:error, changeset}
+
+        not password_confirmation_matches?(password, password_confirmation) ->
+          changeset =
+            %User{}
+            |> User.changeset(attrs)
+            |> Ecto.Changeset.add_error(:password_confirmation, "Nem egyezik a jelszóval.")
+
+          {:error, changeset}
+
+        true ->
+          upsert_unconfirmed_user(email, attrs)
       end
 
     case result do
@@ -61,7 +71,7 @@ defmodule LucaGymapp.Accounts do
         changeset =
           %User{}
           |> User.changeset(attrs)
-          |> Ecto.Changeset.add_error(:email, "már regisztrálva van", constraint: :unique)
+          |> Ecto.Changeset.add_error(:email, "mĂˇr regisztrĂˇlva van", constraint: :unique)
 
         {:error, changeset}
 
@@ -104,6 +114,104 @@ defmodule LucaGymapp.Accounts do
         )
 
         error
+    end
+  end
+
+  def deliver_confirmation_instructions_for_email(email) when is_binary(email) do
+    email = String.trim(email)
+
+    if email != "" do
+      case Repo.get_by(User, email: email) do
+        %User{email_confirmed_at: nil} = user ->
+          deliver_confirmation_instructions(user)
+
+        _ ->
+          :ok
+      end
+    else
+      :ok
+    end
+
+    :ok
+  end
+
+  def deliver_password_reset_instructions(email) when is_binary(email) do
+    email = String.trim(email)
+
+    if email != "" do
+      case Repo.get_by(User, email: email) do
+        %User{} = user ->
+          token = generate_token()
+          token_hash = token_hash(token)
+          now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+          user =
+            user
+            |> Ecto.Changeset.change(%{
+              password_reset_token_hash: token_hash,
+              password_reset_sent_at: now
+            })
+            |> Repo.update!()
+
+          email_message = UserEmail.password_reset_email(user, token)
+
+          Logger.info("Sending password reset email",
+            user_id: user.id,
+            to: user.email,
+            subject: email_message.subject
+          )
+
+          case Mailer.deliver(email_message) do
+            {:ok, _} = ok ->
+              Logger.info("Password reset email sent", user_id: user.id, to: user.email)
+              ok
+
+            {:error, reason} = error ->
+              Logger.error("Password reset email failed",
+                user_id: user.id,
+                to: user.email,
+                reason: inspect(reason)
+              )
+
+              error
+          end
+
+        nil ->
+          :ok
+      end
+    else
+      :ok
+    end
+
+    :ok
+  end
+
+  def reset_password_with_token(token, new_password, new_password_confirmation)
+      when is_binary(token) do
+    case get_user_by_reset_token(token) do
+      {:ok, user} ->
+        case set_user_password(user, new_password, new_password_confirmation) do
+          {:ok, user} ->
+            user
+            |> Ecto.Changeset.change(%{
+              password_reset_token_hash: nil,
+              password_reset_sent_at: nil
+            })
+            |> Repo.update()
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+
+      {:error, :invalid} ->
+        {:error, :invalid}
+    end
+  end
+
+  def password_reset_token_valid?(token) when is_binary(token) do
+    case get_user_by_reset_token(token) do
+      {:ok, _user} -> true
+      {:error, :invalid} -> false
     end
   end
 
@@ -162,8 +270,7 @@ defmodule LucaGymapp.Accounts do
       true ->
         attrs = %{
           email: email,
-          name: name,
-          password_hash: hash_password(random_password())
+          name: name
         }
 
         %User{}
@@ -205,6 +312,72 @@ defmodule LucaGymapp.Accounts do
     user
     |> User.changeset(attrs)
     |> Repo.update()
+  end
+
+  def set_user_password(%User{} = user, new_password, new_password_confirmation) do
+    new_password = if is_binary(new_password), do: String.trim(new_password), else: nil
+
+    new_password_confirmation =
+      if is_binary(new_password_confirmation),
+        do: String.trim(new_password_confirmation),
+        else: nil
+
+    cond do
+      not is_binary(new_password) or new_password == "" ->
+        changeset =
+          user
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.add_error(:new_password, "A jelszó kötelező.")
+
+        {:error, changeset}
+
+      not password_confirmation_matches?(new_password, new_password_confirmation) ->
+        changeset =
+          user
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.add_error(:new_password_confirmation, "Nem egyezik a jelszóval.")
+
+        {:error, changeset}
+
+      true ->
+        user
+        |> Ecto.Changeset.change(password_hash: hash_password(new_password))
+        |> Repo.update()
+    end
+  end
+
+  def change_user_password(
+        %User{} = user,
+        current_password,
+        new_password,
+        new_password_confirmation
+      ) do
+    current_password =
+      if is_binary(current_password), do: String.trim(current_password), else: nil
+
+    cond do
+      is_nil(user.password_hash) ->
+        set_user_password(user, new_password, new_password_confirmation)
+
+      not is_binary(current_password) or current_password == "" ->
+        changeset =
+          user
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.add_error(:current_password, "Add meg a jelenlegi jelszót.")
+
+        {:error, changeset}
+
+      not valid_password?(user, current_password) ->
+        changeset =
+          user
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.add_error(:current_password, "Hibás jelenlegi jelszó.")
+
+        {:error, changeset}
+
+      true ->
+        set_user_password(user, new_password, new_password_confirmation)
+    end
   end
 
   def delete_user(%User{} = user) do
@@ -278,6 +451,33 @@ defmodule LucaGymapp.Accounts do
     DateTime.diff(DateTime.utc_now(), sent_at, :second) > 3600
   end
 
+  defp get_user_by_reset_token(token) do
+    token_hash = token_hash(token)
+
+    user =
+      from(u in User,
+        where: u.password_reset_token_hash == ^token_hash
+      )
+      |> Repo.one()
+
+    cond do
+      user == nil ->
+        {:error, :invalid}
+
+      reset_token_expired?(user) ->
+        {:error, :invalid}
+
+      true ->
+        {:ok, user}
+    end
+  end
+
+  defp reset_token_expired?(%User{password_reset_sent_at: nil}), do: true
+
+  defp reset_token_expired?(%User{password_reset_sent_at: sent_at}) do
+    DateTime.diff(DateTime.utc_now(), sent_at, :second) > 3600
+  end
+
   defp oauth_name(%Ueberauth.Auth{info: info}) do
     info.name
     |> name_from_parts(info.first_name, info.last_name)
@@ -294,9 +494,4 @@ defmodule LucaGymapp.Accounts do
   end
 
   defp name_from_parts(name, _first_name, _last_name), do: name
-
-  defp random_password do
-    :crypto.strong_rand_bytes(32)
-    |> Base.url_encode64(padding: false)
-  end
 end
