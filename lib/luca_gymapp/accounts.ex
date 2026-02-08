@@ -12,6 +12,22 @@ defmodule LucaGymapp.Accounts do
     Repo.all(User)
   end
 
+  def list_users_for_admin_select do
+    User
+    |> order_by([user], asc: user.email)
+    |> select([user], %{id: user.id, email: user.email, name: user.name})
+    |> Repo.all()
+    |> Enum.map(fn user ->
+      label =
+        case user.name do
+          value when is_binary(value) and value != "" -> "#{user.email} (#{value})"
+          _ -> user.email
+        end
+
+      {label, user.id}
+    end)
+  end
+
   def get_user!(id), do: Repo.get!(User, id)
 
   def create_user(attrs \\ %{}) do

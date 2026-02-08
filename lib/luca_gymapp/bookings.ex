@@ -2,6 +2,8 @@ defmodule LucaGymapp.Bookings do
   import Ecto.Query, warn: false
 
   alias LucaGymapp.Accounts.User
+  alias LucaGymapp.Booking
+  alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Bookings.CrossBooking
   alias LucaGymapp.Bookings.PersonalBooking
   alias LucaGymapp.Repo
@@ -9,6 +11,7 @@ defmodule LucaGymapp.Bookings do
 
   def book_personal_training(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
     Repo.transaction(fn ->
+      enforce_slot_exists!("personal", start_time, end_time)
       pass = get_valid_personal_pass!(user.id)
       booking = create_personal_booking!(user, pass, start_time, end_time)
       decrement_pass_occasions!(pass)
@@ -18,6 +21,7 @@ defmodule LucaGymapp.Bookings do
 
   def book_cross_training(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
     Repo.transaction(fn ->
+      enforce_slot_exists!("cross", start_time, end_time)
       pass = get_valid_cross_pass!(user.id)
       enforce_cross_capacity!(start_time, end_time)
       booking = create_cross_booking!(user, pass, start_time, end_time)
@@ -104,6 +108,130 @@ defmodule LucaGymapp.Bookings do
       increment_pass_occasions!(booking.pass_id)
       booking
     end)
+  end
+
+  def list_calendar_slots_for_week(type, %Date{} = week_start, %Date{} = week_end) do
+    slot_type = slot_type_from_booking(type)
+    week_start_dt = DateTime.new!(week_start, ~T[00:00:00], "Etc/UTC")
+    week_end_dt = DateTime.new!(Date.add(week_end, 1), ~T[00:00:00], "Etc/UTC")
+
+    CalendarSlot
+    |> where([slot], slot.slot_type == ^slot_type)
+    |> where([slot], slot.start_time >= ^week_start_dt)
+    |> where([slot], slot.start_time < ^week_end_dt)
+    |> order_by([slot], asc: slot.start_time)
+    |> Repo.all()
+  end
+
+  def publish_default_week(type, %Date{} = week_start) do
+    schedule = Booking.schedule_for(type)
+    {monday, _week_end} = Booking.week_range(week_start)
+    days = Booking.ordered_days(schedule.availability, monday)
+    now = DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.to_naive()
+    slot_type = slot_type_from_booking(type)
+
+    slots =
+      days
+      |> Enum.flat_map(fn day ->
+        Enum.map(day.hour_slots, fn slot ->
+          %{
+            slot_type: slot_type,
+            start_time: slot.start_datetime,
+            end_time: slot.end_datetime,
+            inserted_at: now,
+            updated_at: now
+          }
+        end)
+      end)
+
+    Repo.insert_all(CalendarSlot, slots,
+      on_conflict: :nothing,
+      conflict_target: [:slot_type, :start_time, :end_time]
+    )
+  end
+
+  def create_calendar_slot(type, %Date{} = date, %Time{} = start_time, %Time{} = end_time) do
+    slot_type = slot_type_from_booking(type)
+    start_dt = DateTime.new!(date, start_time, "Etc/UTC")
+    end_dt = DateTime.new!(date, end_time, "Etc/UTC")
+
+    if DateTime.compare(end_dt, start_dt) != :gt do
+      {:error, :invalid_time_range}
+    else
+      %CalendarSlot{}
+      |> CalendarSlot.changeset(%{
+        slot_type: slot_type,
+        start_time: start_dt,
+        end_time: end_dt
+      })
+      |> Repo.insert()
+      |> case do
+        {:ok, slot} -> {:ok, slot}
+        {:error, changeset} -> {:error, changeset}
+      end
+    end
+  end
+
+  def delete_calendar_slot(slot_id) do
+    slot =
+      CalendarSlot
+      |> where([slot], slot.id == ^slot_id)
+      |> Repo.one()
+      |> case do
+        nil -> {:error, :not_found}
+        slot -> {:ok, slot}
+      end
+
+    with {:ok, slot} <- slot,
+         :ok <- ensure_slot_has_no_bookings(slot) do
+      Repo.delete(slot)
+    end
+  end
+
+  defp slot_type_from_booking(:personal), do: "personal"
+  defp slot_type_from_booking(:cross), do: "cross"
+  defp slot_type_from_booking(value) when is_binary(value), do: value
+
+  defp enforce_slot_exists!(slot_type, %DateTime{} = start_time, %DateTime{} = end_time) do
+    exists? =
+      CalendarSlot
+      |> where([slot], slot.slot_type == ^slot_type)
+      |> where([slot], slot.start_time == ^start_time)
+      |> where([slot], slot.end_time == ^end_time)
+      |> Repo.exists?()
+
+    if exists? do
+      :ok
+    else
+      Repo.rollback(:slot_not_available)
+    end
+  end
+
+  defp ensure_slot_has_no_bookings(%CalendarSlot{} = slot) do
+    case slot.slot_type do
+      "personal" ->
+        exists? =
+          PersonalBooking
+          |> where([booking], booking.status == "booked")
+          |> where([booking], booking.start_time == ^slot.start_time)
+          |> where([booking], booking.end_time == ^slot.end_time)
+          |> Repo.exists?()
+
+        if exists?, do: {:error, :slot_has_bookings}, else: :ok
+
+      "cross" ->
+        exists? =
+          CrossBooking
+          |> where([booking], booking.status == "booked")
+          |> where([booking], booking.start_time == ^slot.start_time)
+          |> where([booking], booking.end_time == ^slot.end_time)
+          |> Repo.exists?()
+
+        if exists?, do: {:error, :slot_has_bookings}, else: :ok
+
+      _ ->
+        :ok
+    end
   end
 
   defp get_valid_personal_pass!(user_id) do

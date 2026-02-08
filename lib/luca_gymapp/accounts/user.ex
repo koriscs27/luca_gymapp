@@ -15,6 +15,7 @@ defmodule LucaGymapp.Accounts.User do
     field :email_confirmation_sent_at, :utc_datetime
     field :password_reset_token_hash, :binary
     field :password_reset_sent_at, :utc_datetime
+    field :admin, :boolean, default: false
 
     has_many :season_passes, LucaGymapp.SeasonPasses.SeasonPass
     has_many :personal_bookings, LucaGymapp.Bookings.PersonalBooking

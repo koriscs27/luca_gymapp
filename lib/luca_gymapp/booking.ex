@@ -29,6 +29,26 @@ defmodule LucaGymapp.Booking do
     end)
   end
 
+  def ordered_days_from_slots(slots, base_date \\ Date.utc_today()) when is_list(slots) do
+    slots_by_date =
+      slots
+      |> Enum.group_by(&DateTime.to_date(&1.start_time))
+
+    @day_order
+    |> Enum.map(fn day ->
+      date = date_for_week_day(day, base_date)
+      day_slots = Map.get(slots_by_date, date, []) |> Enum.sort_by(& &1.start_time)
+
+      %{
+        day: day,
+        label: day_label(day),
+        date: date,
+        slots: [],
+        hour_slots: Enum.map(day_slots, &slot_from_calendar_slot/1)
+      }
+    end)
+  end
+
   def default_day(availability) when is_map(availability) do
     availability
     |> Map.keys()
@@ -94,6 +114,19 @@ defmodule LucaGymapp.Booking do
         key: slot_key(start_datetime, end_datetime)
       }
     end)
+  end
+
+  defp slot_from_calendar_slot(slot) do
+    start_time = slot.start_time |> DateTime.to_time()
+    end_time = slot.end_time |> DateTime.to_time()
+
+    %{
+      id: slot.id,
+      start_datetime: slot.start_time,
+      end_datetime: slot.end_time,
+      label: "#{format_time(start_time)}-#{format_time(end_time)}",
+      key: slot_key(slot.start_time, slot.end_time)
+    }
   end
 
   defp slot_key(%DateTime{} = start_datetime, %DateTime{} = end_datetime) do
