@@ -6,6 +6,7 @@ defmodule LucaGymapp.Accounts do
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Accounts.UserEmail
   alias LucaGymapp.Mailer
+  alias LucaGymapp.SeasonPasses.SeasonPass
 
   def list_users do
     Repo.all(User)
@@ -108,6 +109,31 @@ defmodule LucaGymapp.Accounts do
 
       {:error, reason} = error ->
         Logger.error("Confirmation email failed",
+          user_id: user.id,
+          to: user.email,
+          reason: inspect(reason)
+        )
+
+        error
+    end
+  end
+
+  def deliver_season_pass_details(%User{} = user, %SeasonPass{} = pass) do
+    email = UserEmail.season_pass_email(user, pass)
+
+    Logger.info("Sending season pass email",
+      user_id: user.id,
+      to: user.email,
+      pass_id: pass.pass_id
+    )
+
+    case Mailer.deliver(email) do
+      {:ok, _} = ok ->
+        Logger.info("Season pass email sent", user_id: user.id, to: user.email)
+        ok
+
+      {:error, reason} = error ->
+        Logger.error("Season pass email failed",
           user_id: user.id,
           to: user.email,
           reason: inspect(reason)

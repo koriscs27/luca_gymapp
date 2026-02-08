@@ -41,6 +41,28 @@ defmodule LucaGymapp.Accounts.UserEmail do
     """)
   end
 
+  def season_pass_email(user, pass) do
+    from_address = mail_from()
+
+    new()
+    |> to({user.name || user.email, user.email})
+    |> from(from_address)
+    |> subject("Berlet vasarlas megerositese")
+    |> text_body("""
+    Szia!
+
+    A berleted sikeresen letrehoztuk. A reszletek:
+    - Tipus: #{pass.pass_name}
+    - Kategoria: #{pass.pass_type}
+    - Ar: #{pass.purchase_price} Ft
+    - Vasarlas ideje: #{pass.purchase_timestamp}
+    - Lejarat: #{pass.expiry_date}
+    - Azonosito: #{pass.pass_id}
+
+    Koszonjuk!
+    """)
+  end
+
   defp mail_from do
     Application.get_env(:luca_gymapp, LucaGymapp.Mailer)[:default_from] || "no-reply@localhost"
   end

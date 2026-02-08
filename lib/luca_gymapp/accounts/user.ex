@@ -16,6 +16,10 @@ defmodule LucaGymapp.Accounts.User do
     field :password_reset_token_hash, :binary
     field :password_reset_sent_at, :utc_datetime
 
+    has_many :season_passes, LucaGymapp.SeasonPasses.SeasonPass
+    has_many :personal_bookings, LucaGymapp.Bookings.PersonalBooking
+    has_many :cross_bookings, LucaGymapp.Bookings.CrossBooking
+
     timestamps()
   end
 

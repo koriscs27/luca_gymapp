@@ -9,7 +9,37 @@ import Config
 
 config :luca_gymapp,
   ecto_repos: [LucaGymapp.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  season_pass_types: %{
+    :"1_alkalmas_jegy" => %{price_huf: 5_000, occasions: 1},
+    :"5_alkalmas_kezdo" => %{price_huf: 15_000, occasions: 5, once_per_user: true},
+    :"10_alkalmas_berlet" => %{price_huf: 45_000, occasions: 10},
+    :"1_honapos_etrend" => %{price_huf: 10_000},
+    cross_8_alkalmas_berlet: %{price_huf: 27_000, occasions: 8},
+    cross_12_alkalmas_berlet: %{price_huf: 45_000, occasions: 12}
+  },
+  booking_schedule: %{
+    personal: %{
+      default_view: :week,
+      availability: %{
+        monday: [%{from: ~T[08:00:00], to: ~T[16:00:00]}],
+        tuesday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
+        wednesday: [%{from: ~T[08:00:00], to: ~T[16:00:00]}],
+        thursday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
+        friday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
+        saturday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}]
+      }
+    },
+    cross: %{
+      default_view: :week,
+      availability: %{
+        monday: [%{from: ~T[17:00:00], to: ~T[18:00:00]}],
+        wednesday: [%{from: ~T[17:00:00], to: ~T[18:00:00]}],
+        saturday: [%{from: ~T[10:00:00], to: ~T[11:00:00]}]
+      },
+      max_overlap: 8
+    }
+  }
 
 # Configure the endpoint
 config :luca_gymapp, LucaGymappWeb.Endpoint,

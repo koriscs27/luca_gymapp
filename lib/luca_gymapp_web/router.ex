@@ -18,6 +18,13 @@ defmodule LucaGymappWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/berletek", PageController, :berletek
+    get "/foglalas", PageController, :booking
+    post "/foglalas/personal", PageController, :create_personal_booking
+    post "/foglalas/cross", PageController, :create_cross_booking
+    post "/foglalas/personal/cancel", PageController, :cancel_personal_booking
+    post "/foglalas/cross/cancel", PageController, :cancel_cross_booking
+    post "/berletek/purchase", PageController, :purchase_season_pass
     get "/auth/:provider", OAuthController, :request
     get "/auth/:provider/callback", OAuthController, :callback
     get "/confirm-email", EmailConfirmationController, :show
