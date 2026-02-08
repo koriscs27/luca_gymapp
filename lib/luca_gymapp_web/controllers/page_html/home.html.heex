@@ -36,6 +36,13 @@
           class="transition hover:text-white/80"
         >Rólam</.link>
         <%= if @current_user do %>
+          <.link
+            href={~p"/profile"}
+            class="transition hover:text-white/80"
+            id="profile-link"
+          >
+            Profil
+          </.link>
           <.form
           for={%{}}
           id="logout-form"
@@ -126,6 +133,13 @@
     </.link>
     <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">Rólam</.link>
     <%= if @current_user do %>
+      <.link
+        href={~p"/profile"}
+        class="rounded-xl border border-neutral-200 px-4 py-3"
+        id="profile-link-mobile"
+      >
+        Profil
+      </.link>
       <.form for={%{}} id="logout-form-mobile" action={~p"/logout"} method="delete">
         <button
           id="logout-button-mobile"

@@ -40,6 +40,13 @@ defmodule LucaGymapp.SeasonPasses do
     |> Repo.all()
   end
 
+  def list_user_passes(user_id) do
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> order_by([pass], desc: pass.purchase_timestamp)
+    |> Repo.all()
+  end
+
   def latest_pass_by_type(user_id, pass_type) when is_binary(pass_type) do
     SeasonPass
     |> where([pass], pass.user_id == ^user_id)

@@ -4,7 +4,9 @@ defmodule LucaGymappWeb.PageController do
   alias LucaGymapp.Accounts
   alias LucaGymapp.Booking
   alias LucaGymapp.Bookings
+  alias LucaGymapp.Payments
   alias LucaGymapp.SeasonPasses
+  require Logger
 
   def home(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
@@ -126,35 +128,42 @@ defmodule LucaGymappWeb.PageController do
          {:ok, user} <- fetch_user(current_user_id),
          {:ok, start_dt, _} <- DateTime.from_iso8601(start_time),
          {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
-         {:ok, _booking} <- Bookings.book_personal_training(user, start_dt, end_dt) do
+         {:ok, booking} <- Bookings.book_personal_training(user, start_dt, end_dt) do
+      Logger.info(
+        "booking_success type=personal email=#{user.email} name=#{user.name} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
+      )
+
       conn
       |> put_flash(:info, "Sikeres személyi edzés foglalás.")
       |> redirect(to: ~p"/foglalas?type=personal&view=week")
     else
+      false ->
+        Logger.warning("booking_error_unauthorized type=personal")
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+
+      {:error, :unauthorized} ->
+        Logger.warning("booking_error_unauthorized type=personal")
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+
       {:error, :no_valid_pass} ->
-        conn
-        |> put_flash(:error, "Nincs érvényes személyi bérleted ehhez a foglaláshoz.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        log_booking_error("personal", current_user_id, :no_valid_pass)
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       {:error, :capacity_reached} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már tele van.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        log_booking_error("personal", current_user_id, :capacity_reached)
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       {:error, %Ecto.Changeset{}} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már foglalt.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        log_booking_error("personal", current_user_id, :changeset)
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       {:error, :slot_not_available} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már nem elérhető.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        log_booking_error("personal", current_user_id, :slot_not_available)
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       _ ->
-        conn
-        |> put_flash(:error, "A foglalás nem sikerült.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        log_booking_error("personal", current_user_id, :unknown)
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
     end
   end
 
@@ -165,35 +174,42 @@ defmodule LucaGymappWeb.PageController do
          {:ok, user} <- fetch_user(current_user_id),
          {:ok, start_dt, _} <- DateTime.from_iso8601(start_time),
          {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
-         {:ok, _booking} <- Bookings.book_cross_training(user, start_dt, end_dt) do
+         {:ok, booking} <- Bookings.book_cross_training(user, start_dt, end_dt) do
+      Logger.info(
+        "booking_success type=cross email=#{user.email} name=#{user.name} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
+      )
+
       conn
       |> put_flash(:info, "Sikeres cross edzés foglalás.")
       |> redirect(to: ~p"/foglalas?type=cross&view=week")
     else
+      false ->
+        Logger.warning("booking_error_unauthorized type=cross")
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+
+      {:error, :unauthorized} ->
+        Logger.warning("booking_error_unauthorized type=cross")
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+
       {:error, :no_valid_pass} ->
-        conn
-        |> put_flash(:error, "Nincs érvényes cross bérleted ehhez a foglaláshoz.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        log_booking_error("cross", current_user_id, :no_valid_pass)
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       {:error, :capacity_reached} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már tele van.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        log_booking_error("cross", current_user_id, :capacity_reached)
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       {:error, %Ecto.Changeset{}} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már foglalt.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        log_booking_error("cross", current_user_id, :changeset)
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       {:error, :slot_not_available} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már nem elérhető.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        log_booking_error("cross", current_user_id, :slot_not_available)
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       _ ->
-        conn
-        |> put_flash(:error, "A foglalás nem sikerült.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        log_booking_error("cross", current_user_id, :unknown)
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
     end
   end
 
@@ -210,19 +226,16 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=personal&view=week")
     else
       {:error, :not_found} ->
-        conn
-        |> put_flash(:error, "Nem található ilyen foglalás.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        Logger.warning("booking_cancel_error type=personal reason=not_found user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       {:error, :too_late_to_cancel} ->
-        conn
-        |> put_flash(:error, "A foglalás csak legkésőbb 12 órával kezdés előtt mondható le.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        Logger.warning("booking_cancel_error type=personal reason=too_late user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       _ ->
-        conn
-        |> put_flash(:error, "A foglalás törlése nem sikerült.")
-        |> redirect(to: ~p"/foglalas?type=personal&view=week")
+        Logger.error("booking_cancel_error type=personal reason=unknown user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=personal&view=week")
     end
   end
 
@@ -239,63 +252,75 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=cross&view=week")
     else
       {:error, :not_found} ->
-        conn
-        |> put_flash(:error, "Nem található ilyen foglalás.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        Logger.warning("booking_cancel_error type=cross reason=not_found user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       {:error, :too_late_to_cancel} ->
-        conn
-        |> put_flash(:error, "A foglalás csak legkésőbb 12 órával kezdés előtt mondható le.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        Logger.warning("booking_cancel_error type=cross reason=too_late user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       _ ->
-        conn
-        |> put_flash(:error, "A foglalás törlése nem sikerült.")
-        |> redirect(to: ~p"/foglalas?type=cross&view=week")
+        Logger.error("booking_cancel_error type=cross reason=unknown user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=cross&view=week")
     end
   end
 
   defp fetch_user(nil), do: {:error, :unauthorized}
   defp fetch_user(user_id), do: {:ok, Accounts.get_user!(user_id)}
 
-  def purchase_season_pass(conn, %{"pass_name" => pass_name}) do
+  def purchase_season_pass(conn, %{"pass_name" => pass_name} = params) do
     current_user_id = get_session(conn, :user_id)
 
     if current_user_id do
       user = Accounts.get_user!(current_user_id)
+      payment_method = Map.get(params, "payment_method", "barion")
 
-      case SeasonPasses.purchase_season_pass(user, pass_name) do
-        {:ok, _pass} ->
-          conn
-          |> put_flash(:info, "Sikeres foglalás. E-mailt küldtünk a részletekkel.")
-          |> redirect(to: ~p"/berletek")
+      case Payments.ensure_payment(%{
+             user: user,
+             pass_name: pass_name,
+             payment_method: payment_method
+           }) do
+        {:ok, _payment} ->
+          case SeasonPasses.purchase_season_pass(user, pass_name) do
+            {:ok, pass} ->
+              Logger.info(
+                "purchase_success email=#{user.email} name=#{user.name} pass_id=#{pass.pass_id} pass_name=#{pass_name}"
+              )
 
-        {:error, :once_per_user} ->
-          conn
-          |> put_flash(:error, "Ez a bérlet csak egyszer vásárolható meg.")
-          |> redirect(to: ~p"/berletek")
+              conn
+              |> put_flash(:info, "Sikeres foglalás. E-mailt küldtünk a részletekkel.")
+              |> redirect(to: ~p"/berletek")
 
-        {:error, :active_pass_exists} ->
-          conn
-          |> put_flash(
-            :error,
-            "Már van aktív bérleted ebből a típusból. Előbb használd fel vagy várd meg a lejáratot."
-          )
-          |> redirect(to: ~p"/berletek")
+            {:error, :once_per_user} ->
+              Logger.warning("purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}")
+              generic_error(conn, ~p"/berletek")
 
-        {:error, :invalid_type} ->
-          conn
-          |> put_flash(:error, "Ismeretlen bérlet típus.")
-          |> redirect(to: ~p"/berletek")
+            {:error, :active_pass_exists} ->
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
+              )
+              generic_error(conn, ~p"/berletek")
+
+            {:error, :invalid_type} ->
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
+              )
+              generic_error(conn, ~p"/berletek")
+
+            {:error, _reason} ->
+              Logger.error("purchase_error email=#{user.email} name=#{user.name} reason=unknown pass_name=#{pass_name}")
+              generic_error(conn, ~p"/berletek")
+          end
 
         {:error, _reason} ->
-          conn
-          |> put_flash(:error, "Nem sikerült a bérletet létrehozni.")
-          |> redirect(to: ~p"/berletek")
+          Logger.error("payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}")
+          generic_error(conn, ~p"/berletek")
       end
     else
+      Logger.warning("purchase_error_unauthorized")
+
       conn
-      |> put_flash(:error, "A vásárláshoz be kell jelentkezned.")
+      |> put_flash(:error, "A művelet nem sikerült. Próbáld újra.")
       |> redirect(to: ~p"/berletek")
     end
   end
@@ -316,32 +341,24 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/berletek")
     else
       false ->
-        conn
-        |> put_flash(:error, "Nincs jogosultságod ehhez a művelethez.")
-        |> redirect(to: ~p"/berletek")
+        Logger.warning("admin_purchase_error reason=unauthorized admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/berletek")
 
       {:error, :once_per_user} ->
-        conn
-        |> put_flash(:error, "Ez a bérlet csak egyszer vásárolható meg.")
-        |> redirect(to: ~p"/berletek")
+        Logger.warning("admin_purchase_error reason=once_per_user admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/berletek")
 
       {:error, :active_pass_exists} ->
-        conn
-        |> put_flash(
-          :error,
-          "A felhasználónak már van aktív bérlete ebből a típusból."
-        )
-        |> redirect(to: ~p"/berletek")
+        Logger.warning("admin_purchase_error reason=active_pass_exists admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/berletek")
 
       {:error, :invalid_type} ->
-        conn
-        |> put_flash(:error, "Ismeretlen bérlet típus.")
-        |> redirect(to: ~p"/berletek")
+        Logger.warning("admin_purchase_error reason=invalid_type admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/berletek")
 
       _ ->
-        conn
-        |> put_flash(:error, "Nem sikerült a bérletet létrehozni.")
-        |> redirect(to: ~p"/berletek")
+        Logger.error("admin_purchase_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/berletek")
     end
   end
 
@@ -360,14 +377,12 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week_offset_from_date(date)}")
     else
       false ->
-        conn
-        |> put_flash(:error, "Nincs jogosultságod ehhez a művelethez.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.warning("admin_publish_error reason=unauthorized admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
 
       _ ->
-        conn
-        |> put_flash(:error, "Nem sikerült feltölteni a heti naptárat.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.error("admin_publish_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
     end
   end
 
@@ -394,24 +409,20 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week_offset_from_date(date)}")
     else
       false ->
-        conn
-        |> put_flash(:error, "Nincs jogosultságod ehhez a művelethez.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.warning("admin_create_slot_error reason=unauthorized admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
 
       {:error, :invalid_time_range} ->
-        conn
-        |> put_flash(:error, "Az időpont tartománya érvénytelen.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.warning("admin_create_slot_error reason=invalid_time_range admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
 
       {:error, %Ecto.Changeset{}} ->
-        conn
-        |> put_flash(:error, "Ez az időpont már létezik.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.warning("admin_create_slot_error reason=changeset admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
 
       _ ->
-        conn
-        |> put_flash(:error, "Nem sikerült létrehozni az időpontot.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.error("admin_create_slot_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
     end
   end
 
@@ -429,19 +440,16 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
     else
       false ->
-        conn
-        |> put_flash(:error, "Nincs jogosultságod ehhez a művelethez.")
-        |> redirect(to: ~p"/foglalas")
+        Logger.warning("admin_delete_slot_error reason=unauthorized admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
 
       {:error, :slot_has_bookings} ->
-        conn
-        |> put_flash(:error, "Nem törölhető, mert már van foglalás ezen az időponton.")
-        |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
+        Logger.warning("admin_delete_slot_error reason=slot_has_bookings admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
 
       _ ->
-        conn
-        |> put_flash(:error, "Nem sikerült törölni az időpontot.")
-        |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
+        Logger.error("admin_delete_slot_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
     end
   end
 
@@ -462,5 +470,21 @@ defmodule LucaGymappWeb.PageController do
       end
 
     Time.from_iso8601(value)
+  end
+
+  defp generic_error(conn, redirect_path) do
+    conn
+    |> put_flash(:error, "A művelet nem sikerült. Próbáld újra.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp log_booking_error(type, user_id, reason) do
+    case user_id do
+      nil ->
+        Logger.warning("booking_error type=#{type} reason=#{reason} user_id=nil")
+
+      id ->
+        Logger.warning("booking_error type=#{type} reason=#{reason} user_id=#{id}")
+    end
   end
 end

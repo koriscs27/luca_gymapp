@@ -3,9 +3,9 @@
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">Foglalás</p>
-        
+
         <h1 class="mt-3 text-3xl font-semibold">Edzésnaptárak</h1>
-        
+
         <p class="mt-3 max-w-2xl text-white/70">
           Válassz naptárat, majd nézd meg az elérhető időpontokat.
         </p>
@@ -18,7 +18,7 @@
         Vissza a főoldalra
       </.link>
     </div>
-    
+
     <%= if @current_user do %>
       <div class="rounded-2xl border border-white/15 bg-white/5 px-5 py-4">
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">
@@ -31,7 +31,9 @@
                 {season_pass_label(@current_pass.pass_name)}
               </p>
               <p class="mt-1 text-sm text-white/70">
-                Alkalmak: {@current_pass.occasions} · Lejárat: {format_date(@current_pass.expiry_date)}
+                Alkalmak: {@current_pass.occasions} · Lejárat: {format_date(
+                  @current_pass.expiry_date
+                )}
               </p>
             </div>
             <span class="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/70">
@@ -168,9 +170,8 @@
       <%= if @current_user_is_admin do %>
         <div class="grid gap-4 rounded-2xl border border-neutral-200 bg-white p-4 lg:grid-cols-[0.6fr_0.4fr]">
           <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">
-              Alapértelmezett hét
-            </p>
+            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Alapértelmezett hét</p>
+            
             <p class="mt-2 text-sm text-neutral-600">
               Töltsd fel a heti alap időpontokat ebből a hétből.
             </p>
@@ -202,12 +203,9 @@
           </div>
           
           <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">
-              Egyedi időpont
-            </p>
-            <p class="mt-2 text-sm text-neutral-600">
-              Adj hozzá új időpontot ehhez a héthez.
-            </p>
+            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Egyedi időpont</p>
+            
+            <p class="mt-2 text-sm text-neutral-600">Adj hozzá új időpontot ehhez a héthez.</p>
             
             <.form
               for={@admin_slot_form}
@@ -220,8 +218,7 @@
                 field={@admin_slot_form[:type]}
                 type="hidden"
                 value={@booking_type}
-              />
-              <.input field={@admin_slot_form[:date]} type="date" label="Dátum" required />
+              /> <.input field={@admin_slot_form[:date]} type="date" label="Dátum" required />
               <div class="grid grid-cols-2 gap-2">
                 <.input
                   field={@admin_slot_form[:start_time]}
@@ -236,6 +233,7 @@
                   required
                 />
               </div>
+              
               <button
                 type="submit"
                 class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
@@ -345,7 +343,11 @@
                           role="dialog"
                           aria-modal="true"
                         >
-                          <a href="#" class="booking-confirm-modal__overlay" aria-label="Bezárás">
+                          <a
+                            href="#"
+                            class="booking-confirm-modal__overlay"
+                            aria-label="Bezárás"
+                          >
                           </a>
                           <div class="booking-confirm-modal__panel">
                             <div class="flex items-start justify-between gap-4">

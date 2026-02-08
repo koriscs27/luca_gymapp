@@ -10,6 +10,7 @@ import Config
 config :luca_gymapp,
   ecto_repos: [LucaGymapp.Repo],
   generators: [timestamp_type: :utc_datetime],
+  payment_needed: true,
   season_pass_types: %{
     :"1_alkalmas_jegy" => %{price_huf: 5_000, occasions: 1},
     :"5_alkalmas_kezdo" => %{price_huf: 15_000, occasions: 5, once_per_user: true},

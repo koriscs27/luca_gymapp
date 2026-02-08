@@ -48,6 +48,25 @@ defmodule LucaGymapp.Bookings do
     |> slot_keys_from_ranges()
   end
 
+  def list_user_appointments(user_id) do
+    personal =
+      PersonalBooking
+      |> where([booking], booking.user_id == ^user_id)
+      |> where([booking], booking.status == "booked")
+      |> select([booking], %{type: "personal", start_time: booking.start_time})
+      |> Repo.all()
+
+    cross =
+      CrossBooking
+      |> where([booking], booking.user_id == ^user_id)
+      |> where([booking], booking.status == "booked")
+      |> select([booking], %{type: "cross", start_time: booking.start_time})
+      |> Repo.all()
+
+    (personal ++ cross)
+    |> Enum.sort_by(& &1.start_time, {:desc, DateTime})
+  end
+
   def cancel_personal_booking(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
     Repo.transaction(fn ->
       booking =

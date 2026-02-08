@@ -15,6 +15,7 @@ defmodule LucaGymapp.BookingsTest do
       pass = create_personal_pass(user, 1)
       start_time = DateTime.add(base_time, round * 2 * 60 * 60, :second)
       end_time = DateTime.add(start_time, 60 * 60, :second)
+      :ok = ensure_slot("personal", start_time, end_time)
 
       results =
         1..3
@@ -43,6 +44,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_personal_training(user, start_time, end_time)
   end
@@ -53,6 +55,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_personal_training(user, start_time, end_time)
   end
@@ -63,6 +66,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_personal_training(user, start_time, end_time)
   end
@@ -73,6 +77,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("cross", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_cross_training(user, start_time, end_time)
   end
@@ -83,6 +88,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("cross", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_cross_training(user, start_time, end_time)
   end
@@ -93,6 +99,7 @@ defmodule LucaGymapp.BookingsTest do
 
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("cross", start_time, end_time)
 
     assert {:error, :no_valid_pass} = Bookings.book_cross_training(user, start_time, end_time)
   end
@@ -100,6 +107,7 @@ defmodule LucaGymapp.BookingsTest do
   test "cross bookings reject when max overlap exceeded" do
     start_time = DateTime.utc_now() |> DateTime.truncate(:second)
     end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("cross", start_time, end_time)
 
     users =
       1..10
@@ -156,5 +164,17 @@ defmodule LucaGymapp.BookingsTest do
       user_id: user.id
     })
     |> Repo.insert!()
+  end
+
+  defp ensure_slot(type, %DateTime{} = start_time, %DateTime{} = end_time) do
+    date = DateTime.to_date(start_time)
+    start_clock = DateTime.to_time(start_time)
+    end_clock = DateTime.to_time(end_time)
+
+    case Bookings.create_calendar_slot(type, date, start_clock, end_clock) do
+      {:ok, _slot} -> :ok
+      {:error, %Ecto.Changeset{}} -> :ok
+      {:error, reason} -> flunk("failed to create slot: #{inspect(reason)}")
+    end
   end
 end

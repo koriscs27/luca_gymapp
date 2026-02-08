@@ -3,14 +3,14 @@
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bérletek</p>
-
+        
         <h1 class="mt-3 text-3xl font-semibold">Személyre szabott bérletek.</h1>
-
+        
         <p class="mt-3 max-w-2xl text-white/70">
           Válassz a bérletek közül, és indítsd el a foglalást egy kattintással.
         </p>
       </div>
-
+      
       <.link
         href={~p"/"}
         class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
@@ -32,10 +32,12 @@
       <div class="flex items-start justify-between gap-4">
         <div>
           <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérlet hiba</p>
+          
           <h3 id="purchase-error-title" class="mt-1 text-2xl font-semibold text-neutral-900">
             Nem sikerült a vásárlás
           </h3>
         </div>
+        
         <.link
           href={~p"/berletek"}
           class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
@@ -44,9 +46,11 @@
           <.icon name="hero-x-mark" class="h-4 w-4" />
         </.link>
       </div>
+      
       <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
         {error}
       </p>
+      
       <div class="mt-6">
         <.link
           href={~p"/berletek"}
@@ -64,12 +68,13 @@
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-8">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Admin</p>
+        
         <h2 class="mt-3 text-3xl font-semibold">Bérlet hozzáadása felhasználónak</h2>
         <p class="mt-4 text-neutral-600">
           Válaszd ki a felhasználót és a bérlet típusát, majd hozd létre a bérletet.
         </p>
       </div>
-
+      
       <.form
         for={@admin_form}
         id="admin-pass-form"
@@ -85,7 +90,6 @@
           prompt="Válassz felhasználót"
           required
         />
-
         <.input
           field={@admin_form[:pass_name]}
           type="select"
@@ -94,7 +98,6 @@
           prompt="Válassz bérletet"
           required
         />
-
         <button
           id="admin-pass-submit"
           type="submit"
@@ -106,7 +109,6 @@
     </div>
   </section>
 <% else %>
-
   <%= if @current_user do %>
     <section class="bg-neutral-950 px-5 pb-16 text-white sm:px-8 lg:px-10">
       <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -139,476 +141,312 @@
       </div>
     </section>
   <% end %>
-
-<section id="berletek" class="scroll-mt-20 bg-white px-5 py-16 text-neutral-900 sm:px-8 lg:px-10">
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-12">
-    <div class="max-w-3xl">
-      <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérletek</p>
-
-      <h2 class="mt-3 text-3xl font-semibold">Csak a jelenlegi bérletek.</h2>
-
-      <p class="mt-4 text-neutral-600">
-        Válaszd ki a számodra megfelelő kategóriát, és vásárolj bérletet.
-      </p>
-    </div>
-
-    <div class="space-y-10">
-      <section>
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Személyi edzés</p>
-
-            <h3 class="mt-2 text-2xl font-semibold">Alkalmas bérletek</h3>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-6 md:grid-cols-3">
-          <%= for pass <- Map.get(@season_pass_categories, :szemelyi_edzes, []) do %>
-            <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-              <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Személyi</p>
-
-              <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-
-              <p class="mt-3 text-2xl font-semibold text-neutral-900">
-                {format_huf(pass.price_huf)} Ft
-              </p>
-
-              <div class="mt-4 space-y-2 text-sm text-neutral-600">
-                <%= if pass.occasions > 0 do %>
-                  <p>{pass.occasions} alkalom</p>
-                <% end %>
-
-                <%= if pass.once_per_user do %>
-                  <p>Egyszer vásárolható</p>
-                <% end %>
-              </div>
-
-              <div class="mt-6">
-                <%= if @current_user do %>
-                  <.link
-                    href={"#purchase-#{pass.key}"}
-                    id={"purchase-button-#{pass.key}"}
-                    class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                  >
-                    Vásárlás
-                  </.link>
-                  <div
-                    id={"purchase-#{pass.key}"}
-                    class="booking-confirm-modal"
-                    role="dialog"
-                    aria-modal="true"
-                  >
-                    <a href="#" class="booking-confirm-modal__overlay" aria-label="Bezárás"></a>
-                    <div class="booking-confirm-modal__panel">
-                      <div class="flex items-start justify-between gap-4">
-                        <div>
-                          <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">
-                            Bérlet vásárlás
-                          </p>
-
-                          <h3 class="mt-1 text-xl font-semibold text-neutral-900">Megerősítés</h3>
-                        </div>
-
-                        <.link
-                          href="#"
-                          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                          aria-label="Bezárás"
-                        >
-                          <.icon name="hero-x-mark" class="h-4 w-4" />
-                        </.link>
-                      </div>
-
-                      <p class="mt-4 text-sm text-neutral-600">
-                        Biztosan meg szeretnéd vásárolni ezt a bérletet?
-                      </p>
-
-                      <div class="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
-                        <p>{pass.name} – {format_huf(pass.price_huf)} Ft</p>
-                      </div>
-
-                      <.form
-                        for={%{}}
-                        id={"confirm-purchase-#{pass.key}"}
-                        action={~p"/berletek/purchase"}
-                        method="post"
-                        class="mt-6"
-                      >
-                        <.input type="hidden" name="pass_name" value={pass.type} />
-                        <button
-                          type="submit"
-                          class="w-full rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                        >
-                          Igen, vásárolok
-                        </button>
-                      </.form>
-
-                      <.link
-                        href="#"
-                        class="mt-3 inline-flex w-full justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
-                      >
-                        Mégse
-                      </.link>
-                    </div>
-                  </div>
-                <% else %>
-                  <button
-                    id={"purchase-button-#{pass.key}"}
-                    type="button"
-                    class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
-                    disabled
-                  >
-                    Bejelentkezés szükséges
-                  </button>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </section>
-
-      <section>
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Cross</p>
-
-            <h3 class="mt-2 text-2xl font-semibold">Cross bérletek</h3>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-6 md:grid-cols-2">
-          <%= for pass <- Map.get(@season_pass_categories, :cross, []) do %>
-            <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-              <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Cross</p>
-
-              <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-
-              <p class="mt-3 text-2xl font-semibold text-neutral-900">
-                {format_huf(pass.price_huf)} Ft
-              </p>
-
-              <div class="mt-4 space-y-2 text-sm text-neutral-600">
-                <%= if pass.occasions > 0 do %>
-                  <p>{pass.occasions} alkalom</p>
-                <% end %>
-              </div>
-
-              <div class="mt-6">
-                <%= if @current_user do %>
-                  <.link
-                    href={"#purchase-#{pass.key}"}
-                    id={"purchase-button-#{pass.key}"}
-                    class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                  >
-                    Vásárlás
-                  </.link>
-                  <div
-                    id={"purchase-#{pass.key}"}
-                    class="booking-confirm-modal"
-                    role="dialog"
-                    aria-modal="true"
-                  >
-                    <a href="#" class="booking-confirm-modal__overlay" aria-label="Bezárás"></a>
-                    <div class="booking-confirm-modal__panel">
-                      <div class="flex items-start justify-between gap-4">
-                        <div>
-                          <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">
-                            Bérlet vásárlás
-                          </p>
-
-                          <h3 class="mt-1 text-xl font-semibold text-neutral-900">Megerősítés</h3>
-                        </div>
-
-                        <.link
-                          href="#"
-                          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                          aria-label="Bezárás"
-                        >
-                          <.icon name="hero-x-mark" class="h-4 w-4" />
-                        </.link>
-                      </div>
-
-                      <p class="mt-4 text-sm text-neutral-600">
-                        Biztosan meg szeretnéd vásárolni ezt a bérletet?
-                      </p>
-
-                      <div class="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
-                        <p>{pass.name} – {format_huf(pass.price_huf)} Ft</p>
-                      </div>
-
-                      <.form
-                        for={%{}}
-                        id={"confirm-purchase-#{pass.key}"}
-                        action={~p"/berletek/purchase"}
-                        method="post"
-                        class="mt-6"
-                      >
-                        <.input type="hidden" name="pass_name" value={pass.type} />
-                        <button
-                          type="submit"
-                          class="w-full rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                        >
-                          Igen, vásárolok
-                        </button>
-                      </.form>
-
-                      <.link
-                        href="#"
-                        class="mt-3 inline-flex w-full justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
-                      >
-                        Mégse
-                      </.link>
-                    </div>
-                  </div>
-                <% else %>
-                  <button
-                    id={"purchase-button-#{pass.key}"}
-                    type="button"
-                    class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
-                    disabled
-                  >
-                    Bejelentkezés szükséges
-                  </button>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </section>
-
-      <section>
-        <div class="flex items-center justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Egyéb</p>
-
-            <h3 class="mt-2 text-2xl font-semibold">Kiegészítő csomagok</h3>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-6 md:grid-cols-2">
-          <%= for pass <- Map.get(@season_pass_categories, :egyeb, []) do %>
-            <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-              <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Egyéb</p>
-
-              <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-
-              <p class="mt-3 text-2xl font-semibold text-neutral-900">
-                {format_huf(pass.price_huf)} Ft
-              </p>
-
-              <div class="mt-4 space-y-2 text-sm text-neutral-600">
-                <%= if pass.occasions > 0 do %>
-                  <p>{pass.occasions} alkalom</p>
-                <% else %>
-                  <p>Időtartam: 1 hónap</p>
-                <% end %>
-              </div>
-
-              <div class="mt-6">
-                <%= if @current_user do %>
-                  <.link
-                    href={"#purchase-#{pass.key}"}
-                    id={"purchase-button-#{pass.key}"}
-                    class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                  >
-                    Vásárlás
-                  </.link>
-                  <div
-                    id={"purchase-#{pass.key}"}
-                    class="booking-confirm-modal"
-                    role="dialog"
-                    aria-modal="true"
-                  >
-                    <a href="#" class="booking-confirm-modal__overlay" aria-label="Bezárás"></a>
-                    <div class="booking-confirm-modal__panel">
-                      <div class="flex items-start justify-between gap-4">
-                        <div>
-                          <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">
-                            Bérlet vásárlás
-                          </p>
-
-                          <h3 class="mt-1 text-xl font-semibold text-neutral-900">Megerősítés</h3>
-                        </div>
-
-                        <.link
-                          href="#"
-                          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                          aria-label="Bezárás"
-                        >
-                          <.icon name="hero-x-mark" class="h-4 w-4" />
-                        </.link>
-                      </div>
-
-                      <p class="mt-4 text-sm text-neutral-600">
-                        Biztosan meg szeretnéd vásárolni ezt a bérletet?
-                      </p>
-
-                      <div class="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
-                        <p>{pass.name} – {format_huf(pass.price_huf)} Ft</p>
-                      </div>
-
-                      <.form
-                        for={%{}}
-                        id={"confirm-purchase-#{pass.key}"}
-                        action={~p"/berletek/purchase"}
-                        method="post"
-                        class="mt-6"
-                      >
-                        <.input type="hidden" name="pass_name" value={pass.type} />
-                        <button
-                          type="submit"
-                          class="w-full rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                        >
-                          Igen, vásárolok
-                        </button>
-                      </.form>
-
-                      <.link
-                        href="#"
-                        class="mt-3 inline-flex w-full justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
-                      >
-                        Mégse
-                      </.link>
-                    </div>
-                  </div>
-                <% else %>
-                  <button
-                    id={"purchase-button-#{pass.key}"}
-                    type="button"
-                    class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
-                    disabled
-                  >
-                    Bejelentkezés szükséges
-                  </button>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </section>
-    </div>
-
-    <%= if !@current_user do %>
-      <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-        <div>
-          <p class="text-sm font-semibold text-neutral-900">A vásárláshoz bejelentkezés kell</p>
-
-          <p class="mt-1 text-sm text-neutral-600">
-            Lépj be a fiókodba, hogy elindítsd a vásárlást.
-          </p>
-        </div>
-
-        <.link
-          href="#login-modal"
-          class="inline-flex rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
-        >
-          Bejelentkezés
-        </.link>
-      </div>
-    <% end %>
-  </div>
-</section>
-
-<%= if !@current_user do %>
-  <div id="login-modal" class="login-modal" aria-hidden="true">
-    <a href="#" class="login-modal__overlay" aria-label="Bezárás"></a>
-    <div class="login-modal__panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bejelentkezés</p>
-
-          <h3 id="login-title" class="mt-1 text-2xl font-semibold text-neutral-900">
-            Üdv újra itt!
-          </h3>
-        </div>
-
-        <.link
-          href="#"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-          aria-label="Bezárás"
-        >
-          <.icon name="hero-x-mark" class="h-4 w-4" />
-        </.link>
-      </div>
-
-      <.form for={@form} id="login-form" action={~p"/login"} class="mt-6 space-y-4">
-        <.input field={@form[:email]} type="email" label="E-mail" required />
-        <.input field={@form[:password]} type="password" label="Jelszó" required />
-        <div class="text-right text-sm">
-          <.link
-            href={~p"/password/forgot"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
-          >
-            Elfelejtetted a jelszót?
-          </.link>
-        </div>
-
-        <div class="text-right text-sm">
-          <.link
-            href={~p"/confirm-email/new"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
-          >
-            Nem kaptad meg a megerősítő e-mailt?
-          </.link>
-        </div>
-
-        <button
-          id="login-submit"
-          type="submit"
-          class="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
-        >
-          Bejelentkezés
-        </button>
-        <.link
-          id="google-login-button"
-          href={~p"/auth/google"}
-          class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"
-        >
-          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 533.5 544.3"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                fill="#4285F4"
-                d="M533.5 278.4c0-18.4-1.5-36.1-4.3-53.4H272.1v101h146.9c-6.3 34.1-25.1 63-53.6 82.4v68h86.8c50.8-46.8 80.3-115.8 80.3-198z"
-              />
-              <path
-                fill="#34A853"
-                d="M272.1 544.3c72.6 0 133.5-24 178-65.3l-86.8-68c-24 16.1-55 25.6-91.2 25.6-70 0-129.2-47.2-150.4-110.6H32.3v69.5C76.6 481.9 167.6 544.3 272.1 544.3z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M121.7 326c-10.3-30.6-10.3-63.7 0-94.3V162.2H32.3c-38.6 77.2-38.6 167.7 0 244.9l89.4-69.1z"
-              />
-              <path
-                fill="#EA4335"
-                d="M272.1 107.7c39.5-.6 77.4 14.4 106.2 41.7l79.1-79.1C408.3 24.3 344.7-1.1 272.1 0 167.6 0 76.6 62.4 32.3 162.2l89.4 69.5c21.2-63.4 80.4-110.6 150.4-110.6z"
-              />
-            </svg>
-          </span>
-          Folytatás Google-fiókkal
-        </.link>
-      </.form>
-
-      <div class="mt-4 flex items-center justify-between text-sm">
-        <span class="text-neutral-500">Nincs még fiókod?</span>
-        <.link
-          href={~p"/register"}
-          class="font-semibold text-amber-600 transition hover:text-amber-500"
-        >
-          Regisztrálj
-        </.link>
-      </div>
-
-      <%= if error = Phoenix.Flash.get(@flash, :error) do %>
-        <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
+  
+  <section
+    id="berletek"
+    class="scroll-mt-20 bg-white px-5 py-16 text-neutral-900 sm:px-8 lg:px-10"
+  >
+    <div class="mx-auto flex w-full max-w-6xl flex-col gap-12">
+      <div class="max-w-3xl">
+        <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérletek</p>
+        
+        <h2 class="mt-3 text-3xl font-semibold">Csak a jelenlegi bérletek.</h2>
+        
+        <p class="mt-4 text-neutral-600">
+          Válaszd ki a számodra megfelelő kategóriát, és vásárolj bérletet.
         </p>
+      </div>
+      
+      <div class="space-y-10">
+        <section>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Személyi edzés</p>
+              
+              <h3 class="mt-2 text-2xl font-semibold">Alkalmas bérletek</h3>
+            </div>
+          </div>
+          
+          <div class="mt-6 grid gap-6 md:grid-cols-3">
+            <%= for pass <- Map.get(@season_pass_categories, :szemelyi_edzes, []) do %>
+              <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Személyi</p>
+                
+                <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
+                
+                <p class="mt-3 text-2xl font-semibold text-neutral-900">
+                  {format_huf(pass.price_huf)} Ft
+                </p>
+                
+                <div class="mt-4 space-y-2 text-sm text-neutral-600">
+                  <%= if pass.occasions > 0 do %>
+                    <p>{pass.occasions} alkalom</p>
+                  <% end %>
+                  
+                  <%= if pass.once_per_user do %>
+                    <p>Egyszer vásárolható</p>
+                  <% end %>
+                </div>
+                
+                <div class="mt-6">
+                  <%= if @current_user do %>
+                    <.link
+                      href={"#purchase-#{pass.key}"}
+                      id={"purchase-button-#{pass.key}"}
+                      class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                    >
+                      Vásárlás
+                    </.link>
+                    <.payment_modal pass={pass} />
+                  <% else %>
+                    <button
+                      id={"purchase-button-#{pass.key}"}
+                      type="button"
+                      class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
+                      disabled
+                    >
+                      Bejelentkezés szükséges
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+        
+        <section>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Cross</p>
+              
+              <h3 class="mt-2 text-2xl font-semibold">Cross bérletek</h3>
+            </div>
+          </div>
+          
+          <div class="mt-6 grid gap-6 md:grid-cols-2">
+            <%= for pass <- Map.get(@season_pass_categories, :cross, []) do %>
+              <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Cross</p>
+                
+                <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
+                
+                <p class="mt-3 text-2xl font-semibold text-neutral-900">
+                  {format_huf(pass.price_huf)} Ft
+                </p>
+                
+                <div class="mt-4 space-y-2 text-sm text-neutral-600">
+                  <%= if pass.occasions > 0 do %>
+                    <p>{pass.occasions} alkalom</p>
+                  <% end %>
+                </div>
+                
+                <div class="mt-6">
+                  <%= if @current_user do %>
+                    <.link
+                      href={"#purchase-#{pass.key}"}
+                      id={"purchase-button-#{pass.key}"}
+                      class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                    >
+                      Vásárlás
+                    </.link>
+                    <.payment_modal pass={pass} />
+                  <% else %>
+                    <button
+                      id={"purchase-button-#{pass.key}"}
+                      type="button"
+                      class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
+                      disabled
+                    >
+                      Bejelentkezés szükséges
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+        
+        <section>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Egyéb</p>
+              
+              <h3 class="mt-2 text-2xl font-semibold">Kiegészítő csomagok</h3>
+            </div>
+          </div>
+          
+          <div class="mt-6 grid gap-6 md:grid-cols-2">
+            <%= for pass <- Map.get(@season_pass_categories, :egyeb, []) do %>
+              <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+                <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Egyéb</p>
+                
+                <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
+                
+                <p class="mt-3 text-2xl font-semibold text-neutral-900">
+                  {format_huf(pass.price_huf)} Ft
+                </p>
+                
+                <div class="mt-4 space-y-2 text-sm text-neutral-600">
+                  <%= if pass.occasions > 0 do %>
+                    <p>{pass.occasions} alkalom</p>
+                  <% else %>
+                    <p>Időtartam: 1 hónap</p>
+                  <% end %>
+                </div>
+                
+                <div class="mt-6">
+                  <%= if @current_user do %>
+                    <.link
+                      href={"#purchase-#{pass.key}"}
+                      id={"purchase-button-#{pass.key}"}
+                      class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                    >
+                      Vásárlás
+                    </.link>
+                    <.payment_modal pass={pass} />
+                  <% else %>
+                    <button
+                      id={"purchase-button-#{pass.key}"}
+                      type="button"
+                      class="w-full cursor-not-allowed rounded-full bg-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-500"
+                      disabled
+                    >
+                      Bejelentkezés szükséges
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+      </div>
+      
+      <%= if !@current_user do %>
+        <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+          <div>
+            <p class="text-sm font-semibold text-neutral-900">A vásárláshoz bejelentkezés kell</p>
+            
+            <p class="mt-1 text-sm text-neutral-600">
+              Lépj be a fiókodba, hogy elindítsd a vásárlást.
+            </p>
+          </div>
+          
+          <.link
+            href="#login-modal"
+            class="inline-flex rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+          >
+            Bejelentkezés
+          </.link>
+        </div>
       <% end %>
     </div>
-  </div>
-<% end %>
-
+  </section>
+  
+  <%= if !@current_user do %>
+    <div id="login-modal" class="login-modal" aria-hidden="true">
+      <a href="#" class="login-modal__overlay" aria-label="Bezárás"></a>
+      <div
+        class="login-modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-title"
+      >
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bejelentkezés</p>
+            
+            <h3 id="login-title" class="mt-1 text-2xl font-semibold text-neutral-900">
+              Üdv újra itt!
+            </h3>
+          </div>
+          
+          <.link
+            href="#"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+            aria-label="Bezárás"
+          >
+            <.icon name="hero-x-mark" class="h-4 w-4" />
+          </.link>
+        </div>
+        
+        <.form for={@form} id="login-form" action={~p"/login"} class="mt-6 space-y-4">
+          <.input field={@form[:email]} type="email" label="E-mail" required />
+          <.input field={@form[:password]} type="password" label="Jelszó" required />
+          <div class="text-right text-sm">
+            <.link
+              href={~p"/password/forgot"}
+              class="font-semibold text-amber-600 transition hover:text-amber-500"
+            >
+              Elfelejtetted a jelszót?
+            </.link>
+          </div>
+          
+          <div class="text-right text-sm">
+            <.link
+              href={~p"/confirm-email/new"}
+              class="font-semibold text-amber-600 transition hover:text-amber-500"
+            >
+              Nem kaptad meg a megerősítő e-mailt?
+            </.link>
+          </div>
+          
+          <button
+            id="login-submit"
+            type="submit"
+            class="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+          >
+            Bejelentkezés
+          </button>
+          <.link
+            id="google-login-button"
+            href={~p"/auth/google"}
+            class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"
+          >
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 533.5 544.3"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="#4285F4"
+                  d="M533.5 278.4c0-18.4-1.5-36.1-4.3-53.4H272.1v101h146.9c-6.3 34.1-25.1 63-53.6 82.4v68h86.8c50.8-46.8 80.3-115.8 80.3-198z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M272.1 544.3c72.6 0 133.5-24 178-65.3l-86.8-68c-24 16.1-55 25.6-91.2 25.6-70 0-129.2-47.2-150.4-110.6H32.3v69.5C76.6 481.9 167.6 544.3 272.1 544.3z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M121.7 326c-10.3-30.6-10.3-63.7 0-94.3V162.2H32.3c-38.6 77.2-38.6 167.7 0 244.9l89.4-69.1z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M272.1 107.7c39.5-.6 77.4 14.4 106.2 41.7l79.1-79.1C408.3 24.3 344.7-1.1 272.1 0 167.6 0 76.6 62.4 32.3 162.2l89.4 69.5c21.2-63.4 80.4-110.6 150.4-110.6z"
+                />
+              </svg>
+            </span>
+            Folytatás Google-fiókkal
+          </.link>
+        </.form>
+        
+        <div class="mt-4 flex items-center justify-between text-sm">
+          <span class="text-neutral-500">Nincs még fiókod?</span>
+          <.link
+            href={~p"/register"}
+            class="font-semibold text-amber-600 transition hover:text-amber-500"
+          >
+            Regisztrálj
+          </.link>
+        </div>
+        
+        <%= if error = Phoenix.Flash.get(@flash, :error) do %>
+          <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 <% end %>

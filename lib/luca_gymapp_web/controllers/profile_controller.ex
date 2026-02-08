@@ -2,6 +2,7 @@ defmodule LucaGymappWeb.ProfileController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Accounts
+  require Logger
 
   plug :require_user
 
@@ -10,7 +11,7 @@ defmodule LucaGymappWeb.ProfileController do
     profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
     password_form = Phoenix.Component.to_form(%{}, as: :password)
 
-    render(conn, :profile, user: user, profile_form: profile_form, password_form: password_form)
+    render(conn, :profile, build_profile_assigns(user, profile_form, password_form))
   end
 
   def update_profile(conn, %{"user" => user_params}) do
@@ -19,22 +20,29 @@ defmodule LucaGymappWeb.ProfileController do
 
     case Accounts.update_user(user, attrs) do
       {:ok, user} ->
+        Logger.info(
+          "profile_update_success user_id=#{user.id} email=#{user.email} name=#{user.name} fields=#{Enum.join(Map.keys(attrs), ",")}"
+        )
+
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
 
         conn
         |> put_flash(:info, "Profil frissítve.")
-        |> render(:profile, user: user, profile_form: profile_form, password_form: password_form)
+        |> render(:profile, build_profile_assigns(user, profile_form, password_form))
 
       {:error, changeset} ->
+        Logger.warning(
+          "profile_update_error user_id=#{user.id} email=#{user.email} name=#{user.name} fields=#{Enum.join(Map.keys(attrs), ",")}"
+        )
+
         password_form = Phoenix.Component.to_form(%{}, as: :password)
 
         conn
         |> put_flash(:error, "Nem sikerült frissíteni a profilt.")
-        |> render(:profile,
-          user: user,
-          profile_form: Phoenix.Component.to_form(changeset),
-          password_form: password_form
+        |> render(
+          :profile,
+          build_profile_assigns(user, Phoenix.Component.to_form(changeset), password_form)
         )
     end
   end
@@ -59,22 +67,29 @@ defmodule LucaGymappWeb.ProfileController do
 
     case result do
       {:ok, user} ->
+        Logger.info("password_update_success user_id=#{user.id} email=#{user.email} name=#{user.name}")
+
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
 
         conn
         |> put_flash(:info, "Jelszó frissítve.")
-        |> render(:profile, user: user, profile_form: profile_form, password_form: password_form)
+        |> render(:profile, build_profile_assigns(user, profile_form, password_form))
 
       {:error, changeset} ->
+        Logger.warning("password_update_error user_id=#{user.id} email=#{user.email} name=#{user.name}")
+
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
 
         conn
         |> put_flash(:error, "Nem sikerült frissíteni a jelszót.")
-        |> render(:profile,
-          user: user,
-          profile_form: profile_form,
-          password_form: Phoenix.Component.to_form(changeset, as: :password)
+        |> render(
+          :profile,
+          build_profile_assigns(
+            user,
+            profile_form,
+            Phoenix.Component.to_form(changeset, as: :password)
+          )
         )
     end
   end
@@ -100,5 +115,13 @@ defmodule LucaGymappWeb.ProfileController do
     conn
     |> get_session(:user_id)
     |> Accounts.get_user!()
+  end
+
+  defp build_profile_assigns(user, profile_form, password_form) do
+    %{
+      user: user,
+      profile_form: profile_form,
+      password_form: password_form
+    }
   end
 end

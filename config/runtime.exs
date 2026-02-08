@@ -27,6 +27,26 @@ config :ueberauth, Ueberauth.Strategy.Google.OAuth,
   client_id: System.get_env("GOOGLE_CLIENT_ID"),
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
 
+barion_env =
+  System.get_env("BARION_ENV") ||
+    case config_env() do
+      :prod -> "prod"
+      _ -> "test"
+    end
+
+barion_base_url =
+  System.get_env("BARION_BASE_URL") ||
+    case barion_env do
+      "prod" -> "https://secure.barion.com"
+      _ -> "https://secure.test.barion.com"
+    end
+
+config :luca_gymapp, :barion,
+  env: barion_env,
+  base_url: barion_base_url,
+  pos_key: System.get_env("BARION_POS_KEY") || "CHANGE_ME_POS_KEY",
+  api_key: System.get_env("BARION_API_KEY") || "CHANGE_ME_API_KEY"
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

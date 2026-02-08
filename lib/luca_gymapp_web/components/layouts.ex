@@ -27,6 +27,10 @@ defmodule LucaGymappWeb.Layouts do
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
   attr :show_nav, :boolean, default: true, doc: "whether to show the top navigation"
+  attr :show_logo, :boolean, default: true, doc: "whether to show the logo in the simple header"
+  attr :back_link, :map,
+    default: nil,
+    doc: "optional back link map with :href, :label, and optional :id"
 
   attr :current_scope, :map,
     default: nil,
@@ -65,10 +69,26 @@ defmodule LucaGymappWeb.Layouts do
       </header>
     <% else %>
       <header class="px-4 py-6 sm:px-6 lg:px-8">
-        <a href="/" class="flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">Luca Gym</span>
-        </a>
+        <div class="flex items-center justify-between gap-4">
+          <%= if @show_logo do %>
+            <a href="/" class="flex w-fit items-center gap-2">
+              <img src={~p"/images/logo.svg"} width="36" />
+              <span class="text-sm font-semibold">Luca Gym</span>
+            </a>
+          <% else %>
+            <span></span>
+          <% end %>
+
+          <%= if @back_link do %>
+            <.link
+              href={@back_link[:href]}
+              id={@back_link[:id]}
+              class="inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
+            >
+              {@back_link[:label]}
+            </.link>
+          <% end %>
+        </div>
       </header>
     <% end %>
 
