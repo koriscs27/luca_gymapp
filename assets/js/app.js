@@ -77,6 +77,13 @@ const renderTurnstileWidgets = () => {
     return
   }
 
+  const submitButton = document.querySelector("[data-turnstile-submit]")
+  if (submitButton) {
+    submitButton.disabled = true
+    submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
+    submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
+  }
+
   ensureTurnstileLoaded()
     .then(() => {
       widgets.forEach(widget => {
@@ -96,15 +103,30 @@ const renderTurnstileWidgets = () => {
             if (tokenInput) {
               tokenInput.value = token
             }
+            if (submitButton) {
+              submitButton.disabled = false
+              submitButton.classList.remove("cursor-not-allowed", "bg-neutral-300")
+              submitButton.classList.add("bg-neutral-900", "hover:bg-neutral-800")
+            }
           },
           "expired-callback": () => {
             if (tokenInput) {
               tokenInput.value = ""
             }
+            if (submitButton) {
+              submitButton.disabled = true
+              submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
+              submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
+            }
           },
           "error-callback": () => {
             if (tokenInput) {
               tokenInput.value = ""
+            }
+            if (submitButton) {
+              submitButton.disabled = true
+              submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
+              submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
             }
           },
         })
