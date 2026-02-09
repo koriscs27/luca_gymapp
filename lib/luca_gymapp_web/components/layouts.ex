@@ -28,6 +28,7 @@ defmodule LucaGymappWeb.Layouts do
   attr :flash, :map, required: true, doc: "the map of flash messages"
   attr :show_nav, :boolean, default: true, doc: "whether to show the top navigation"
   attr :show_logo, :boolean, default: true, doc: "whether to show the logo in the simple header"
+
   attr :back_link, :map,
     default: nil,
     doc: "optional back link map with :href, :label, and optional :id"

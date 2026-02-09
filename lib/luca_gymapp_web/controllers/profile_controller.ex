@@ -67,7 +67,9 @@ defmodule LucaGymappWeb.ProfileController do
 
     case result do
       {:ok, user} ->
-        Logger.info("password_update_success user_id=#{user.id} email=#{user.email} name=#{user.name}")
+        Logger.info(
+          "password_update_success user_id=#{user.id} email=#{user.email} name=#{user.name}"
+        )
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
@@ -77,7 +79,9 @@ defmodule LucaGymappWeb.ProfileController do
         |> render(:profile, build_profile_assigns(user, profile_form, password_form))
 
       {:error, changeset} ->
-        Logger.warning("password_update_error user_id=#{user.id} email=#{user.email} name=#{user.name}")
+        Logger.warning(
+          "password_update_error user_id=#{user.id} email=#{user.email} name=#{user.name}"
+        )
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
 

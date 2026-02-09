@@ -10,7 +10,15 @@ defmodule LucaGymappWeb.PageController do
 
   def home(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
-    render(conn, :home, form: form, current_user: get_session(conn, :user_id))
+    current_user_id = get_session(conn, :user_id)
+    current_user = if current_user_id, do: Accounts.get_user!(current_user_id), else: nil
+    current_user_is_admin = current_user && current_user.admin
+
+    render(conn, :home,
+      form: form,
+      current_user: current_user,
+      current_user_is_admin: current_user_is_admin
+    )
   end
 
   def berletek(conn, _params) do
@@ -63,22 +71,47 @@ defmodule LucaGymappWeb.PageController do
 
     view = :week
 
-    week_offset =
-      case params["week"] do
-        value when is_binary(value) ->
-          case Integer.parse(value) do
-            {int, _} -> int
-            :error -> 0
-          end
-
-        _ ->
-          0
-      end
+    week_offset = parse_week_offset(params["week"])
 
     base_date = Date.add(Date.utc_today(), week_offset * 7)
     {week_start, week_end} = Booking.week_range(base_date)
 
     slots = Bookings.list_calendar_slots_for_week(type, week_start, week_end)
+
+    {slots, draft_add_keys, draft_change_count} =
+      if is_admin && current_user_id do
+        draft = Bookings.AdminDraftStore.list(current_user_id, type)
+        filtered_slots = Enum.reject(slots, &MapSet.member?(draft.deletes, &1.id))
+
+        week_start_dt = DateTime.new!(week_start, ~T[00:00:00], "Etc/UTC")
+        week_end_dt = DateTime.new!(Date.add(week_end, 1), ~T[00:00:00], "Etc/UTC")
+
+        existing_keys =
+          filtered_slots
+          |> Enum.map(&slot_key_from_slot/1)
+          |> MapSet.new()
+
+        draft_adds =
+          draft.adds
+          |> Map.values()
+          |> Enum.filter(fn slot ->
+            DateTime.compare(slot.start_time, week_start_dt) != :lt and
+              DateTime.compare(slot.start_time, week_end_dt) == :lt
+          end)
+          |> Enum.reject(fn slot -> MapSet.member?(existing_keys, slot_key_from_slot(slot)) end)
+
+        draft_keys =
+          draft_adds
+          |> Enum.map(&slot_key_from_slot/1)
+          |> MapSet.new()
+
+        changes_count = map_size(draft.adds) + MapSet.size(draft.deletes)
+
+        {filtered_slots ++ draft_adds, draft_keys, changes_count}
+      else
+        {slots, MapSet.new(), 0}
+      end
+
     ordered_days = Booking.ordered_days_from_slots(slots, week_start)
 
     booked_slot_keys =
@@ -94,6 +127,7 @@ defmodule LucaGymappWeb.PageController do
     admin_slot_form = Phoenix.Component.to_form(%{}, as: :admin_slot)
     admin_publish_form = Phoenix.Component.to_form(%{}, as: :admin_publish)
     admin_delete_form = Phoenix.Component.to_form(%{}, as: :admin_delete)
+    admin_upload_form = Phoenix.Component.to_form(%{}, as: :admin_upload)
 
     current_pass =
       if current_user_id do
@@ -117,8 +151,47 @@ defmodule LucaGymappWeb.PageController do
       admin_slot_form: admin_slot_form,
       admin_publish_form: admin_publish_form,
       admin_delete_form: admin_delete_form,
-      current_pass: current_pass
+      admin_upload_form: admin_upload_form,
+      current_pass: current_pass,
+      draft_add_keys: draft_add_keys,
+      admin_draft_changes: draft_change_count
     )
+  end
+
+  def admin_bookings(conn, params) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin do
+      week_offset = parse_week_offset(params["week"])
+      base_date = Date.add(Date.utc_today(), week_offset * 7)
+      {week_start, week_end} = Booking.week_range(base_date)
+
+      personal_calendar = build_admin_calendar(:personal, week_start, week_end)
+      cross_calendar = build_admin_calendar(:cross, week_start, week_end)
+
+      render(conn, :admin_bookings,
+        current_user: current_user_id,
+        current_user_is_admin: true,
+        week_offset: week_offset,
+        week_start: week_start,
+        week_end: week_end,
+        personal_calendar: personal_calendar,
+        cross_calendar: cross_calendar
+      )
+    else
+      false ->
+        Logger.warning(
+          "admin_bookings_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/")
+
+      _ ->
+        Logger.error("admin_bookings_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/")
+    end
   end
 
   def create_personal_booking(conn, %{"start_time" => start_time, "end_time" => end_time}) do
@@ -226,15 +299,24 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=personal&view=week")
     else
       {:error, :not_found} ->
-        Logger.warning("booking_cancel_error type=personal reason=not_found user_id=#{current_user_id}")
+        Logger.warning(
+          "booking_cancel_error type=personal reason=not_found user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       {:error, :too_late_to_cancel} ->
-        Logger.warning("booking_cancel_error type=personal reason=too_late user_id=#{current_user_id}")
+        Logger.warning(
+          "booking_cancel_error type=personal reason=too_late user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
       _ ->
-        Logger.error("booking_cancel_error type=personal reason=unknown user_id=#{current_user_id}")
+        Logger.error(
+          "booking_cancel_error type=personal reason=unknown user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas?type=personal&view=week")
     end
   end
@@ -252,11 +334,17 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/foglalas?type=cross&view=week")
     else
       {:error, :not_found} ->
-        Logger.warning("booking_cancel_error type=cross reason=not_found user_id=#{current_user_id}")
+        Logger.warning(
+          "booking_cancel_error type=cross reason=not_found user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       {:error, :too_late_to_cancel} ->
-        Logger.warning("booking_cancel_error type=cross reason=too_late user_id=#{current_user_id}")
+        Logger.warning(
+          "booking_cancel_error type=cross reason=too_late user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas?type=cross&view=week")
 
       _ ->
@@ -292,28 +380,39 @@ defmodule LucaGymappWeb.PageController do
               |> redirect(to: ~p"/berletek")
 
             {:error, :once_per_user} ->
-              Logger.warning("purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}")
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
+              )
+
               generic_error(conn, ~p"/berletek")
 
             {:error, :active_pass_exists} ->
               Logger.warning(
                 "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
               )
+
               generic_error(conn, ~p"/berletek")
 
             {:error, :invalid_type} ->
               Logger.warning(
                 "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
               )
+
               generic_error(conn, ~p"/berletek")
 
             {:error, _reason} ->
-              Logger.error("purchase_error email=#{user.email} name=#{user.name} reason=unknown pass_name=#{pass_name}")
+              Logger.error(
+                "purchase_error email=#{user.email} name=#{user.name} reason=unknown pass_name=#{pass_name}"
+              )
+
               generic_error(conn, ~p"/berletek")
           end
 
         {:error, _reason} ->
-          Logger.error("payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}")
+          Logger.error(
+            "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+          )
+
           generic_error(conn, ~p"/berletek")
       end
     else
@@ -341,19 +440,31 @@ defmodule LucaGymappWeb.PageController do
       |> redirect(to: ~p"/berletek")
     else
       false ->
-        Logger.warning("admin_purchase_error reason=unauthorized admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_purchase_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/berletek")
 
       {:error, :once_per_user} ->
-        Logger.warning("admin_purchase_error reason=once_per_user admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_purchase_error reason=once_per_user admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/berletek")
 
       {:error, :active_pass_exists} ->
-        Logger.warning("admin_purchase_error reason=active_pass_exists admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_purchase_error reason=active_pass_exists admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/berletek")
 
       {:error, :invalid_type} ->
-        Logger.warning("admin_purchase_error reason=invalid_type admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_purchase_error reason=invalid_type admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/berletek")
 
       _ ->
@@ -370,10 +481,11 @@ defmodule LucaGymappWeb.PageController do
          true <- admin_user.admin,
          {:ok, date} <- Date.from_iso8601(week_start),
          {type, _} <- parse_booking_type(type) do
-      _ = Bookings.publish_default_week(type, date)
+      slots = Bookings.build_default_week_slots(type, date)
+      :ok = Bookings.AdminDraftStore.add_slots(current_user_id, type, slots)
 
       conn
-      |> put_flash(:info, "Az alapértelmezett heti naptár feltöltve.")
+      |> put_flash(:info, "Az alap időpontok piszkozatként elmentve.")
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week_offset_from_date(date)}")
     else
       false ->
@@ -403,21 +515,32 @@ defmodule LucaGymappWeb.PageController do
          {:ok, date} <- Date.from_iso8601(date),
          {:ok, start_time} <- parse_time_param(start_time),
          {:ok, end_time} <- parse_time_param(end_time),
-         {:ok, _slot} <- Bookings.create_calendar_slot(type, date, start_time, end_time) do
+         {:ok, slot} <- build_draft_slot(type, date, start_time, end_time) do
+      :ok = Bookings.AdminDraftStore.add_slot(current_user_id, type, slot)
+
       conn
-      |> put_flash(:info, "Időpont hozzáadva.")
+      |> put_flash(:info, "Időpont piszkozatként elmentve.")
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week_offset_from_date(date)}")
     else
       false ->
-        Logger.warning("admin_create_slot_error reason=unauthorized admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_create_slot_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas")
 
       {:error, :invalid_time_range} ->
-        Logger.warning("admin_create_slot_error reason=invalid_time_range admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_create_slot_error reason=invalid_time_range admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas")
 
       {:error, %Ecto.Changeset{}} ->
-        Logger.warning("admin_create_slot_error reason=changeset admin_user_id=#{current_user_id}")
+        Logger.warning(
+          "admin_create_slot_error reason=changeset admin_user_id=#{current_user_id}"
+        )
+
         generic_error(conn, ~p"/foglalas")
 
       _ ->
@@ -426,30 +549,105 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def admin_delete_slot(conn, %{"admin_delete" => %{"slot_id" => slot_id, "type" => type}}) do
+  def admin_delete_slot(
+        conn,
+        %{"admin_delete" => %{"slot_id" => slot_id, "type" => type} = params}
+      ) do
     current_user_id = get_session(conn, :user_id)
+    slot_key = Map.get(params, "slot_key")
 
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
          true <- admin_user.admin,
          {type, _} <- parse_booking_type(type),
-         {slot_id, _} <- Integer.parse(slot_id),
-         {:ok, _slot} <- Bookings.delete_calendar_slot(slot_id) do
+         {slot_id, _} <- Integer.parse(slot_id) do
+      :ok = Bookings.AdminDraftStore.mark_delete(current_user_id, type, slot_id, slot_key)
+
       conn
-      |> put_flash(:info, "Időpont törölve.")
+      |> put_flash(:info, "Időpont piszkozat törlésre jelölve.")
       |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
     else
       false ->
-        Logger.warning("admin_delete_slot_error reason=unauthorized admin_user_id=#{current_user_id}")
-        generic_error(conn, ~p"/foglalas")
+        Logger.warning(
+          "admin_delete_slot_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
 
-      {:error, :slot_has_bookings} ->
-        Logger.warning("admin_delete_slot_error reason=slot_has_bookings admin_user_id=#{current_user_id}")
-        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+        generic_error(conn, ~p"/foglalas")
 
       _ ->
         Logger.error("admin_delete_slot_error reason=unknown admin_user_id=#{current_user_id}")
         generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+    end
+  end
+
+  def admin_delete_slot(conn, %{"admin_delete" => %{"draft_key" => draft_key, "type" => type}}) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin,
+         {type, _} <- parse_booking_type(type) do
+      :ok = Bookings.AdminDraftStore.remove_draft_slot(current_user_id, type, draft_key)
+
+      conn
+      |> put_flash(:info, "Piszkozat időpont törölve.")
+      |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
+    else
+      false ->
+        Logger.warning(
+          "admin_delete_slot_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/foglalas")
+
+      _ ->
+        Logger.error("admin_delete_slot_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+    end
+  end
+
+  def admin_upload_changes(conn, %{"admin_upload" => %{"type" => type, "week" => week}}) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin,
+         {type, _} <- parse_booking_type(type) do
+      draft = Bookings.AdminDraftStore.list(current_user_id, type)
+
+      result =
+        Bookings.apply_admin_draft_changes(Map.values(draft.adds), draft.deletes)
+
+      case result do
+        {:ok, :ok} ->
+          _ = GenServer.stop(Bookings.AdminDraftStore, :normal)
+
+          conn
+          |> put_flash(:info, "A piszkozat időpontok feltöltve.")
+          |> redirect(to: ~p"/admin/foglalas?week=#{week}")
+
+        {:error, :slot_has_bookings} ->
+          Logger.warning(
+            "admin_upload_error reason=slot_has_bookings admin_user_id=#{current_user_id}"
+          )
+
+          generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+
+        {:error, reason} ->
+          Logger.error(
+            "admin_upload_error reason=#{inspect(reason)} admin_user_id=#{current_user_id}"
+          )
+
+          generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+      end
+    else
+      false ->
+        Logger.warning("admin_upload_error reason=unauthorized admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
+
+      _ ->
+        Logger.error("admin_upload_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/foglalas")
     end
   end
 
@@ -462,6 +660,19 @@ defmodule LucaGymappWeb.PageController do
     div(diff, 7)
   end
 
+  defp parse_week_offset(value) do
+    case value do
+      value when is_binary(value) ->
+        case Integer.parse(value) do
+          {int, _} -> int
+          :error -> 0
+        end
+
+      _ ->
+        0
+    end
+  end
+
   defp parse_time_param(value) when is_binary(value) do
     value =
       case String.length(value) do
@@ -470,6 +681,90 @@ defmodule LucaGymappWeb.PageController do
       end
 
     Time.from_iso8601(value)
+  end
+
+  defp build_admin_calendar(type, %Date{} = week_start, %Date{} = week_end) do
+    slots = Bookings.list_calendar_slots_for_week(type, week_start, week_end)
+    days = Booking.ordered_days_from_slots(slots, week_start)
+    bookings = Bookings.list_bookings_for_week(type, week_start, week_end)
+    bookings_by_key = Enum.group_by(bookings, &slot_key_from_booking/1)
+    capacity = calendar_capacity(type)
+
+    days =
+      Enum.map(days, fn day ->
+        hour_slots =
+          Enum.map(day.hour_slots, fn slot ->
+            slot_bookings = Map.get(bookings_by_key, slot.key, [])
+            remaining = max(capacity - length(slot_bookings), 0)
+
+            %{
+              slot: slot,
+              bookings: Enum.map(slot_bookings, &booking_display_name/1),
+              remaining: remaining
+            }
+          end)
+
+        %{day | hour_slots: hour_slots}
+      end)
+
+    %{
+      type: type,
+      days: days,
+      capacity: capacity
+    }
+  end
+
+  defp calendar_capacity(:personal), do: 1
+
+  defp calendar_capacity(:cross) do
+    Application.get_env(:luca_gymapp, :booking_schedule, %{})
+    |> Map.get(:cross, %{})
+    |> Map.get(:max_overlap, 0)
+  end
+
+  defp calendar_capacity(_), do: 1
+
+  defp booking_display_name(booking) do
+    cond do
+      is_binary(booking.user_name) and booking.user_name != "" ->
+        booking.user_name
+
+      booking.user && is_binary(booking.user.email) ->
+        booking.user.email
+
+      true ->
+        "Ismeretlen"
+    end
+  end
+
+  defp slot_key_from_booking(booking) do
+    DateTime.to_iso8601(booking.start_time) <> "|" <> DateTime.to_iso8601(booking.end_time)
+  end
+
+  defp build_draft_slot(type, %Date{} = date, %Time{} = start_time, %Time{} = end_time) do
+    start_dt = DateTime.new!(date, start_time, "Etc/UTC")
+    end_dt = DateTime.new!(date, end_time, "Etc/UTC")
+
+    if DateTime.compare(end_dt, start_dt) != :gt do
+      {:error, :invalid_time_range}
+    else
+      slot_type =
+        case type do
+          :cross -> "cross"
+          _ -> "personal"
+        end
+
+      {:ok,
+       %LucaGymapp.Bookings.CalendarSlot{
+         slot_type: slot_type,
+         start_time: start_dt,
+         end_time: end_dt
+       }}
+    end
+  end
+
+  defp slot_key_from_slot(slot) do
+    DateTime.to_iso8601(slot.start_time) <> "|" <> DateTime.to_iso8601(slot.end_time)
   end
 
   defp generic_error(conn, redirect_path) do

@@ -41,6 +41,8 @@ WORKDIR /app
 
 ENV MIX_ENV=prod
 ENV LANG=C.UTF-8
+ENV ECTO_IPV6 true
+ENV ERL_AFLAGS "-proto_dist inet6_tcp"
 
 COPY --from=builder /app/_build/prod/rel/luca_gymapp ./
 

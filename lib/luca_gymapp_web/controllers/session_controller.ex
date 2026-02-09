@@ -26,7 +26,7 @@ defmodule LucaGymappWeb.SessionController do
         Logger.warning("login_error_invalid email=#{email}")
 
         conn
-        |> put_flash(:error, "A bejelentkezés nem sikerült. Próbáld újra.")
+        |> put_flash(:error, "Hibás e-mail vagy jelszó.")
         |> redirect(to: "/#login-modal")
     end
   end

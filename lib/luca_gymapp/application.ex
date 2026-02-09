@@ -10,6 +10,7 @@ defmodule LucaGymapp.Application do
     children = [
       LucaGymappWeb.Telemetry,
       LucaGymapp.Repo,
+      LucaGymapp.Bookings.AdminDraftStore,
       {DNSCluster, query: Application.get_env(:luca_gymapp, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: LucaGymapp.PubSub},
       # Start a worker by calling: LucaGymapp.Worker.start_link(arg)

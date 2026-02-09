@@ -20,6 +20,7 @@ defmodule LucaGymappWeb.Router do
     get "/", PageController, :home
     get "/berletek", PageController, :berletek
     get "/foglalas", PageController, :booking
+    get "/admin/foglalas", PageController, :admin_bookings
     post "/foglalas/personal", PageController, :create_personal_booking
     post "/foglalas/cross", PageController, :create_cross_booking
     post "/foglalas/personal/cancel", PageController, :cancel_personal_booking
@@ -27,6 +28,7 @@ defmodule LucaGymappWeb.Router do
     post "/foglalas/admin/publish", PageController, :admin_publish_week
     post "/foglalas/admin/slot", PageController, :admin_create_slot
     post "/foglalas/admin/slot/delete", PageController, :admin_delete_slot
+    post "/foglalas/admin/upload", PageController, :admin_upload_changes
     post "/berletek/purchase", PageController, :purchase_season_pass
     post "/berletek/admin/purchase", PageController, :admin_purchase_season_pass
     get "/auth/:provider", OAuthController, :request

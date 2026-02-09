@@ -31,16 +31,24 @@
           href={~p"/foglalas"}
           class="transition hover:text-white/80"
         >Foglalás</.link>
+        <%= if @current_user_is_admin do %>
+          <.link
+          href={~p"/admin/foglalas"}
+          class="transition hover:text-white/80"
+        >
+            Foglalások
+          </.link>
+        <% end %>
         <.link
           href="#rolam"
           class="transition hover:text-white/80"
         >Rólam</.link>
         <%= if @current_user do %>
           <.link
-            href={~p"/profile"}
-            class="transition hover:text-white/80"
-            id="profile-link"
-          >
+          href={~p"/profile"}
+          class="transition hover:text-white/80"
+          id="profile-link"
+        >
             Profil
           </.link>
           <.form
@@ -131,6 +139,11 @@
     <.link href={~p"/foglalas"} class="rounded-xl border border-neutral-200 px-4 py-3">
       Foglalás
     </.link>
+    <%= if @current_user_is_admin do %>
+      <.link href={~p"/admin/foglalas"} class="rounded-xl border border-neutral-200 px-4 py-3">
+        Foglalások
+      </.link>
+    <% end %>
     <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">Rólam</.link>
     <%= if @current_user do %>
       <.link
