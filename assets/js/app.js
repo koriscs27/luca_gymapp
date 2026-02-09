@@ -46,6 +46,83 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+const turnstileScriptUrl = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+let turnstileScriptPromise = null
+
+const ensureTurnstileLoaded = () => {
+  if (window.turnstile) {
+    return Promise.resolve()
+  }
+
+  if (turnstileScriptPromise) {
+    return turnstileScriptPromise
+  }
+
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script")
+    script.src = turnstileScriptUrl
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Turnstile failed to load"))
+    document.head.appendChild(script)
+  })
+
+  return turnstileScriptPromise
+}
+
+const renderTurnstileWidgets = () => {
+  const widgets = document.querySelectorAll("[data-turnstile]")
+  if (widgets.length === 0) {
+    return
+  }
+
+  ensureTurnstileLoaded()
+    .then(() => {
+      widgets.forEach(widget => {
+        if (widget.dataset.rendered === "true") {
+          return
+        }
+
+        const sitekey = widget.dataset.sitekey
+        if (!sitekey) {
+          return
+        }
+
+        const tokenInput = document.getElementById("turnstile-token")
+        window.turnstile.render(widget, {
+          sitekey,
+          callback: token => {
+            if (tokenInput) {
+              tokenInput.value = token
+            }
+          },
+          "expired-callback": () => {
+            if (tokenInput) {
+              tokenInput.value = ""
+            }
+          },
+          "error-callback": () => {
+            if (tokenInput) {
+              tokenInput.value = ""
+            }
+          },
+        })
+
+        widget.dataset.rendered = "true"
+      })
+    })
+    .catch(() => {
+      const tokenInput = document.getElementById("turnstile-token")
+      if (tokenInput) {
+        tokenInput.value = ""
+      }
+    })
+}
+
+document.addEventListener("DOMContentLoaded", renderTurnstileWidgets)
+window.addEventListener("phx:page-loading-stop", renderTurnstileWidgets)
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //
@@ -80,4 +157,3 @@ if (process.env.NODE_ENV === "development") {
     window.liveReloader = reloader
   })
 }
-

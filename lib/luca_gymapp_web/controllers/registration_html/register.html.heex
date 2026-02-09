@@ -1,4 +1,4 @@
-<Layouts.app flash={@flash} show_nav={false}>
+﻿<Layouts.app flash={@flash} show_nav={false}>
   <section class="mx-auto w-full max-w-2xl rounded-3xl border border-neutral-200 bg-white px-6 py-10 shadow-lg shadow-neutral-200/40">
     <div class="flex flex-col gap-2">
       <p class="text-xs uppercase tracking-[0.35em] text-neutral-400">Regisztráció</p>
@@ -15,9 +15,19 @@
       </.link>
     </div>
 
-    <.form for={@form} id="register-form" action={~p"/register"} class="mt-8 space-y-4">
+    <.form
+      for={@form}
+      id="register-form"
+      action={~p"/register"}
+      class="mt-8 space-y-4"
+    >
       <.input field={@form[:email]} type="email" label="E-mail" required />
-      <.input field={@form[:password]} type="password" label="Jelszó" required />
+      <.input
+        field={@form[:password]}
+        type="password"
+        label="Jelszó"
+        required
+      />
       <.input
         field={@form[:password_confirmation]}
         type="password"
@@ -25,7 +35,11 @@
         required
       />
       <.input field={@form[:name]} type="text" label="Név" />
-      <.input field={@form[:phone_number]} type="tel" label="Telefonszám" />
+      <.input
+        field={@form[:phone_number]}
+        type="tel"
+        label="Telefonszám"
+      />
       <.input field={@form[:age]} type="number" label="Életkor" min="0" />
       <.input
         field={@form[:sex]}
@@ -39,6 +53,24 @@
         ]}
       />
       <.input field={@form[:birth_date]} type="date" label="Születési dátum" />
+
+      <%= if @turnstile_site_key do %>
+        <div class="mt-4 space-y-2">
+          <div
+          id="turnstile-widget"
+          data-turnstile
+          data-sitekey={@turnstile_site_key}
+        ></div>
+          <input type="hidden" name="cf-turnstile-response" id="turnstile-token" />
+          <p class="text-xs text-neutral-500">
+            A regisztráció előtt kérünk egy gyors robotellenőrzést.
+          </p>
+        </div>
+      <% else %>
+        <p class="mt-4 text-xs text-rose-600">
+          A robotellenőrzés nincs beállítva. Kérlek jelezd az üzemeltetőnek.
+        </p>
+      <% end %>
 
       <button
         id="register-submit"
