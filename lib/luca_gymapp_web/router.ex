@@ -20,6 +20,8 @@ defmodule LucaGymappWeb.Router do
     get "/", PageController, :home
     get "/berletek", PageController, :berletek
     get "/foglalas", PageController, :booking
+    get "/barion/return", BarionController, :return
+    get "/barion/check/:payment_id", BarionController, :check
     get "/admin/foglalas", PageController, :admin_bookings
     post "/foglalas/personal", PageController, :create_personal_booking
     post "/foglalas/cross", PageController, :create_cross_booking
@@ -47,6 +49,12 @@ defmodule LucaGymappWeb.Router do
     get "/profile", ProfileController, :show
     patch "/profile", ProfileController, :update_profile
     patch "/profile/password", ProfileController, :update_password
+  end
+
+  scope "/barion", LucaGymappWeb do
+    pipe_through :api
+
+    post "/callback", BarionController, :callback
   end
 
   # Other scopes may use custom stacks.

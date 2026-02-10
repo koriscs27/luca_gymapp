@@ -28,6 +28,14 @@ defmodule LucaGymapp.SeasonPasses do
     |> Enum.sort_by(& &1.name)
   end
 
+  def validate_purchase(%User{} = user, pass_name) do
+    with {:ok, type_def} <- fetch_type_definition(pass_name),
+         :ok <- enforce_once_per_user(user.id, type_def),
+         :ok <- enforce_no_active_pass(user.id, type_def) do
+      {:ok, type_def}
+    end
+  end
+
   def group_by_category(type_definitions) do
     Enum.group_by(type_definitions, & &1.category)
   end

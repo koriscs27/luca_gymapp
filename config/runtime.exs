@@ -48,8 +48,14 @@ barion_base_url =
 config :luca_gymapp, :barion,
   env: barion_env,
   base_url: barion_base_url,
+  api_base_url:
+    System.get_env("BARION_API_BASE_URL") ||
+      (case barion_env do
+         "prod" -> "https://api.barion.com"
+         _ -> "https://api.test.barion.com"
+       end),
   pos_key: System.get_env("BARION_POS_KEY") || "CHANGE_ME_POS_KEY",
-  api_key: System.get_env("BARION_API_KEY") || "CHANGE_ME_API_KEY"
+  payee_email: System.get_env("BARION_PAYEE_EMAIL")
 
 if config_env() == :prod do
   database_url =
