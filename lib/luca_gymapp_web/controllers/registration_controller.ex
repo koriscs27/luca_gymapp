@@ -17,7 +17,7 @@ defmodule LucaGymappWeb.RegistrationController do
 
       conn
       |> put_flash(:info, "Sikeres regisztráció. Küldtünk egy megerősítő e-mailt.")
-      |> redirect(to: ~p"/")
+      |> redirect(to: "/#registration-success")
     else
       {:error, :turnstile_missing} ->
         render_register_error(conn, user_params, "Kérlek igazold, hogy nem vagy robot.")

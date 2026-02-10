@@ -17,7 +17,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
 
     conn = post(conn, ~p"/register", user: params)
 
-    assert redirected_to(conn) == ~p"/"
+    assert redirected_to(conn) == "/#registration-success"
 
     user = Repo.get_by(User, email: "uj@example.com")
     assert user != nil

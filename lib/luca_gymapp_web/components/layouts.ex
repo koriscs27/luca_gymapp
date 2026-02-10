@@ -41,63 +41,65 @@ defmodule LucaGymappWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <%= if @show_nav do %>
-      <header class="navbar px-4 sm:px-6 lg:px-8">
-        <div class="flex-1">
-          <a href="/" class="flex-1 flex w-fit items-center gap-2">
-            <img src={~p"/images/logo.svg"} width="36" />
-            <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-          </a>
-        </div>
-        <div class="flex-none">
-          <ul class="flex flex-column px-1 space-x-4 items-center">
-            <li>
-              <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-            </li>
-            <li>
-              <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-            </li>
-            <li>
-              <.theme_toggle />
-            </li>
-            <li>
-              <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-                Get Started <span aria-hidden="true">&rarr;</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </header>
-    <% else %>
-      <header class="px-4 py-6 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between gap-4">
-          <%= if @show_logo do %>
-            <a href="/" class="flex w-fit items-center gap-2">
+    <div class="gym-page">
+      <%= if @show_nav do %>
+        <header class="navbar px-4 sm:px-6 lg:px-8">
+          <div class="flex-1">
+            <a href="/" class="flex-1 flex w-fit items-center gap-2">
               <img src={~p"/images/logo.svg"} width="36" />
-              <span class="text-sm font-semibold">Luca Gym</span>
+              <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
             </a>
-          <% else %>
-            <span></span>
-          <% end %>
+          </div>
+          <div class="flex-none">
+            <ul class="flex flex-column px-1 space-x-4 items-center">
+              <li>
+                <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
+              </li>
+              <li>
+                <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
+              </li>
+              <li>
+                <.theme_toggle />
+              </li>
+              <li>
+                <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
+                  Get Started <span aria-hidden="true">&rarr;</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </header>
+      <% else %>
+        <header class="px-4 py-6 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between gap-4">
+            <%= if @show_logo do %>
+              <a href="/" class="flex w-fit items-center gap-2">
+                <img src={~p"/images/logo.svg"} width="36" />
+                <span class="text-sm font-semibold">Luca Gym</span>
+              </a>
+            <% else %>
+              <span></span>
+            <% end %>
 
-          <%= if @back_link do %>
-            <.link
-              href={@back_link[:href]}
-              id={@back_link[:id]}
-              class="inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
-            >
-              {@back_link[:label]}
-            </.link>
-          <% end %>
+            <%= if @back_link do %>
+              <.link
+                href={@back_link[:href]}
+                id={@back_link[:id]}
+                class="inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
+              >
+                {@back_link[:label]}
+              </.link>
+            <% end %>
+          </div>
+        </header>
+      <% end %>
+
+      <main class="px-4 py-20 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl space-y-4">
+          {render_slot(@inner_block)}
         </div>
-      </header>
-    <% end %>
-
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
-        {render_slot(@inner_block)}
-      </div>
-    </main>
+      </main>
+    </div>
 
     <.flash_group flash={@flash} />
     """

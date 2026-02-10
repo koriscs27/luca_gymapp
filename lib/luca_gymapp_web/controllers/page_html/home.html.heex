@@ -253,7 +253,7 @@
         <button
           id="login-submit"
           type="submit"
-          class="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+          class="w-full cursor-pointer rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 hover:shadow-sm"
         >
           Bejelentkezés
         </button>
@@ -295,7 +295,7 @@
         <span class="text-neutral-500">Nincs még fiókod?</span>
         <.link
           href={~p"/register"}
-          class="font-semibold text-amber-600 transition hover:text-amber-500"
+          class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-amber-200/80 transition hover:bg-amber-100 hover:text-amber-800"
         >
           Regisztrálj
         </.link>
@@ -308,4 +308,46 @@
       <% end %>
     </div>
   </div>
+
+  <%= if info = Phoenix.Flash.get(@flash, :info) do %>
+    <div id="registration-success" class="login-modal" aria-hidden="true">
+      <a href="#" class="login-modal__overlay" aria-label="Bezárás"></a>
+      <div
+        class="login-modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="registration-success-title"
+      >
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-[0.3em] text-emerald-500">
+              Sikeres regisztráció
+            </p>
+            <h3
+              id="registration-success-title"
+              class="mt-1 text-2xl font-semibold text-neutral-900"
+            >
+              Nézd meg az e-mailjeidet
+            </h3>
+          </div>
+          <.link
+            href="#"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+            aria-label="Bezárás"
+          >
+            <.icon name="hero-x-mark" class="h-4 w-4" />
+          </.link>
+        </div>
+        <div class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {info}
+        </div>
+        <.link
+          href="#login-modal"
+          class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+        >
+          Bejelentkezés
+        </.link>
+      </div>
+    </div>
+  <% end %>
 <% end %>
