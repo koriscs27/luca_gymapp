@@ -1,5 +1,16 @@
 import Config
 
+trimmed_env = fn key ->
+  case System.get_env(key) do
+    nil ->
+      nil
+
+    value ->
+      value = String.trim(value)
+      if value == "", do: nil, else: value
+  end
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
@@ -32,14 +43,14 @@ config :luca_gymapp, :turnstile,
   secret_key: System.get_env("TURNSTILE_SECRET_KEY")
 
 barion_env =
-  System.get_env("BARION_ENV") ||
+  trimmed_env.("BARION_ENV") ||
     case config_env() do
       :prod -> "prod"
       _ -> "test"
     end
 
 barion_base_url =
-  System.get_env("BARION_BASE_URL") ||
+  trimmed_env.("BARION_BASE_URL") ||
     case barion_env do
       "prod" -> "https://secure.barion.com"
       _ -> "https://secure.test.barion.com"
@@ -49,13 +60,13 @@ config :luca_gymapp, :barion,
   env: barion_env,
   base_url: barion_base_url,
   api_base_url:
-    System.get_env("BARION_API_BASE_URL") ||
+    trimmed_env.("BARION_API_BASE_URL") ||
       (case barion_env do
          "prod" -> "https://api.barion.com"
          _ -> "https://api.test.barion.com"
        end),
-  pos_key: System.get_env("BARION_POS_KEY") || "CHANGE_ME_POS_KEY",
-  payee_email: System.get_env("BARION_PAYEE_EMAIL")
+  pos_key: trimmed_env.("BARION_POS_KEY") || "CHANGE_ME_POS_KEY",
+  payee_email: trimmed_env.("BARION_PAYEE_EMAIL")
 
 if config_env() == :prod do
   database_url =
