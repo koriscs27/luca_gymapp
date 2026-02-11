@@ -47,6 +47,7 @@ defmodule LucaGymapp.Payments.Barion do
     }
 
     request = Req.new(base_url: api_base_url, headers: [{"x-pos-key", pos_key}])
+    Logger.warning("barion_start_request url=#{api_base_url}/v2/Payment/Start payload=#{inspect(payload)}")
 
     case Req.post(request, url: "/v2/Payment/Start", json: payload) do
       {:ok,
