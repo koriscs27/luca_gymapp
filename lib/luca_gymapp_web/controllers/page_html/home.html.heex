@@ -1,4 +1,4 @@
-﻿<div class={[
+<div class={[
   "gym-hero min-h-screen text-white",
   @current_user && "gym-hero--authed"
 ]}>
@@ -11,10 +11,7 @@
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pb-6 pt-6 sm:px-8 lg:px-10">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
-          <.icon
-            name="hero-bolt"
-            class="h-5 w-5 text-white"
-          />
+          <img src={~p"/images/logo.svg"} alt="PL logo" class="h-8 w-8" />
         </div>
         <div class="leading-tight">
           <p class="text-xs uppercase tracking-[0.2em] text-white/70">Luca Gym</p>
@@ -26,50 +23,56 @@
         <.link
           href={~p"/berletek"}
           class="transition hover:text-white/80"
-        >Bérletek</.link>
+        >
+          Bérletek
+        </.link>
         <.link
           href={~p"/foglalas"}
           class="transition hover:text-white/80"
-        >Foglalás</.link>
+        >
+          Foglalás
+        </.link>
         <%= if @current_user_is_admin do %>
           <.link
-          href={~p"/admin/foglalas"}
-          class="transition hover:text-white/80"
-        >
+            href={~p"/admin/foglalas"}
+            class="transition hover:text-white/80"
+          >
             Foglalások
           </.link>
         <% end %>
         <.link
           href="#rolam"
           class="transition hover:text-white/80"
-        >Rólam</.link>
+        >
+          Rólam
+        </.link>
         <%= if @current_user do %>
           <.link
-          href={~p"/profile"}
-          class="transition hover:text-white/80"
-          id="profile-link"
-        >
+            href={~p"/profile"}
+            class="transition hover:text-white/80"
+            id="profile-link"
+          >
             Profil
           </.link>
           <.form
-          for={%{}}
-          id="logout-form"
-          action={~p"/logout"}
-          method="delete"
-        >
-            <button
-            id="logout-button"
-            type="submit"
-            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+            for={%{}}
+            id="logout-form"
+            action={~p"/logout"}
+            method="delete"
           >
+            <button
+              id="logout-button"
+              type="submit"
+              class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+            >
               Kijelentkezés
             </button>
           </.form>
         <% else %>
           <.link
-          href="#login-modal"
-          class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
-        >
+            href="#login-modal"
+            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+          >
             Bejelentkezés
           </.link>
         <% end %>

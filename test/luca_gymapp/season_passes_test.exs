@@ -24,6 +24,22 @@ defmodule LucaGymapp.SeasonPassesTest do
              SeasonPasses.purchase_season_pass(user, "1_alkalmas_jegy")
   end
 
+  test "cannot buy cross pass when active cross exists with legacy pass_type" do
+    user = create_user()
+
+    _legacy_pass =
+      create_pass(user, %{
+        pass_name: "cross_8_alkalmas_berlet",
+        pass_type: "cross_8_alkalmas_berlet",
+        occasions: 8,
+        purchase_price: 27_000,
+        expiry_date: Date.add(Date.utc_today(), 30)
+      })
+
+    assert {:error, :active_pass_exists} =
+             SeasonPasses.purchase_season_pass(user, "cross_12_alkalmas_berlet")
+  end
+
   test "can buy one cross and one personal pass together" do
     user = create_user()
 
@@ -83,5 +99,22 @@ defmodule LucaGymapp.SeasonPassesTest do
     pass
     |> Ecto.Changeset.change(attrs)
     |> Repo.update!()
+  end
+
+  defp create_pass(user, attrs) do
+    defaults = %{
+      pass_id: Ecto.UUID.generate(),
+      pass_name: "10_alkalmas_berlet",
+      pass_type: "personal",
+      occasions: 10,
+      purchase_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
+      purchase_price: 45_000,
+      expiry_date: Date.add(Date.utc_today(), 30),
+      user_id: user.id
+    }
+
+    %SeasonPass{}
+    |> Ecto.Changeset.change(Map.merge(defaults, attrs))
+    |> Repo.insert!()
   end
 end

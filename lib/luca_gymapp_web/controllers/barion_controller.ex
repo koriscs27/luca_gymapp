@@ -2,38 +2,41 @@ defmodule LucaGymappWeb.BarionController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Payments
+  require Logger
 
   def return(conn, %{"paymentId" => payment_id}) do
-    case Payments.handle_return(payment_id) do
-      {:ok, "paid"} ->
-        conn
-        |> put_flash(:info, "Sikeres fizetés. A bérleted aktiválva lett.")
-        |> redirect(to: ~p"/berletek")
+    Logger.warning("barion_return payload=#{inspect(conn.query_params)}")
 
-      {:ok, status} when status in ["pending", "authorized"] ->
-        conn
-        |> put_flash(:info, "A fizetés feldolgozás alatt. Kérjük, térj vissza később.")
-        |> redirect(to: ~p"/berletek")
+    if dev_env?() do
+      payment_error(conn)
+    else
+      case Payments.handle_return(payment_id) do
+        {:ok, "paid"} ->
+          conn
+          |> put_flash(:info, "Sikeres fizetés. A bérleted aktiválva lett.")
+          |> redirect(to: ~p"/berletek")
 
-      {:ok, _status} ->
-        conn
-        |> put_flash(:error, "A fizetés nem sikerült. Próbáld újra.")
-        |> redirect(to: ~p"/berletek")
+        {:ok, status} when status in ["pending", "authorized"] ->
+          conn
+          |> put_flash(:info, "A fizetés feldolgozás alatt. Kérjük, térj vissza később.")
+          |> redirect(to: ~p"/berletek")
 
-      {:error, _reason} ->
-        conn
-        |> put_flash(:error, "A fizetés nem sikerült. Próbáld újra.")
-        |> redirect(to: ~p"/berletek")
+        {:ok, _status} ->
+          payment_error(conn)
+
+        {:error, _reason} ->
+          payment_error(conn)
+      end
     end
   end
 
   def return(conn, _params) do
-    conn
-    |> put_flash(:error, "A fizetés nem sikerült. Próbáld újra.")
-    |> redirect(to: ~p"/berletek")
+    Logger.warning("barion_return payload=#{inspect(conn.query_params)}")
+    payment_error(conn)
   end
 
   def callback(conn, params) do
+    Logger.warning("barion_callback payload=#{inspect(params)}")
     payment_id = Map.get(params, "PaymentId") || Map.get(params, "paymentId")
 
     if is_binary(payment_id) do
@@ -86,4 +89,12 @@ defmodule LucaGymappWeb.BarionController do
     |> put_flash(:error, "Nem sikerült lekérdezni a fizetés státuszát.")
     |> redirect(to: ~p"/berletek")
   end
+
+  defp payment_error(conn) do
+    conn
+    |> put_flash(:error, "A fizetés nem sikerült. Próbáld újra.")
+    |> redirect(to: ~p"/berletek")
+  end
+
+  defp dev_env?, do: Application.get_env(:luca_gymapp, :env) == "dev"
 end

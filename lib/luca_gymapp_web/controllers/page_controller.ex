@@ -361,33 +361,61 @@ defmodule LucaGymappWeb.PageController do
 
     if current_user_id do
       user = Accounts.get_user!(current_user_id)
-      payment_method = Map.get(params, "payment_method", "barion")
 
-      case payment_method do
-        "barion" ->
-          redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
-          callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
+      case SeasonPasses.validate_purchase(user, pass_name) do
+        {:ok, _type_def} ->
+          payment_method = Map.get(params, "payment_method", "barion")
 
-          case Payments.start_season_pass_payment(user, pass_name, redirect_url, callback_url) do
-            {:ok, :skipped} ->
-              complete_pass_purchase(conn, user, pass_name)
+          case payment_method do
+            "barion" ->
+              redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
+              callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
 
-            {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
-              redirect(conn, external: gateway_url)
+              case Payments.start_season_pass_payment(user, pass_name, redirect_url, callback_url) do
+                {:ok, :skipped} ->
+                  complete_pass_purchase(conn, user, pass_name)
 
-            {:error, :missing_barion_payee_email} ->
-              Logger.error("payment_error reason=missing_payee_email pass_name=#{pass_name}")
-              generic_error(conn, ~p"/berletek")
+                {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
+                  redirect(conn, external: gateway_url)
 
-            {:error, _reason} ->
-              Logger.error(
-                "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
-              )
+                {:error, :missing_barion_payee_email} ->
+                  Logger.error("payment_error reason=missing_payee_email pass_name=#{pass_name}")
+                  generic_error(conn, ~p"/berletek")
 
+                {:error, _reason} ->
+                  Logger.error(
+                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                  )
+
+                  generic_error(conn, ~p"/berletek")
+              end
+
+            _ ->
               generic_error(conn, ~p"/berletek")
           end
 
-        _ ->
+        {:error, :active_pass_exists} ->
+          Logger.warning(
+            "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
+          )
+
+          generic_error(conn, ~p"/berletek")
+
+        {:error, :once_per_user} ->
+          Logger.warning(
+            "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
+          )
+
+          generic_error(conn, ~p"/berletek")
+
+        {:error, :invalid_type} ->
+          Logger.warning(
+            "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
+          )
+
+          generic_error(conn, ~p"/berletek")
+
+        {:error, _reason} ->
           generic_error(conn, ~p"/berletek")
       end
     else

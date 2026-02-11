@@ -154,11 +154,11 @@ defmodule LucaGymapp.SeasonPasses do
       active_exists? =
         SeasonPass
         |> where([pass], pass.user_id == ^user_id)
-        |> where([pass], pass.pass_type == ^pass_type)
         |> where([pass], pass.occasions > 0)
         |> where([pass], pass.expiry_date >= ^today)
         |> lock("FOR UPDATE")
-        |> Repo.exists?()
+        |> Repo.all()
+        |> Enum.any?(&same_category_active_pass?(&1, category, pass_type))
 
       if active_exists? do
         {:error, :active_pass_exists}
@@ -168,6 +168,10 @@ defmodule LucaGymapp.SeasonPasses do
     else
       :ok
     end
+  end
+
+  defp same_category_active_pass?(%SeasonPass{} = pass, category, pass_type) do
+    pass.pass_type == pass_type or category_for_type(pass.pass_name) == category
   end
 
   defp category_for_type(type) do

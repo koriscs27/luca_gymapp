@@ -53,9 +53,8 @@ defmodule LucaGymappWeb.PageHTML do
       <div class="booking-confirm-modal__panel">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">
-              Bérlet vásárlás
-            </p>
+            <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérlet vásárlás</p>
+
             <h3 id={"payment-title-#{@pass.key}"} class="mt-1 text-xl font-semibold text-neutral-900">
               Fizetési mód
             </h3>
@@ -72,6 +71,7 @@ defmodule LucaGymappWeb.PageHTML do
 
         <div class="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
           <p class="text-sm font-semibold text-neutral-900">{@pass.name}</p>
+
           <div class="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
             <span class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm">
               Ár: {format_huf(@pass.price_huf)} Ft
@@ -97,28 +97,16 @@ defmodule LucaGymappWeb.PageHTML do
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
                   B
                 </span>
+
                 <div>
                   <p class="text-sm font-semibold text-emerald-900">Barion</p>
+
                   <p class="text-xs text-emerald-700">Aktív fizetés</p>
                 </div>
               </div>
+
               <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
                 Ajánlott
-              </span>
-            </div>
-
-            <div class="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 opacity-70">
-              <div class="flex items-center gap-3">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-sm font-semibold text-white">
-                  S
-                </span>
-                <div>
-                  <p class="text-sm font-semibold text-neutral-800">SimplePay</p>
-                  <p class="text-xs text-neutral-500">Hamarosan</p>
-                </div>
-              </div>
-              <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-500">
-                Fejlesztés alatt
               </span>
             </div>
           </div>
@@ -139,9 +127,6 @@ defmodule LucaGymappWeb.PageHTML do
           >
             Fizetés Barionnal
           </button>
-          <p class="text-center text-xs text-neutral-500">
-            A SimplePay hamarosan elérhető lesz.
-          </p>
         </.form>
 
         <.link
