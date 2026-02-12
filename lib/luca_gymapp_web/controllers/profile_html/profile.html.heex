@@ -22,15 +22,15 @@
           <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
             <table id="payments-table" class="min-w-full text-left text-sm">
               <thead>
-              <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
-                <th class="px-3 py-2 font-semibold">Dátum</th>
-                <th class="px-3 py-2 font-semibold">Bérlet</th>
-                <th class="px-3 py-2 font-semibold">Összeg</th>
-                <th class="px-3 py-2 font-semibold">Státusz</th>
-                <th class="px-3 py-2 font-semibold">Művelet</th>
-                <th class="px-3 py-2 font-semibold">Mód</th>
-              </tr>
-            </thead>
+                <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
+                  <th class="px-3 py-2 font-semibold">Dátum</th>
+                  <th class="px-3 py-2 font-semibold">Bérlet</th>
+                  <th class="px-3 py-2 font-semibold">Összeg</th>
+                  <th class="px-3 py-2 font-semibold">Státusz</th>
+                  <th class="px-3 py-2 font-semibold">Művelet</th>
+                  <th class="px-3 py-2 font-semibold">Mód</th>
+                </tr>
+              </thead>
               <tbody>
                 <%= if @payments == [] do %>
                   <tr>
@@ -41,14 +41,14 @@
                 <% end %>
 
                 <%= for payment <- @payments do %>
-                <tr class="border-b border-neutral-200/70">
-                  <td class="px-3 py-2 text-neutral-700">
-                    {format_datetime(payment.inserted_at)}
-                  </td>
-                  <td class="px-3 py-2 text-neutral-700">
-                    <span
-                      class="break-words"
-                      style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                  <tr class="border-b border-neutral-200/70">
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_datetime(payment.inserted_at)}
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      <span
+                        class="break-words"
+                        style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
                       >
                         {season_pass_label(payment.pass_name)}
                       </span>
@@ -58,8 +58,8 @@
                     </td>
                     <td class="px-3 py-2 text-neutral-700">
                       {format_payment_status(payment.status)}
-                  </td>
-                  <td class="px-3 py-2">
+                    </td>
+                    <td class="px-3 py-2">
                       <%= if payment.payment_method == "barion" and is_binary(payment.payment_id) do %>
                         <.form
                           for={%{}}
@@ -82,12 +82,12 @@
                         >
                           Frissítés
                         </button>
-                    <% end %>
-                  </td>
-                  <td class="px-3 py-2 text-neutral-700">
-                    {format_payment_method(payment.payment_method)}
-                  </td>
-                </tr>
+                      <% end %>
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_payment_method(payment.payment_method)}
+                    </td>
+                  </tr>
                 <% end %>
               </tbody>
             </table>

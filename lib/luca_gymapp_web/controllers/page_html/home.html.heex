@@ -7,14 +7,17 @@
     @current_user && "gym-hero-scrim--authed"
   ]}>
   </div>
+
   <div class="relative">
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pb-6 pt-6 sm:px-8 lg:px-10">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#d6c2a1]/55 ring-1 ring-[#7a1c1c]/20">
           <img src={~p"/images/logo.svg"} alt="PL logo" class="h-8 w-8" />
         </div>
+
         <div class="leading-tight">
           <p class="text-xs uppercase tracking-[0.2em] text-[#7a1c1c]/70">Luca Gym</p>
+
           <p class="text-lg font-semibold">Mozgás. Erő. Egyensúly.</p>
         </div>
       </div>
@@ -40,6 +43,7 @@
             Foglalások
           </.link>
         <% end %>
+
         <.link
           href="#rolam"
           class="transition hover:text-[#7a1c1c]/80"
@@ -110,6 +114,7 @@
                 Foglalások
               </.link>
             <% end %>
+
             <.link href="#rolam" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
               Rólam
             </.link>
@@ -146,12 +151,15 @@
     <section class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 pb-16 pt-6 sm:px-8 lg:px-10 lg:pb-24">
       <div class="max-w-2xl">
         <p class="text-sm uppercase tracking-[0.4em] text-[#7a1c1c]/70">Luca Gym</p>
+
         <h1 class="mt-4 text-balance text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
           Egy hely, ahol az edzés fókuszált, a légkör motiváló, a fejlődés biztos.
         </h1>
+
         <p class="mt-5 text-lg text-[#7a1c1c]/80">
           Modern felszerelés, személyre szabott edzéstervek és barátságos közösség. Kezdd el ma!
         </p>
+
         <div class="mt-8 flex flex-wrap gap-4">
           <.link
             href={~p"/foglalas"}
@@ -179,17 +187,25 @@
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
           <p class="text-sm text-[#7a1c1c]/70">Nyitvatartás</p>
+
           <p class="mt-2 text-xl font-semibold">H-P 6:00-22:00</p>
+
           <p class="text-sm text-[#7a1c1c]/70">Sz 8:00-20:00</p>
         </div>
+
         <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
           <p class="text-sm text-[#7a1c1c]/70">Edzőink</p>
+
           <p class="mt-2 text-xl font-semibold">5 szakértő</p>
+
           <p class="text-sm text-[#7a1c1c]/70">Erő, mobilitás, állóképesség</p>
         </div>
+
         <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
           <p class="text-sm text-[#7a1c1c]/70">Kezdő csomag</p>
+
           <p class="mt-2 text-xl font-semibold">7 nap próba</p>
+
           <p class="text-sm text-[#7a1c1c]/70">Felrázunk a rutinból</p>
         </div>
       </div>
@@ -203,7 +219,9 @@
 >
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Rólam</p>
+
     <h2 class="text-3xl font-semibold">Luca – edző, mentor, motivátor.</h2>
+
     <p class="max-w-3xl text-[#7a1c1c]/80">
       Több mint 8 év tapasztalat, személyre szabott edzéstervek, és egy közösség, ahol mindenki
       számít. A célom, hogy erősebbnek és magabiztosabbnak érezd magad minden edzés után.
@@ -218,10 +236,11 @@
   >
     <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Bejelentkezés</p>
+
       <h2 class="text-3xl font-semibold">Lépj be a fiókodba.</h2>
-      <p class="text-[#7a1c1c]/80">
-        Foglalásaid és bérleteid kezelése egy helyen.
-      </p>
+
+      <p class="text-[#7a1c1c]/80">Foglalásaid és bérleteid kezelése egy helyen.</p>
+
       <div class="mt-4 flex flex-wrap gap-4">
         <.link
           href="#login-modal"
@@ -245,10 +264,12 @@
       <div class="flex items-start justify-between gap-4">
         <div>
           <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Bejelentkezés</p>
+
           <h3 id="login-title" class="mt-1 text-2xl font-semibold text-[#7a1c1c]">
             Üdv újra itt!
           </h3>
         </div>
+
         <.link
           href="#"
           class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d6c2a1] text-[#7a1c1c]/70 transition hover:border-[#7a1c1c]/30 hover:text-[#7a1c1c]"
@@ -269,6 +290,7 @@
             Elfelejtetted a jelszót?
           </.link>
         </div>
+
         <div class="text-right text-sm">
           <.link
             href={~p"/confirm-email/new"}
@@ -277,6 +299,7 @@
             Nem kaptad meg a megerősítő e-mailt?
           </.link>
         </div>
+
         <button
           id="login-submit"
           type="submit"
@@ -359,6 +382,7 @@
             <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">
               Sikeres regisztráció
             </p>
+
             <h3
               id="registration-success-title"
               class="mt-1 text-2xl font-semibold text-[#7a1c1c]"
@@ -366,6 +390,7 @@
               Nézd meg az e-mailjeidet
             </h3>
           </div>
+
           <.link
             href="#"
             class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d6c2a1] text-[#7a1c1c]/70 transition hover:border-[#7a1c1c]/30 hover:text-[#7a1c1c]"
@@ -374,9 +399,11 @@
             <.icon name="hero-x-mark" class="h-4 w-4" />
           </.link>
         </div>
+
         <div class="mt-4 rounded-xl border border-[#d6c2a1] bg-[#d6c2a1]/20 px-4 py-3 text-sm text-[#7a1c1c]">
           {info}
         </div>
+
         <.link
           href="#login-modal"
           class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#d6c2a1] px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] transition hover:bg-[#cdb592]"
