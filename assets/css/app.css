@@ -492,3 +492,21 @@ body {
 :where(button, input[type="submit"], .btn, a[role="button"]):not(:disabled):active {
   transform: scale(0.98);
 }
+
+[data-turnstile] {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+[data-turnstile] > div,
+[data-turnstile] iframe {
+  max-width: 100% !important;
+}
+
+@media (max-width: 380px) {
+  [data-turnstile] {
+    transform: scale(0.9);
+    transform-origin: left top;
+    min-height: 64px;
+  }
+}

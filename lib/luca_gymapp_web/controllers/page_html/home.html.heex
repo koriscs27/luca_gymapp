@@ -70,6 +70,12 @@
           </.form>
         <% else %>
           <.link
+            href={~p"/register"}
+            class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
+          >
+            Regisztráció
+          </.link>
+          <.link
             href="#login-modal"
             class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
           >
@@ -78,13 +84,63 @@
         <% end %>
       </nav>
 
-      <.link
-        href="#mobile-menu"
-        class="md:hidden inline-flex items-center justify-center rounded-full border border-[#7a1c1c]/35 bg-[#d6c2a1]/35 p-2 text-[#7a1c1c] transition hover:bg-[#d6c2a1]/55"
-        aria-label="Menü megnyitása"
-      >
-        <.icon name="hero-bars-3" class="h-6 w-6" />
-      </.link>
+      <details class="relative md:hidden">
+        <summary
+          class="inline-flex cursor-pointer list-none items-center justify-center rounded-full border border-[#7a1c1c]/35 bg-[#d6c2a1]/35 p-2 text-[#7a1c1c] transition hover:bg-[#d6c2a1]/55 [&::-webkit-details-marker]:hidden"
+          aria-label="Menü megnyitása"
+        >
+          <.icon name="hero-bars-3" class="h-6 w-6" />
+        </summary>
+
+        <div class="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-[#d6c2a1] bg-white p-3 shadow-xl">
+          <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Menü</p>
+
+          <div class="mt-3 grid gap-2 text-base font-medium text-[#7a1c1c]">
+            <.link href={~p"/berletek"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+              Bérletek
+            </.link>
+            <.link href={~p"/foglalas"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+              Foglalás
+            </.link>
+            <%= if @current_user_is_admin do %>
+              <.link
+                href={~p"/admin/foglalas"}
+                class="rounded-xl border border-[#d6c2a1] px-4 py-3"
+              >
+                Foglalások
+              </.link>
+            <% end %>
+            <.link href="#rolam" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+              Rólam
+            </.link>
+            <%= if @current_user do %>
+              <.link
+                href={~p"/profile"}
+                class="rounded-xl border border-[#d6c2a1] px-4 py-3"
+                id="profile-link-mobile"
+              >
+                Profil
+              </.link>
+              <.form for={%{}} id="logout-form-mobile" action={~p"/logout"} method="delete">
+                <button
+                  id="logout-button-mobile"
+                  type="submit"
+                  class="w-full rounded-xl border border-[#d6c2a1] px-4 py-3 text-left"
+                >
+                  Kijelentkezés
+                </button>
+              </.form>
+            <% else %>
+              <.link href={~p"/register"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+                Regisztráció
+              </.link>
+              <.link href="#login-modal" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+                Bejelentkezés
+              </.link>
+            <% end %>
+          </div>
+        </div>
+      </details>
     </header>
 
     <section class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 pb-16 pt-6 sm:px-8 lg:px-10 lg:pb-24">
@@ -109,6 +165,14 @@
           >
             Bérletek megtekintése
           </.link>
+          <%= if !@current_user do %>
+            <.link
+              href="#login-modal"
+              class="rounded-full border border-[#7a1c1c]/40 px-6 py-3 text-sm font-semibold text-[#7a1c1c] transition hover:border-[#7a1c1c]/70 hover:bg-[#d6c2a1]/35 md:hidden"
+            >
+              Bejelentkezés
+            </.link>
+          <% end %>
         </div>
       </div>
 
@@ -132,46 +196,6 @@
     </section>
   </div>
 </div>
-
-<section id="mobile-menu" class="scroll-mt-20 bg-white px-5 py-6 text-[#7a1c1c] md:hidden">
-  <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Menü</p>
-  <div class="mt-4 grid gap-3 text-base font-medium">
-    <.link href={~p"/berletek"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
-      Bérletek
-    </.link>
-    <.link href={~p"/foglalas"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
-      Foglalás
-    </.link>
-    <%= if @current_user_is_admin do %>
-      <.link href={~p"/admin/foglalas"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
-        Foglalások
-      </.link>
-    <% end %>
-    <.link href="#rolam" class="rounded-xl border border-[#d6c2a1] px-4 py-3">Rólam</.link>
-    <%= if @current_user do %>
-      <.link
-        href={~p"/profile"}
-        class="rounded-xl border border-[#d6c2a1] px-4 py-3"
-        id="profile-link-mobile"
-      >
-        Profil
-      </.link>
-      <.form for={%{}} id="logout-form-mobile" action={~p"/logout"} method="delete">
-        <button
-          id="logout-button-mobile"
-          type="submit"
-          class="w-full rounded-xl border border-[#d6c2a1] px-4 py-3 text-left"
-        >
-          Kijelentkezés
-        </button>
-      </.form>
-    <% else %>
-      <.link href="#login-modal" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
-        Bejelentkezés
-      </.link>
-    <% end %>
-  </div>
-</section>
 
 <section
   id="rolam"
@@ -240,7 +264,7 @@
         <div class="text-right text-sm">
           <.link
             href={~p"/password/forgot"}
-            class="font-semibold text-[#7a1c1c] transition hover:text-[#651717]"
+            class="cursor-pointer text-xs font-normal text-black underline decoration-black/60 underline-offset-2 transition hover:text-black hover:decoration-black"
           >
             Elfelejtetted a jelszót?
           </.link>
@@ -248,7 +272,7 @@
         <div class="text-right text-sm">
           <.link
             href={~p"/confirm-email/new"}
-            class="font-semibold text-[#7a1c1c] transition hover:text-[#651717]"
+            class="cursor-pointer text-xs font-normal text-black underline decoration-black/60 underline-offset-2 transition hover:text-black hover:decoration-black"
           >
             Nem kaptad meg a megerősítő e-mailt?
           </.link>
@@ -263,7 +287,7 @@
         <.link
           id="google-login-button"
           href={~p"/auth/google"}
-          class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#d6c2a1] bg-white px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] shadow-sm transition hover:border-[#7a1c1c]/30 hover:bg-[#d6c2a1]/15"
+          class="inline-flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-[#d6c2a1] bg-white px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] shadow-sm transition hover:-translate-y-0.5 hover:border-[#7a1c1c]/40 hover:bg-[#d6c2a1]/15 hover:shadow-md"
         >
           <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
             <svg

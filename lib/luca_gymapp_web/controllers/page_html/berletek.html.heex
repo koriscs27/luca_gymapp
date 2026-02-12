@@ -400,7 +400,7 @@
           <div class="text-right text-sm">
             <.link
             href={~p"/password/forgot"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
+            class="cursor-pointer text-xs font-normal text-black underline decoration-black/60 underline-offset-2 transition hover:text-black hover:decoration-black"
           >
               Elfelejtetted a jelszót?
             </.link>
@@ -409,7 +409,7 @@
           <div class="text-right text-sm">
             <.link
             href={~p"/confirm-email/new"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
+            class="cursor-pointer text-xs font-normal text-black underline decoration-black/60 underline-offset-2 transition hover:text-black hover:decoration-black"
           >
               Nem kaptad meg a megerősítő e-mailt?
             </.link>
@@ -422,10 +422,10 @@
         >
             Bejelentkezés
           </button>
-          <.link
+        <.link
           id="google-login-button"
           href={~p"/auth/google"}
-          class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"
+          class="inline-flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md"
         >
             <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
               <svg
