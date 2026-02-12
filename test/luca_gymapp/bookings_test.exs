@@ -3,6 +3,7 @@ defmodule LucaGymapp.BookingsTest do
 
   alias LucaGymapp.Accounts
   alias LucaGymapp.Bookings
+  alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
 
@@ -11,14 +12,6 @@ defmodule LucaGymapp.BookingsTest do
 
     now = DateTime.utc_now() |> DateTime.truncate(:second)
     base_time = DateTime.add(now, 2 * 60 * 60, :second)
-
-    base_time =
-      if Time.compare(DateTime.to_time(base_time), ~T[23:30:00]) == :gt do
-        DateTime.add(base_time, 60 * 60, :second)
-      else
-        base_time
-      end
-
     step_seconds = 30 * 60
 
     parent = self()
@@ -193,14 +186,11 @@ defmodule LucaGymapp.BookingsTest do
   end
 
   defp ensure_slot(type, %DateTime{} = start_time, %DateTime{} = end_time) do
-    date = DateTime.to_date(start_time)
-    start_clock = DateTime.to_time(start_time)
-    end_clock = DateTime.to_time(end_time)
+    slot = %CalendarSlot{slot_type: type, start_time: start_time, end_time: end_time}
 
-    case Bookings.create_calendar_slot(type, date, start_clock, end_clock) do
-      {:ok, _slot} -> :ok
-      {:error, %Ecto.Changeset{}} -> :ok
-      {:error, reason} -> flunk("failed to create slot: #{inspect(reason)}")
+    case Bookings.insert_calendar_slots([slot]) do
+      {0, _} -> :ok
+      {_count, _} -> :ok
     end
   end
 end
