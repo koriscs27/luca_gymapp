@@ -64,6 +64,35 @@ defmodule LucaGymappWeb.PageControllerTest do
     refute html =~ "Nincs még bérlet ebben a kategóriában."
   end
 
+  test "purchase shows specific error when user already has active pass in category", %{conn: conn} do
+    user =
+      %User{
+        email: "active-pass@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{
+      pass_name: "10_alkalmas_berlet",
+      pass_type: "personal",
+      occasions: 5,
+      expiry_date: Date.add(Date.utc_today(), 30)
+    })
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/berletek/purchase", %{
+        "pass_name" => "1_alkalmas_jegy",
+        "payment_method" => "dummy"
+      })
+
+    assert redirected_to(conn) == ~p"/berletek"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "Már van aktív bérleted ebben a kategóriában."
+  end
+
   defp insert_pass(user_id, attrs) do
     %SeasonPass{}
     |> SeasonPass.changeset(

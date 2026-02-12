@@ -395,12 +395,12 @@ defmodule LucaGymappWeb.PageController do
 
                       generic_error(conn, ~p"/berletek")
 
-                    {:error, _reason} ->
+                    {:error, reason} ->
                       Logger.error(
                         "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
                       )
 
-                      generic_error(conn, ~p"/berletek")
+                      pass_purchase_error(conn, reason, ~p"/berletek")
                   end
 
                 "dummy" ->
@@ -411,12 +411,12 @@ defmodule LucaGymappWeb.PageController do
                         |> put_flash(:info, "Sikeres fizetes. A berleted aktivalva lett.")
                         |> redirect(to: ~p"/berletek")
 
-                      {:error, _reason} ->
+                      {:error, reason} ->
                         Logger.error(
                           "dummy_payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
                         )
 
-                        generic_error(conn, ~p"/berletek")
+                        pass_purchase_error(conn, reason, ~p"/berletek")
                     end
                   else
                     generic_error(conn, ~p"/berletek")
@@ -431,14 +431,14 @@ defmodule LucaGymappWeb.PageController do
                 "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
               )
 
-              generic_error(conn, ~p"/berletek")
+              pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
 
             {:error, :once_per_user} ->
               Logger.warning(
                 "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
               )
 
-              generic_error(conn, ~p"/berletek")
+              pass_purchase_error(conn, :once_per_user, ~p"/berletek")
 
             {:error, :invalid_type} ->
               Logger.warning(
@@ -480,14 +480,14 @@ defmodule LucaGymappWeb.PageController do
           "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
         )
 
-        generic_error(conn, ~p"/berletek")
+        pass_purchase_error(conn, :once_per_user, ~p"/berletek")
 
       {:error, :active_pass_exists} ->
         Logger.warning(
           "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
         )
 
-        generic_error(conn, ~p"/berletek")
+        pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
 
       {:error, :invalid_type} ->
         Logger.warning(
@@ -866,6 +866,20 @@ defmodule LucaGymappWeb.PageController do
     |> put_flash(:error, "A művelet nem sikerült. Próbáld újra.")
     |> redirect(to: redirect_path)
   end
+
+  defp pass_purchase_error(conn, :active_pass_exists, redirect_path) do
+    conn
+    |> put_flash(:error, "Már van aktív bérleted ebben a kategóriában.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp pass_purchase_error(conn, :once_per_user, redirect_path) do
+    conn
+    |> put_flash(:error, "Ezt a bérletet csak egyszer lehet megvásárolni.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp pass_purchase_error(conn, _reason, redirect_path), do: generic_error(conn, redirect_path)
 
   defp log_booking_error(type, user_id, reason) do
     case user_id do
