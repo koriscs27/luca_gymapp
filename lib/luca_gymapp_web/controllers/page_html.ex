@@ -114,6 +114,35 @@ defmodule LucaGymappWeb.PageHTML do
               />
             </button>
           </.form>
+          <div
+            class="mt-1.5 flex items-center justify-center gap-1.5"
+            aria-label="Elfogadott kártyák"
+          >
+            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/960px-Former_Visa_%28company%29_logo.svg.png"
+                alt="Visa"
+                class="h-3.5 w-auto"
+                loading="lazy"
+              />
+            </span>
+            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/750px-Mastercard-logo.svg.png"
+                alt="Mastercard"
+                class="h-3.5 w-auto"
+                loading="lazy"
+              />
+            </span>
+            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Maestro_2016.svg/440px-Maestro_2016.svg.png"
+                alt="Maestro"
+                class="h-3.5 w-auto"
+                loading="lazy"
+              />
+            </span>
+          </div>
 
           <%= if dummy_payment_available?() do %>
             <.form
