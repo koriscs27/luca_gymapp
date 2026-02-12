@@ -49,6 +49,7 @@ defmodule LucaGymappWeb.Router do
     get "/profile", ProfileController, :show
     patch "/profile", ProfileController, :update_profile
     patch "/profile/password", ProfileController, :update_password
+    patch "/profile/payments/:payment_id/refresh", ProfileController, :refresh_payment
   end
 
   scope "/barion", LucaGymappWeb do

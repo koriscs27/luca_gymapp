@@ -72,6 +72,7 @@ defmodule LucaGymappWeb.PageControllerTest do
           pass_id: Ecto.UUID.generate(),
           pass_name: "default_pass",
           pass_type: "personal",
+          payment_method: "cash",
           occasions: 1,
           purchase_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
           purchase_price: 10_000,

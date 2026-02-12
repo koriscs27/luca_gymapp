@@ -515,7 +515,7 @@ defmodule LucaGymappWeb.PageController do
          {:ok, admin_user} <- fetch_user(current_user_id),
          true <- admin_user.admin,
          {:ok, target_user} <- fetch_user(user_id),
-         {:ok, _pass} <- SeasonPasses.purchase_season_pass(target_user, pass_name) do
+         {:ok, _payment} <- Payments.grant_cash_season_pass(target_user, pass_name) do
       conn
       |> put_flash(:info, "A bérlet sikeresen létrejött a kiválasztott felhasználónak.")
       |> redirect(to: ~p"/berletek")

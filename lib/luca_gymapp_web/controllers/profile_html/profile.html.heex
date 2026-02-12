@@ -1,4 +1,4 @@
-﻿<Layouts.app
+<Layouts.app
   flash={@flash}
   show_nav={false}
   show_logo={false}
@@ -11,6 +11,151 @@
         <p class="text-sm text-neutral-500">
           Itt frissítheted a profil adataidat és a jelszavadat.
         </p>
+      </div>
+
+      <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:mt-8 sm:rounded-2xl sm:p-6">
+        <div>
+          <h2 class="text-lg font-semibold text-neutral-900">Fizetések</h2>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
+            <table id="payments-table" class="min-w-full text-left text-sm">
+              <thead>
+              <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
+                <th class="px-3 py-2 font-semibold">Dátum</th>
+                <th class="px-3 py-2 font-semibold">Bérlet</th>
+                <th class="px-3 py-2 font-semibold">Összeg</th>
+                <th class="px-3 py-2 font-semibold">Státusz</th>
+                <th class="px-3 py-2 font-semibold">Művelet</th>
+                <th class="px-3 py-2 font-semibold">Mód</th>
+              </tr>
+            </thead>
+              <tbody>
+                <%= if @payments == [] do %>
+                  <tr>
+                    <td colspan="6" class="px-3 py-4 text-neutral-500">
+                      Még nincs fizetési előzmény.
+                    </td>
+                  </tr>
+                <% end %>
+
+                <%= for payment <- @payments do %>
+                <tr class="border-b border-neutral-200/70">
+                  <td class="px-3 py-2 text-neutral-700">
+                    {format_datetime(payment.inserted_at)}
+                  </td>
+                  <td class="px-3 py-2 text-neutral-700">
+                    <span
+                      class="break-words"
+                      style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                      >
+                        {season_pass_label(payment.pass_name)}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_huf(payment.amount_huf)} Ft
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_payment_status(payment.status)}
+                  </td>
+                  <td class="px-3 py-2">
+                      <%= if payment.payment_method == "barion" and is_binary(payment.payment_id) do %>
+                        <.form
+                          for={%{}}
+                          id={"refresh-payment-#{payment.id}"}
+                          action={~p"/profile/payments/#{payment.payment_id}/refresh"}
+                          method="patch"
+                        >
+                          <button
+                            type="submit"
+                            class="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-100"
+                          >
+                            Frissítés
+                          </button>
+                        </.form>
+                      <% else %>
+                        <button
+                          type="button"
+                          class="cursor-not-allowed rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-400"
+                          disabled
+                        >
+                          Frissítés
+                        </button>
+                    <% end %>
+                  </td>
+                  <td class="px-3 py-2 text-neutral-700">
+                    {format_payment_method(payment.payment_method)}
+                  </td>
+                </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:rounded-2xl sm:p-6">
+        <div>
+          <h2 class="text-lg font-semibold text-neutral-900">Bérletek</h2>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
+            <table id="season-passes-table" class="min-w-full text-left text-sm">
+              <thead>
+                <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
+                  <th class="px-3 py-2 font-semibold">Vásárlás</th>
+                  <th class="px-3 py-2 font-semibold">Bérlet</th>
+                  <th class="px-3 py-2 font-semibold">Ár</th>
+                  <th class="px-3 py-2 font-semibold">Alkalmak</th>
+                  <th class="px-3 py-2 font-semibold">Lejárat</th>
+                  <th class="px-3 py-2 font-semibold">Fizetés módja</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= if @season_passes == [] do %>
+                  <tr>
+                    <td colspan="6" class="px-3 py-4 text-neutral-500">
+                      Még nincs bérlet előzmény.
+                    </td>
+                  </tr>
+                <% end %>
+
+                <%= for season_pass <- @season_passes do %>
+                  <tr class="border-b border-neutral-200/70">
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_datetime(season_pass.purchase_timestamp)}
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      <span
+                        class="break-words"
+                        style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                      >
+                        {season_pass_label(season_pass.pass_name)}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      <span class="block whitespace-nowrap">
+                        {format_huf(season_pass.purchase_price)}
+                      </span>
+                      <span class="block text-xs leading-none">Ft</span>
+                    </td>
+                    <td class="w-16 px-2 py-2 text-center text-neutral-700">
+                      {season_pass.occasions}
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_date(season_pass.expiry_date)}
+                    </td>
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_payment_method(season_pass.payment_method)}
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div class="mt-6 grid gap-4 sm:mt-8 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -31,22 +176,10 @@
             class="mt-6 grid gap-4"
           >
             <.input field={@profile_form[:name]} type="text" label="Név" />
-            <.input
-              field={@profile_form[:phone_number]}
-              type="text"
-              label="Telefonszám"
-            />
+            <.input field={@profile_form[:phone_number]} type="text" label="Telefonszám" />
             <.input field={@profile_form[:age]} type="number" label="Életkor" />
-            <.input
-              field={@profile_form[:sex]}
-              type="text"
-              label="Nem"
-            />
-            <.input
-              field={@profile_form[:birth_date]}
-              type="date"
-              label="Születési dátum"
-            />
+            <.input field={@profile_form[:sex]} type="text" label="Nem" />
+            <.input field={@profile_form[:birth_date]} type="date" label="Születési dátum" />
 
             <button
               id="profile-submit"
@@ -83,10 +216,10 @@
           >
             <%= if @user.password_hash do %>
               <.input
-              field={@password_form[:current_password]}
-              type="password"
-              label="Jelenlegi jelszó"
-            />
+                field={@password_form[:current_password]}
+                type="password"
+                label="Jelenlegi jelszó"
+              />
             <% end %>
 
             <.input

@@ -106,6 +106,7 @@ defmodule LucaGymapp.SeasonPassesTest do
       pass_id: Ecto.UUID.generate(),
       pass_name: "10_alkalmas_berlet",
       pass_type: "personal",
+      payment_method: "cash",
       occasions: 10,
       purchase_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
       purchase_price: 45_000,

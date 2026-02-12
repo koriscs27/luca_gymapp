@@ -55,6 +55,14 @@ defmodule LucaGymapp.SeasonPasses do
     |> Repo.all()
   end
 
+  def list_recent_user_passes(user_id, limit \\ 20) do
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> order_by([pass], desc: pass.purchase_timestamp)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
   def latest_pass_by_type(user_id, pass_type) when is_binary(pass_type) do
     today = Date.utc_today()
 
@@ -76,18 +84,22 @@ defmodule LucaGymapp.SeasonPasses do
     }
   end
 
-  def purchase_season_pass(%User{} = user, pass_name) do
+  def purchase_season_pass(%User{} = user, pass_name, opts \\ []) do
     Repo.transaction(fn ->
       with {:ok, type_def} <- fetch_type_definition(pass_name),
            :ok <- enforce_once_per_user(user.id, type_def),
            :ok <- enforce_no_active_pass(user.id, type_def) do
         now = DateTime.utc_now() |> DateTime.truncate(:second)
         expiry_date = now |> DateTime.add(60 * 24 * 60 * 60, :second) |> DateTime.to_date()
+        payment_id = Keyword.get(opts, :payment_id)
+        payment_method = Keyword.get(opts, :payment_method, "cash")
 
         attrs = %{
           pass_id: Ecto.UUID.generate(),
           pass_name: type_def.type,
           pass_type: pass_type_for_category(type_def.category),
+          payment_id: payment_id,
+          payment_method: payment_method,
           occasions: type_def.occasions,
           purchase_timestamp: now,
           purchase_price: type_def.price_huf,

@@ -2,6 +2,8 @@ defmodule LucaGymappWeb.ProfileController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Accounts
+  alias LucaGymapp.Payments
+  alias LucaGymapp.SeasonPasses
   require Logger
 
   plug :require_user
@@ -10,8 +12,13 @@ defmodule LucaGymappWeb.ProfileController do
     user = current_user(conn)
     profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
     password_form = Phoenix.Component.to_form(%{}, as: :password)
+    {payments, season_passes} = profile_history(user.id)
 
-    render(conn, :profile, build_profile_assigns(user, profile_form, password_form))
+    render(
+      conn,
+      :profile,
+      build_profile_assigns(user, profile_form, password_form, payments, season_passes)
+    )
   end
 
   def update_profile(conn, %{"user" => user_params}) do
@@ -26,10 +33,14 @@ defmodule LucaGymappWeb.ProfileController do
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
+        {payments, season_passes} = profile_history(user.id)
 
         conn
         |> put_flash(:info, "Profil frissítve.")
-        |> render(:profile, build_profile_assigns(user, profile_form, password_form))
+        |> render(
+          :profile,
+          build_profile_assigns(user, profile_form, password_form, payments, season_passes)
+        )
 
       {:error, changeset} ->
         Logger.warning(
@@ -37,12 +48,19 @@ defmodule LucaGymappWeb.ProfileController do
         )
 
         password_form = Phoenix.Component.to_form(%{}, as: :password)
+        {payments, season_passes} = profile_history(user.id)
 
         conn
         |> put_flash(:error, "Nem sikerült frissíteni a profilt.")
         |> render(
           :profile,
-          build_profile_assigns(user, Phoenix.Component.to_form(changeset), password_form)
+          build_profile_assigns(
+            user,
+            Phoenix.Component.to_form(changeset),
+            password_form,
+            payments,
+            season_passes
+          )
         )
     end
   end
@@ -73,10 +91,14 @@ defmodule LucaGymappWeb.ProfileController do
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
+        {payments, season_passes} = profile_history(user.id)
 
         conn
         |> put_flash(:info, "Jelszó frissítve.")
-        |> render(:profile, build_profile_assigns(user, profile_form, password_form))
+        |> render(
+          :profile,
+          build_profile_assigns(user, profile_form, password_form, payments, season_passes)
+        )
 
       {:error, changeset} ->
         Logger.warning(
@@ -84,6 +106,7 @@ defmodule LucaGymappWeb.ProfileController do
         )
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
+        {payments, season_passes} = profile_history(user.id)
 
         conn
         |> put_flash(:error, "Nem sikerült frissíteni a jelszót.")
@@ -92,7 +115,9 @@ defmodule LucaGymappWeb.ProfileController do
           build_profile_assigns(
             user,
             profile_form,
-            Phoenix.Component.to_form(changeset, as: :password)
+            Phoenix.Component.to_form(changeset, as: :password),
+            payments,
+            season_passes
           )
         )
     end
@@ -102,6 +127,27 @@ defmodule LucaGymappWeb.ProfileController do
     conn
     |> put_flash(:error, "Nem sikerült frissíteni a jelszót.")
     |> redirect(to: ~p"/profile")
+  end
+
+  def refresh_payment(conn, %{"payment_id" => payment_id}) do
+    user = current_user(conn)
+
+    conn =
+      case Payments.sync_payment_status_for_user(user.id, payment_id) do
+        {:ok, _payment} ->
+          put_flash(conn, :info, "A fizetés állapota frissítve lett.")
+
+        {:error, :refresh_not_supported} ->
+          put_flash(conn, :error, "Ehhez a fizetési módhoz nem elérhető frissítés.")
+
+        {:error, :payment_not_found} ->
+          put_flash(conn, :error, "A fizetés nem található.")
+
+        {:error, _reason} ->
+          put_flash(conn, :error, "Nem sikerült frissíteni a fizetést.")
+      end
+
+    redirect(conn, to: ~p"/profile")
   end
 
   defp require_user(conn, _opts) do
@@ -129,11 +175,20 @@ defmodule LucaGymappWeb.ProfileController do
 
   defp current_user(conn), do: conn.assigns.current_user
 
-  defp build_profile_assigns(user, profile_form, password_form) do
+  defp build_profile_assigns(user, profile_form, password_form, payments, season_passes) do
     %{
       user: user,
       profile_form: profile_form,
-      password_form: password_form
+      password_form: password_form,
+      payments: payments,
+      season_passes: season_passes
+    }
+  end
+
+  defp profile_history(user_id) do
+    {
+      Payments.list_recent_user_payments(user_id, 20),
+      SeasonPasses.list_recent_user_passes(user_id, 20)
     }
   end
 end

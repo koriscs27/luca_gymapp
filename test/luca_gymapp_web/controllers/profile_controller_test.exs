@@ -3,6 +3,7 @@ defmodule LucaGymappWeb.ProfileControllerTest do
 
   alias LucaGymapp.Accounts
   alias LucaGymapp.Accounts.User
+  alias LucaGymapp.Payments.Payment
   alias LucaGymapp.Repo
 
   setup %{conn: conn} do
@@ -78,5 +79,70 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert is_nil(cleared_user.birth_date)
     assert cleared_user.email == "profil@example.com"
     assert cleared_user.password_hash == password_hash
+  end
+
+  test "profile shows only last 20 payments by datetime", %{conn: conn, user: user} do
+    Enum.each(1..21, fn idx ->
+      create_payment(user.id, %{
+        payment_id: "barion-#{idx}",
+        payment_method: "barion",
+        pass_name: "pass_#{idx}"
+      })
+    end)
+
+    conn = get(conn, ~p"/profile")
+    html = html_response(conn, 200)
+
+    [_before, payments_table_after] = String.split(html, ~s(id="payments-table"), parts: 2)
+    payments_table = ~s(id="payments-table") <> payments_table_after
+    [payments_table_only | _] = String.split(payments_table, "</table>", parts: 2)
+
+    payment_rows_count =
+      payments_table_only
+      |> String.split("class=\"border-b border-neutral-200/70\"")
+      |> length()
+      |> Kernel.-(1)
+
+    assert payment_rows_count == 20
+  end
+
+  test "refresh is disabled for non-barion payments", %{conn: conn, user: user} do
+    _dummy =
+      create_payment(user.id, %{
+        payment_id: "dummy-1",
+        payment_method: "dummy"
+      })
+
+    conn = patch(conn, ~p"/profile/payments/dummy-1/refresh")
+
+    assert redirected_to(conn) == ~p"/profile"
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "Ehhez a fizetési módhoz nem elérhető frissítés."
+  end
+
+  defp create_payment(user_id, attrs) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    %Payment{}
+    |> Payment.changeset(
+      Map.merge(
+        %{
+          user_id: user_id,
+          payment_method: "barion",
+          pass_name: "10_alkalmas_berlet",
+          amount_huf: 10_000,
+          currency: "HUF",
+          payment_request_id: Ecto.UUID.generate(),
+          payment_id: "barion-" <> Ecto.UUID.generate(),
+          status: "paid",
+          barion_status: "Succeeded",
+          paid_at: now,
+          provider_response: %{"source" => "test"}
+        },
+        attrs
+      )
+    )
+    |> Repo.insert!()
   end
 end

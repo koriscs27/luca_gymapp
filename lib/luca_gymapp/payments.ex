@@ -7,6 +7,7 @@ defmodule LucaGymapp.Payments do
   alias LucaGymapp.Payments.Payment
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses
+  import Ecto.Query, warn: false
 
   def payment_needed? do
     Application.get_env(:luca_gymapp, :payment_needed, true)
@@ -42,6 +43,31 @@ defmodule LucaGymapp.Payments do
     end
   end
 
+  def grant_cash_season_pass(%User{} = user, pass_name) do
+    with {:ok, type_def} <- SeasonPasses.validate_purchase(user, pass_name),
+         {:ok, payment} <- create_payment(user, type_def, "cash") do
+      payment =
+        payment
+        |> Payment.changeset(%{
+          payment_id: "cash-" <> Ecto.UUID.generate(),
+          provider_response: %{"status" => "Succeeded", "source" => "cash"},
+          status: "paid",
+          barion_status: "Succeeded"
+        })
+        |> Repo.update!()
+
+      maybe_finalize_payment(payment)
+    end
+  end
+
+  def list_recent_user_payments(user_id, limit \\ 20) when is_integer(user_id) do
+    Payment
+    |> where([payment], payment.user_id == ^user_id)
+    |> order_by([payment], desc: payment.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
   def handle_return(payment_id) when is_binary(payment_id) do
     with {:ok, payment} <- sync_payment_status(payment_id) do
       {:ok, payment.status}
@@ -56,7 +82,8 @@ defmodule LucaGymapp.Payments do
   def sync_payment_status_for_user(user_id, payment_id)
       when is_integer(user_id) and is_binary(payment_id) do
     case Repo.get_by(Payment, payment_id: payment_id, user_id: user_id) do
-      %Payment{} -> sync_payment_status(payment_id)
+      %Payment{payment_method: "barion"} -> sync_payment_status(payment_id)
+      %Payment{} -> {:error, :refresh_not_supported}
       nil -> {:error, :payment_not_found}
     end
   end
@@ -139,7 +166,12 @@ defmodule LucaGymapp.Payments do
     if is_nil(payment.season_pass_id) do
       user = Accounts.get_user!(payment.user_id)
 
-      case SeasonPasses.purchase_season_pass(user, payment.pass_name) do
+      case SeasonPasses.purchase_season_pass(
+             user,
+             payment.pass_name,
+             payment_id: payment.payment_id,
+             payment_method: payment.payment_method
+           ) do
         {:ok, pass} ->
           payment
           |> Payment.changeset(%{

@@ -7,6 +7,7 @@ defmodule LucaGymapp.PaymentsTest do
   alias LucaGymapp.Payments
   alias LucaGymapp.Payments.Payment
   alias LucaGymapp.Repo
+  alias LucaGymapp.SeasonPasses.SeasonPass
 
   test "dummy payment succeeds and finalizes purchase" do
     user = create_user()
@@ -18,6 +19,10 @@ defmodule LucaGymapp.PaymentsTest do
     assert payment.status == "paid"
     assert is_binary(payment.payment_id)
     assert payment.season_pass_id
+
+    pass = Repo.get!(SeasonPass, payment.season_pass_id)
+    assert pass.payment_method == "dummy"
+    assert pass.payment_id == payment.payment_id
   end
 
   test "dummy payment applies the same prechecks as barion path" do
@@ -43,6 +48,32 @@ defmodule LucaGymapp.PaymentsTest do
              Payments.start_dummy_season_pass_payment(user, "10_alkalmas_berlet")
 
     refute Repo.exists?(from payment in Payment, where: payment.user_id == ^user.id)
+  end
+
+  test "cash grant creates paid payment and links pass metadata" do
+    user = create_user()
+
+    assert {:ok, %Payment{} = payment} =
+             Payments.grant_cash_season_pass(user, "10_alkalmas_berlet")
+
+    assert payment.payment_method == "cash"
+    assert payment.status == "paid"
+    assert is_binary(payment.payment_id)
+    assert payment.season_pass_id
+
+    pass = Repo.get!(SeasonPass, payment.season_pass_id)
+    assert pass.payment_method == "cash"
+    assert pass.payment_id == payment.payment_id
+  end
+
+  test "status refresh is disabled for non-barion payment methods" do
+    user = create_user()
+
+    assert {:ok, %Payment{} = payment} =
+             Payments.grant_cash_season_pass(user, "10_alkalmas_berlet")
+
+    assert {:error, :refresh_not_supported} =
+             Payments.sync_payment_status_for_user(user.id, payment.payment_id)
   end
 
   defp create_user do
