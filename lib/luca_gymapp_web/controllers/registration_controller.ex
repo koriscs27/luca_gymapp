@@ -81,7 +81,11 @@ defmodule LucaGymappWeb.RegistrationController do
   end
 
   defp verify_turnstile(conn, token) do
-    if Mix.env() == :test do
+    bypass_in_test? =
+      Mix.env() == :test and
+        not Application.get_env(:luca_gymapp, :enforce_turnstile_in_test, false)
+
+    if bypass_in_test? do
       :ok
     else
       do_verify_turnstile(conn, token)

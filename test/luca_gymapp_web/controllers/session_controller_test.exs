@@ -32,4 +32,37 @@ defmodule LucaGymappWeb.SessionControllerTest do
     assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Hibás e-mail vagy jelszó."
     assert redirected_to(conn) == "/#login-modal"
   end
+
+  test "rejects password login for google-only user without password", %{conn: conn} do
+    user =
+      %User{
+        email: "google-only@example.com",
+        password_hash: nil,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    conn = post(conn, ~p"/login", user: %{email: user.email, password: "barmi-jelszo"})
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Hibás e-mail vagy jelszó."
+    assert redirected_to(conn) == "/#login-modal"
+  end
+
+  test "rejects login when backend receives missing password", %{conn: conn, user: user} do
+    conn = post(conn, ~p"/login", user: %{email: user.email})
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A bejelentkezés nem sikerült. Próbáld újra."
+
+    assert redirected_to(conn) == "/#login-modal"
+  end
+
+  test "rejects login when backend receives blank password", %{conn: conn, user: user} do
+    conn = post(conn, ~p"/login", user: %{email: user.email, password: "   "})
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A bejelentkezés nem sikerült. Próbáld újra."
+
+    assert redirected_to(conn) == "/#login-modal"
+  end
 end

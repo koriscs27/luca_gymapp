@@ -145,6 +145,40 @@ const renderTurnstileWidgets = () => {
 document.addEventListener("DOMContentLoaded", renderTurnstileWidgets)
 window.addEventListener("phx:page-loading-stop", renderTurnstileWidgets)
 
+const togglePasswordField = toggleButton => {
+  const fieldContainer = toggleButton.closest("[data-password-field]")
+  if (!fieldContainer) {
+    return
+  }
+
+  const passwordInput = fieldContainer.querySelector("[data-password-input]")
+  if (!passwordInput) {
+    return
+  }
+
+  const showIcon = toggleButton.querySelector("[data-password-show-icon]")
+  const hideIcon = toggleButton.querySelector("[data-password-hide-icon]")
+  const showPassword = passwordInput.type === "password"
+
+  passwordInput.type = showPassword ? "text" : "password"
+  toggleButton.setAttribute("aria-label", showPassword ? "Hide password" : "Show password")
+
+  if (showIcon && hideIcon) {
+    showIcon.classList.toggle("hidden", showPassword)
+    hideIcon.classList.toggle("hidden", !showPassword)
+  }
+}
+
+document.addEventListener("click", event => {
+  const toggleButton = event.target.closest("[data-password-toggle]")
+  if (!toggleButton) {
+    return
+  }
+
+  event.preventDefault()
+  togglePasswordField(toggleButton)
+})
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

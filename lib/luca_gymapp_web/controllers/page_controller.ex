@@ -10,8 +10,7 @@ defmodule LucaGymappWeb.PageController do
 
   def home(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
-    current_user_id = get_session(conn, :user_id)
-    current_user = if current_user_id, do: Accounts.get_user!(current_user_id), else: nil
+    {conn, current_user} = current_user_from_session(conn)
     current_user_is_admin = current_user && current_user.admin
 
     render(conn, :home,
@@ -23,8 +22,8 @@ defmodule LucaGymappWeb.PageController do
 
   def berletek(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
-    current_user_id = get_session(conn, :user_id)
-    current_user = if current_user_id, do: Accounts.get_user!(current_user_id), else: nil
+    {conn, current_user} = current_user_from_session(conn)
+    current_user_id = current_user && current_user.id
     is_admin = current_user && current_user.admin
     season_passes = SeasonPasses.list_type_definitions()
     season_pass_categories = SeasonPasses.group_by_category(season_passes)
@@ -59,8 +58,8 @@ defmodule LucaGymappWeb.PageController do
   end
 
   def booking(conn, params) do
-    current_user_id = get_session(conn, :user_id)
-    current_user = if current_user_id, do: Accounts.get_user!(current_user_id), else: nil
+    {conn, current_user} = current_user_from_session(conn)
+    current_user_id = current_user && current_user.id
     is_admin = current_user && current_user.admin
 
     type =
@@ -354,87 +353,106 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp fetch_user(nil), do: {:error, :unauthorized}
-  defp fetch_user(user_id), do: {:ok, Accounts.get_user!(user_id)}
+
+  defp fetch_user(user_id) do
+    case Accounts.get_user(user_id) do
+      nil -> {:error, :unauthorized}
+      user -> {:ok, user}
+    end
+  end
 
   def purchase_season_pass(conn, %{"pass_name" => pass_name} = params) do
     current_user_id = get_session(conn, :user_id)
 
     if current_user_id do
-      user = Accounts.get_user!(current_user_id)
+      case fetch_user(current_user_id) do
+        {:ok, user} ->
+          case SeasonPasses.validate_purchase(user, pass_name) do
+            {:ok, _type_def} ->
+              payment_method = Map.get(params, "payment_method", "barion")
 
-      case SeasonPasses.validate_purchase(user, pass_name) do
-        {:ok, _type_def} ->
-          payment_method = Map.get(params, "payment_method", "barion")
+              case payment_method do
+                "barion" ->
+                  redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
+                  callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
 
-          case payment_method do
-            "barion" ->
-              redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
-              callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
+                  case Payments.start_season_pass_payment(
+                         user,
+                         pass_name,
+                         redirect_url,
+                         callback_url
+                       ) do
+                    {:ok, :skipped} ->
+                      complete_pass_purchase(conn, user, pass_name)
 
-              case Payments.start_season_pass_payment(user, pass_name, redirect_url, callback_url) do
-                {:ok, :skipped} ->
-                  complete_pass_purchase(conn, user, pass_name)
+                    {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
+                      redirect(conn, external: gateway_url)
 
-                {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
-                  redirect(conn, external: gateway_url)
+                    {:error, :missing_barion_payee_email} ->
+                      Logger.error(
+                        "payment_error reason=missing_payee_email pass_name=#{pass_name}"
+                      )
 
-                {:error, :missing_barion_payee_email} ->
-                  Logger.error("payment_error reason=missing_payee_email pass_name=#{pass_name}")
-                  generic_error(conn, ~p"/berletek")
+                      generic_error(conn, ~p"/berletek")
 
-                {:error, _reason} ->
-                  Logger.error(
-                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
-                  )
+                    {:error, _reason} ->
+                      Logger.error(
+                        "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                      )
 
-                  generic_error(conn, ~p"/berletek")
-              end
+                      generic_error(conn, ~p"/berletek")
+                  end
 
-            "dummy" ->
-              if Payments.dummy_payment_available?() do
-                case Payments.start_dummy_season_pass_payment(user, pass_name) do
-                  {:ok, _payment} ->
-                    conn
-                    |> put_flash(:info, "Sikeres fizetes. A berleted aktivalva lett.")
-                    |> redirect(to: ~p"/berletek")
+                "dummy" ->
+                  if Payments.dummy_payment_available?() do
+                    case Payments.start_dummy_season_pass_payment(user, pass_name) do
+                      {:ok, _payment} ->
+                        conn
+                        |> put_flash(:info, "Sikeres fizetes. A berleted aktivalva lett.")
+                        |> redirect(to: ~p"/berletek")
 
-                  {:error, _reason} ->
-                    Logger.error(
-                      "dummy_payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
-                    )
+                      {:error, _reason} ->
+                        Logger.error(
+                          "dummy_payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                        )
 
+                        generic_error(conn, ~p"/berletek")
+                    end
+                  else
                     generic_error(conn, ~p"/berletek")
-                end
-              else
-                generic_error(conn, ~p"/berletek")
+                  end
+
+                _ ->
+                  generic_error(conn, ~p"/berletek")
               end
 
-            _ ->
+            {:error, :active_pass_exists} ->
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
+              )
+
+              generic_error(conn, ~p"/berletek")
+
+            {:error, :once_per_user} ->
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
+              )
+
+              generic_error(conn, ~p"/berletek")
+
+            {:error, :invalid_type} ->
+              Logger.warning(
+                "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
+              )
+
+              generic_error(conn, ~p"/berletek")
+
+            {:error, _reason} ->
               generic_error(conn, ~p"/berletek")
           end
 
-        {:error, :active_pass_exists} ->
-          Logger.warning(
-            "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
-          )
-
-          generic_error(conn, ~p"/berletek")
-
-        {:error, :once_per_user} ->
-          Logger.warning(
-            "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
-          )
-
-          generic_error(conn, ~p"/berletek")
-
-        {:error, :invalid_type} ->
-          Logger.warning(
-            "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
-          )
-
-          generic_error(conn, ~p"/berletek")
-
-        {:error, _reason} ->
+        {:error, :unauthorized} ->
+          Logger.warning("purchase_error_unauthorized")
           generic_error(conn, ~p"/berletek")
       end
     else
@@ -496,7 +514,7 @@ defmodule LucaGymappWeb.PageController do
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
          true <- admin_user.admin,
-         target_user <- Accounts.get_user!(user_id),
+         {:ok, target_user} <- fetch_user(user_id),
          {:ok, _pass} <- SeasonPasses.purchase_season_pass(target_user, pass_name) do
       conn
       |> put_flash(:info, "A bérlet sikeresen létrejött a kiválasztott felhasználónak.")
@@ -711,6 +729,19 @@ defmodule LucaGymappWeb.PageController do
       _ ->
         Logger.error("admin_upload_error reason=unknown admin_user_id=#{current_user_id}")
         generic_error(conn, ~p"/foglalas")
+    end
+  end
+
+  defp current_user_from_session(conn) do
+    case get_session(conn, :user_id) do
+      nil ->
+        {conn, nil}
+
+      user_id ->
+        case Accounts.get_user(user_id) do
+          nil -> {delete_session(conn, :user_id), nil}
+          user -> {conn, user}
+        end
     end
   end
 

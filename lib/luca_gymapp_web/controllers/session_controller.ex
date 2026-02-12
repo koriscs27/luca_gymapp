@@ -5,29 +5,37 @@ defmodule LucaGymappWeb.SessionController do
   require Logger
 
   def create(conn, %{"user" => %{"email" => email, "password" => password}}) do
-    case Accounts.authenticate_user(email, password) do
-      {:ok, user} ->
-        Logger.info("login_success email=#{user.email} name=#{user.name}")
+    if blank?(email) or blank?(password) do
+      Logger.warning("login_error_missing_params")
 
-        conn
-        |> configure_session(renew: true)
-        |> put_session(:user_id, user.id)
-        |> put_flash(:info, "Sikeres bejelentkezés.")
-        |> redirect(to: ~p"/")
+      conn
+      |> put_flash(:error, "A bejelentkezés nem sikerült. Próbáld újra.")
+      |> redirect(to: "/#login-modal")
+    else
+      case Accounts.authenticate_user(email, password) do
+        {:ok, user} ->
+          Logger.info("login_success email=#{user.email} name=#{user.name}")
 
-      {:error, :unconfirmed} ->
-        Logger.warning("login_error_unconfirmed email=#{email}")
+          conn
+          |> configure_session(renew: true)
+          |> put_session(:user_id, user.id)
+          |> put_flash(:info, "Sikeres bejelentkezés.")
+          |> redirect(to: ~p"/")
 
-        conn
-        |> put_flash(:error, "A bejelentkezés nem sikerült. Próbáld újra.")
-        |> redirect(to: "/#login-modal")
+        {:error, :unconfirmed} ->
+          Logger.warning("login_error_unconfirmed email=#{email}")
 
-      :error ->
-        Logger.warning("login_error_invalid email=#{email}")
+          conn
+          |> put_flash(:error, "A bejelentkezés nem sikerült. Próbáld újra.")
+          |> redirect(to: "/#login-modal")
 
-        conn
-        |> put_flash(:error, "Hibás e-mail vagy jelszó.")
-        |> redirect(to: "/#login-modal")
+        :error ->
+          Logger.warning("login_error_invalid email=#{email}")
+
+          conn
+          |> put_flash(:error, "Hibás e-mail vagy jelszó.")
+          |> redirect(to: "/#login-modal")
+      end
     end
   end
 
@@ -45,4 +53,7 @@ defmodule LucaGymappWeb.SessionController do
     |> put_flash(:info, "Sikeres kijelentkezés.")
     |> redirect(to: ~p"/")
   end
+
+  defp blank?(value) when is_binary(value), do: String.trim(value) == ""
+  defp blank?(_value), do: true
 end

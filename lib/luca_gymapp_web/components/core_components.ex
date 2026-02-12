@@ -272,7 +272,47 @@ defmodule LucaGymappWeb.CoreComponents do
     """
   end
 
-  # All other inputs text, datetime-local, url, password, etc. are handled here...
+  def input(%{type: "password"} = assigns) do
+    ~H"""
+    <div class="fieldset mb-2">
+      <label>
+        <span :if={@label} class="label mb-1">{@label}</span>
+        <div class="relative" data-password-field>
+          <input
+            type="password"
+            name={@name}
+            id={@id}
+            value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+            data-password-input
+            class={[
+              @class || "w-full input",
+              "pr-11",
+              @errors != [] && (@error_class || "input-error")
+            ]}
+            {@rest}
+          />
+          <button
+            type="button"
+            data-password-toggle
+            aria-controls={@id}
+            aria-label="Show password"
+            class="absolute inset-y-0 right-1 z-20 flex items-center px-2 text-neutral-500 transition hover:text-neutral-800"
+          >
+            <span data-password-show-icon>
+              <.icon name="hero-eye" class="size-5" />
+            </span>
+            <span data-password-hide-icon class="hidden">
+              <.icon name="hero-eye-slash" class="size-5" />
+            </span>
+          </button>
+        </div>
+      </label>
+      <.error :for={msg <- @errors}>{msg}</.error>
+    </div>
+    """
+  end
+
+  # All other inputs text, datetime-local, url, etc. are handled here...
   def input(assigns) do
     ~H"""
     <div class="fieldset mb-2">

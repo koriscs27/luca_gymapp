@@ -105,21 +105,29 @@ defmodule LucaGymappWeb.ProfileController do
   end
 
   defp require_user(conn, _opts) do
-    if get_session(conn, :user_id) do
-      conn
-    else
-      conn
-      |> put_flash(:error, "Jelentkezz be a profil megtekintéséhez.")
-      |> redirect(to: "/#login-modal")
-      |> halt()
+    case get_session(conn, :user_id) do
+      nil ->
+        conn
+        |> put_flash(:error, "Jelentkezz be a profil megtekintéséhez.")
+        |> redirect(to: "/#login-modal")
+        |> halt()
+
+      user_id ->
+        case Accounts.get_user(user_id) do
+          nil ->
+            conn
+            |> delete_session(:user_id)
+            |> put_flash(:error, "A munkamenet lejárt. Jelentkezz be újra.")
+            |> redirect(to: "/#login-modal")
+            |> halt()
+
+          user ->
+            assign(conn, :current_user, user)
+        end
     end
   end
 
-  defp current_user(conn) do
-    conn
-    |> get_session(:user_id)
-    |> Accounts.get_user!()
-  end
+  defp current_user(conn), do: conn.assigns.current_user
 
   defp build_profile_assigns(user, profile_form, password_form) do
     %{

@@ -1,4 +1,4 @@
-<Layouts.app
+﻿<Layouts.app
   flash={@flash}
   show_nav={false}
   show_logo={false}
@@ -31,10 +31,22 @@
             class="mt-6 grid gap-4"
           >
             <.input field={@profile_form[:name]} type="text" label="Név" />
-            <.input field={@profile_form[:phone_number]} type="text" label="Telefonszám" />
+            <.input
+              field={@profile_form[:phone_number]}
+              type="text"
+              label="Telefonszám"
+            />
             <.input field={@profile_form[:age]} type="number" label="Életkor" />
-            <.input field={@profile_form[:sex]} type="text" label="Nem" />
-            <.input field={@profile_form[:birth_date]} type="date" label="Születési dátum" />
+            <.input
+              field={@profile_form[:sex]}
+              type="text"
+              label="Nem"
+            />
+            <.input
+              field={@profile_form[:birth_date]}
+              type="date"
+              label="Születési dátum"
+            />
 
             <button
               id="profile-submit"
@@ -58,7 +70,7 @@
             <%= if @user.password_hash do %>
               Add meg a jelenlegi jelszavad, majd az újat kétszer.
             <% else %>
-              Google fiókkal léptél be, itt tudsz jelszót beállítani.
+              Google fiókkal léptél be, itt tudsz jelszót létrehozni.
             <% end %>
           </p>
 
@@ -71,21 +83,25 @@
           >
             <%= if @user.password_hash do %>
               <.input
-                field={@password_form[:current_password]}
-                type="password"
-                label="Jelenlegi jelszó"
-              />
+              field={@password_form[:current_password]}
+              type="password"
+              label="Jelenlegi jelszó"
+            />
             <% end %>
 
             <.input
               field={@password_form[:new_password]}
               type="password"
-              label="Új jelszó"
+              label={if @user.password_hash, do: "Új jelszó", else: "Jelszó"}
             />
             <.input
               field={@password_form[:new_password_confirmation]}
               type="password"
-              label="Új jelszó megerősítése"
+              label={
+                if @user.password_hash,
+                  do: "Új jelszó megerősítése",
+                  else: "Jelszó megerősítése"
+              }
             />
 
             <button
@@ -93,7 +109,11 @@
               type="submit"
               class="mt-2 inline-flex items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
             >
-              Mentés
+              <%= if @user.password_hash do %>
+                Mentés
+              <% else %>
+                Jelszó létrehozása
+              <% end %>
             </button>
           </.form>
         </div>

@@ -503,6 +503,12 @@ body {
   max-width: 100% !important;
 }
 
+/* Keep custom password visibility toggle usable across browsers while focused */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 @media (max-width: 380px) {
   [data-turnstile] {
     transform: scale(0.9);

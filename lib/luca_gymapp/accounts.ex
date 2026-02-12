@@ -12,6 +12,17 @@ defmodule LucaGymapp.Accounts do
     Repo.all(User)
   end
 
+  def get_user(id) when is_integer(id), do: Repo.get(User, id)
+
+  def get_user(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {int, ""} -> Repo.get(User, int)
+      _ -> nil
+    end
+  end
+
+  def get_user(_), do: nil
+
   def list_users_for_admin_select do
     User
     |> order_by([user], asc: user.email)
