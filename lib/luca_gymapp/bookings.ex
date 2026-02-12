@@ -115,6 +115,14 @@ defmodule LucaGymapp.Bookings do
       increment_pass_occasions!(booking.pass_id)
       booking
     end)
+    |> case do
+      {:ok, booking} = ok ->
+        _ = Notifications.deliver_booking_cancellation_notification(user, :personal, booking)
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   def cancel_cross_booking(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
@@ -146,6 +154,14 @@ defmodule LucaGymapp.Bookings do
       increment_pass_occasions!(booking.pass_id)
       booking
     end)
+    |> case do
+      {:ok, booking} = ok ->
+        _ = Notifications.deliver_booking_cancellation_notification(user, :cross, booking)
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   def list_calendar_slots_for_week(type, %Date{} = week_start, %Date{} = week_end) do

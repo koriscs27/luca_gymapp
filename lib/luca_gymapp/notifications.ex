@@ -2,6 +2,14 @@ defmodule LucaGymapp.Notifications do
   require Logger
 
   def deliver_booking_notification(user, type, booking) do
+    deliver_coach_email(user, type, booking, "New booking", "Booked")
+  end
+
+  def deliver_booking_cancellation_notification(user, type, booking) do
+    deliver_coach_email(user, type, booking, "Booking cancelled", "Cancelled")
+  end
+
+  defp deliver_coach_email(user, type, booking, subject_prefix, status_label) do
     mailgun = Application.get_env(:luca_gymapp, :mailgun, [])
     coach_email = Application.get_env(:luca_gymapp, :coach_email)
     api_key = Keyword.get(mailgun, :api_key)
@@ -28,14 +36,27 @@ defmodule LucaGymapp.Notifications do
           coach_email,
           user,
           type,
-          booking
+          booking,
+          subject_prefix,
+          status_label
         )
     end
   end
 
-  defp send_mailgun_booking_email(base_url, domain, api_key, from, to, user, type, booking) do
-    subject = "New booking: #{humanize_type(type)}"
-    text = booking_text(user, type, booking)
+  defp send_mailgun_booking_email(
+         base_url,
+         domain,
+         api_key,
+         from,
+         to,
+         user,
+         type,
+         booking,
+         subject_prefix,
+         status_label
+       ) do
+    subject = "#{subject_prefix}: #{humanize_type(type)}"
+    text = booking_text(user, type, booking, status_label)
 
     req = Req.new(base_url: base_url, auth: {:basic, "api", api_key})
 
@@ -65,13 +86,14 @@ defmodule LucaGymapp.Notifications do
     end
   end
 
-  defp booking_text(user, type, booking) do
+  defp booking_text(user, type, booking, status_label) do
     start_time = format_datetime(booking.start_time)
     end_time = format_datetime(booking.end_time)
     name = user.name || ""
     name = if name == "", do: "-", else: name
 
     [
+      "Status: #{status_label}",
       "Class type: #{humanize_type(type)}",
       "Date: #{start_time} - #{end_time}",
       "User email: #{user.email}",
