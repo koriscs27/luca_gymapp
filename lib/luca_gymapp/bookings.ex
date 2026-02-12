@@ -6,6 +6,7 @@ defmodule LucaGymapp.Bookings do
   alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Bookings.CrossBooking
   alias LucaGymapp.Bookings.PersonalBooking
+  alias LucaGymapp.Notifications
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
 
@@ -18,6 +19,14 @@ defmodule LucaGymapp.Bookings do
       decrement_pass_occasions!(pass)
       booking
     end)
+    |> case do
+      {:ok, booking} = ok ->
+        _ = Notifications.deliver_booking_notification(user, :personal, booking)
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   def book_cross_training(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
@@ -30,6 +39,14 @@ defmodule LucaGymapp.Bookings do
       decrement_pass_occasions!(pass)
       booking
     end)
+    |> case do
+      {:ok, booking} = ok ->
+        _ = Notifications.deliver_booking_notification(user, :cross, booking)
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   def list_personal_booked_slot_keys(user_id) do

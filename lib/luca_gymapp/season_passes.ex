@@ -1,7 +1,6 @@
 defmodule LucaGymapp.SeasonPasses do
   import Ecto.Query, warn: false
 
-  alias LucaGymapp.Accounts
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
@@ -111,12 +110,8 @@ defmodule LucaGymapp.SeasonPasses do
         |> SeasonPass.changeset(attrs)
         |> Repo.insert()
         |> case do
-          {:ok, pass} ->
-            _ = Accounts.deliver_season_pass_details(user, pass)
-            pass
-
-          {:error, changeset} ->
-            Repo.rollback(changeset)
+          {:ok, pass} -> pass
+          {:error, changeset} -> Repo.rollback(changeset)
         end
       else
         {:error, reason} -> Repo.rollback(reason)

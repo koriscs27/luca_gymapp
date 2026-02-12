@@ -9,14 +9,23 @@ defmodule LucaGymapp.BookingsTest do
   test "overlapping personal bookings: 15 concurrent rounds allow only 1 success and no extra deduction" do
     user = create_user()
 
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    base_time = DateTime.add(now, 2 * 60 * 60, :second)
+
     base_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
+      if Time.compare(DateTime.to_time(base_time), ~T[23:30:00]) == :gt do
+        DateTime.add(base_time, 60 * 60, :second)
+      else
+        base_time
+      end
+
+    step_seconds = 30 * 60
 
     parent = self()
 
-    Enum.each(1..15, fn round ->
+    Enum.each(0..14, fn round ->
       pass = create_personal_pass(user, 1)
-      start_time = DateTime.add(base_time, round * 40 * 60, :second)
+      start_time = DateTime.add(base_time, round * step_seconds, :second)
       end_time = DateTime.add(start_time, 30 * 60, :second)
       :ok = ensure_slot("personal", start_time, end_time)
 

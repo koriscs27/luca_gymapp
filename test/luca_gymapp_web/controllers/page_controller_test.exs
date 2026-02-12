@@ -3,6 +3,7 @@ defmodule LucaGymappWeb.PageControllerTest do
 
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Repo
+  alias LucaGymapp.SeasonPasses
   alias LucaGymapp.SeasonPasses.SeasonPass
 
   test "GET /", %{conn: conn} do
@@ -13,10 +14,44 @@ defmodule LucaGymappWeb.PageControllerTest do
   test "berletek purchase buttons are inactive for guests", %{conn: conn} do
     conn = get(conn, ~p"/berletek")
     html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
 
-    assert html =~ "Bejelentkezés szükséges"
-    assert html =~ ~s(type="button")
-    assert html =~ ~s(disabled)
+    SeasonPasses.list_type_definitions()
+    |> Enum.each(fn pass ->
+      button_id = "purchase-button-#{pass.key}"
+      button = LazyHTML.query_by_id(doc, button_id)
+
+      assert LazyHTML.tag(button) == ["button"]
+      assert LazyHTML.attribute(button, "disabled") == [""]
+    end)
+  end
+
+  test "berletek hides recent passes when only expired passes exist", %{conn: conn} do
+    user =
+      %User{
+        email: "expired-pass@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{
+      pass_name: "10_alkalmas_berlet",
+      pass_type: "personal",
+      occasions: 5,
+      expiry_date: Date.add(Date.utc_today(), -1)
+    })
+
+    conn = conn |> init_test_session(%{user_id: user.id}) |> get(~p"/berletek")
+    html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
+
+    headings =
+      doc
+      |> LazyHTML.query("h2")
+      |> Enum.map(&LazyHTML.text/1)
+
+    refute Enum.any?(headings, &String.contains?(&1, "Legutóbbi bérletek"))
   end
 
   test "berletek shows only latest valid pass per category and no empty-state text", %{conn: conn} do
@@ -56,15 +91,22 @@ defmodule LucaGymappWeb.PageControllerTest do
 
     conn = conn |> init_test_session(%{user_id: user.id}) |> get(~p"/berletek")
     html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
 
-    assert html =~ "Legutóbbi bérletek"
-    assert html =~ "Personal valid older"
-    assert html =~ "Other valid latest"
-    refute html =~ "Personal invalid newest"
-    refute html =~ "Nincs még bérlet ebben a kategóriában."
+    recent_titles =
+      doc
+      |> LazyHTML.query("section.bg-neutral-950 .grid p.mt-2")
+      |> Enum.map(fn node -> node |> LazyHTML.text() |> String.trim() end)
+
+    assert "Personal valid older" in recent_titles
+    assert "Other valid latest" in recent_titles
+    refute "Personal invalid newest" in recent_titles
+    refute String.contains?(LazyHTML.text(doc), "Nincs még bérlet ebben a kategóriában.")
   end
 
-  test "purchase shows specific error when user already has active pass in category", %{conn: conn} do
+  test "purchase shows specific error when user already has active pass in category", %{
+    conn: conn
+  } do
     user =
       %User{
         email: "active-pass@example.com",
@@ -89,6 +131,7 @@ defmodule LucaGymappWeb.PageControllerTest do
       })
 
     assert redirected_to(conn) == ~p"/berletek"
+
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
              "Már van aktív bérleted ebben a kategóriában."
   end
