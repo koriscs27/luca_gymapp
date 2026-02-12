@@ -475,7 +475,13 @@
           </.link>
         </div>
 
-        <%= if error = Phoenix.Flash.get(@flash, :error) do %>
+        <%= if login_error = Phoenix.Flash.get(@flash, :login_error) do %>
+          <p id="login-error-message" class="mt-4 rounded-lg border-2 border-red-500 bg-red-100 px-3 py-2 text-sm font-semibold text-red-800">
+            {login_error}
+          </p>
+        <% end %>
+
+        <%= if (error = Phoenix.Flash.get(@flash, :error)) && is_nil(Phoenix.Flash.get(@flash, :login_error)) do %>
           <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {error}
           </p>

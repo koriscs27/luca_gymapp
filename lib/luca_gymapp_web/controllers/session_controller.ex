@@ -34,6 +34,7 @@ defmodule LucaGymappWeb.SessionController do
 
           conn
           |> put_flash(:error, "Hibás e-mail vagy jelszó.")
+          |> put_flash(:login_error, "Hibás e-mail vagy jelszó.")
           |> redirect(to: "/#login-modal")
       end
     end

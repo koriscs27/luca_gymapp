@@ -30,7 +30,22 @@ defmodule LucaGymappWeb.SessionControllerTest do
     conn = post(conn, ~p"/login", user: %{email: user.email, password: "rossz-jelszo"})
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Hibás e-mail vagy jelszó."
+    assert Phoenix.Flash.get(conn.assigns.flash, :login_error) == "Hibás e-mail vagy jelszó."
     assert redirected_to(conn) == "/#login-modal"
+  end
+
+  test "shows dedicated login error message in modal after invalid credentials", %{
+    conn: conn,
+    user: user
+  } do
+    conn = post(conn, ~p"/login", user: %{email: user.email, password: "rossz-jelszo"})
+    assert redirected_to(conn) == "/#login-modal"
+
+    conn = conn |> recycle() |> get(~p"/")
+    html = html_response(conn, 200)
+
+    assert html =~ "login-error-message"
+    assert html =~ "Hibás e-mail vagy jelszó."
   end
 
   test "rejects password login for google-only user without password", %{conn: conn} do

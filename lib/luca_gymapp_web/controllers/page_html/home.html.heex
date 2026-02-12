@@ -71,13 +71,13 @@
         <% else %>
           <.link
             href={~p"/register"}
-            class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
+            class="transition hover:text-[#7a1c1c]/80"
           >
             Regisztráció
           </.link>
           <.link
             href="#login-modal"
-            class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
+            class="transition hover:text-[#7a1c1c]/80"
           >
             Bejelentkezés
           </.link>
@@ -328,7 +328,16 @@
         </.link>
       </div>
 
-      <%= if error = Phoenix.Flash.get(@flash, :error) do %>
+      <%= if login_error = Phoenix.Flash.get(@flash, :login_error) do %>
+        <p
+          id="login-error-message"
+          class="mt-4 rounded-lg border-2 border-red-500 bg-red-100 px-3 py-2 text-sm font-semibold text-red-800"
+        >
+          {login_error}
+        </p>
+      <% end %>
+
+      <%= if (error = Phoenix.Flash.get(@flash, :error)) && is_nil(Phoenix.Flash.get(@flash, :login_error)) do %>
         <p class="mt-4 rounded-lg border border-[#d6c2a1] bg-[#d6c2a1]/20 px-3 py-2 text-sm text-[#7a1c1c]">
           {error}
         </p>
