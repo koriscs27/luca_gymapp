@@ -125,3 +125,5 @@ config :luca_gymapp, LucaGymapp.Mailer,
   domain: System.get_env("MAILGUN_DOMAIN"),
   base_url: System.get_env("MAILGUN_BASE_URL"),
   default_from: System.get_env("MAILGUN_FROM") || "no-reply@localhost"
+
+config :luca_gymapp, dummy_payment_enabled: true

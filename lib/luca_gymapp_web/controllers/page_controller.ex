@@ -390,6 +390,25 @@ defmodule LucaGymappWeb.PageController do
                   generic_error(conn, ~p"/berletek")
               end
 
+            "dummy" ->
+              if Payments.dummy_payment_available?() do
+                case Payments.start_dummy_season_pass_payment(user, pass_name) do
+                  {:ok, _payment} ->
+                    conn
+                    |> put_flash(:info, "Sikeres fizetes. A berleted aktivalva lett.")
+                    |> redirect(to: ~p"/berletek")
+
+                  {:error, _reason} ->
+                    Logger.error(
+                      "dummy_payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                    )
+
+                    generic_error(conn, ~p"/berletek")
+                end
+              else
+                generic_error(conn, ~p"/berletek")
+              end
+
             _ ->
               generic_error(conn, ~p"/berletek")
           end

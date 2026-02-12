@@ -1,38 +1,48 @@
 defmodule LucaGymapp.PaymentsTest do
   use LucaGymapp.DataCase, async: false
 
+  import Ecto.Query
+
   alias LucaGymapp.Accounts
   alias LucaGymapp.Payments
+  alias LucaGymapp.Payments.Payment
+  alias LucaGymapp.Repo
 
-  test "barion purchase flow returns value and prints it for debugging" do
+  test "dummy payment succeeds and finalizes purchase" do
     user = create_user()
-    pass_name = "10_alkalmas_berlet"
-    redirect_url = "http://localhost:4000/barion/return"
-    callback_url = "http://localhost:4000/barion/callback"
 
-    previous_payment_needed = Application.get_env(:luca_gymapp, :payment_needed)
+    assert {:ok, %Payment{} = payment} =
+             Payments.start_dummy_season_pass_payment(user, "10_alkalmas_berlet")
 
-    Application.put_env(:luca_gymapp, :payment_needed, true)
+    assert payment.payment_method == "dummy"
+    assert payment.status == "paid"
+    assert is_binary(payment.payment_id)
+    assert payment.season_pass_id
+  end
+
+  test "dummy payment applies the same prechecks as barion path" do
+    user = create_user()
+
+    assert {:ok, %Payment{}} =
+             Payments.start_dummy_season_pass_payment(user, "10_alkalmas_berlet")
+
+    assert {:error, :active_pass_exists} =
+             Payments.start_dummy_season_pass_payment(user, "10_alkalmas_berlet")
+  end
+
+  test "dummy payment is blocked when feature flag is disabled" do
+    user = create_user()
+    previous = Application.get_env(:luca_gymapp, :dummy_payment_enabled)
+    Application.put_env(:luca_gymapp, :dummy_payment_enabled, false)
 
     on_exit(fn ->
-      if is_nil(previous_payment_needed) do
-        Application.delete_env(:luca_gymapp, :payment_needed)
-      else
-        Application.put_env(:luca_gymapp, :payment_needed, previous_payment_needed)
-      end
+      Application.put_env(:luca_gymapp, :dummy_payment_enabled, previous)
     end)
 
-    result =
-      Payments.start_season_pass_payment(
-        user,
-        pass_name,
-        redirect_url,
-        callback_url
-      )
+    assert {:error, :dummy_payment_not_available} =
+             Payments.start_dummy_season_pass_payment(user, "10_alkalmas_berlet")
 
-    IO.inspect(result, label: "barion_purchase_result")
-
-    assert match?({:ok, _}, result) or match?({:error, _}, result)
+    refute Repo.exists?(from payment in Payment, where: payment.user_id == ^user.id)
   end
 
   defp create_user do

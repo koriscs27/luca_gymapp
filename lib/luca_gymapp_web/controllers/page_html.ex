@@ -38,6 +38,10 @@ defmodule LucaGymappWeb.PageHTML do
     |> season_pass_label()
   end
 
+  def dummy_payment_available? do
+    Application.get_env(:luca_gymapp, :dummy_payment_enabled, false)
+  end
+
   attr :pass, :map, required: true
 
   def payment_modal(assigns) do
@@ -97,7 +101,6 @@ defmodule LucaGymappWeb.PageHTML do
                 <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
                   B
                 </span>
-
                 <div>
                   <p class="text-sm font-semibold text-emerald-900">Barion</p>
 
@@ -109,25 +112,70 @@ defmodule LucaGymappWeb.PageHTML do
                 Ajánlott
               </span>
             </div>
+
+            <img
+              src="https://docs.barion.com/images/5/5b/Barion-card-strip-intl_large.png"
+              alt="Barion accepted payment methods"
+              class="h-11 w-auto max-w-full rounded-lg border border-neutral-200 bg-white p-2"
+              loading="lazy"
+            />
+
+            <%= if dummy_payment_available?() do %>
+              <div class="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-600 text-sm font-semibold text-white">
+                    D
+                  </span>
+
+                  <div>
+                    <p class="text-sm font-semibold text-amber-900">Dummy</p>
+                    <p class="text-xs text-amber-700">Csak fejlesztéshez és teszthez</p>
+                  </div>
+                </div>
+
+                <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700">
+                  Dev/Test
+                </span>
+              </div>
+            <% end %>
           </div>
         </div>
 
-        <.form
-          for={%{}}
-          id={"confirm-purchase-#{@pass.key}"}
-          action={~p"/berletek/purchase"}
-          method="post"
-          class="mt-6 space-y-3"
-        >
-          <.input type="hidden" name="pass_name" value={@pass.type} />
-          <.input type="hidden" name="payment_method" value="barion" />
-          <button
-            type="submit"
-            class="w-full rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+        <div class="mt-6 space-y-3">
+          <.form
+            for={%{}}
+            id={"confirm-purchase-barion-#{@pass.key}"}
+            action={~p"/berletek/purchase"}
+            method="post"
           >
-            Fizetés Barionnal
-          </button>
-        </.form>
+            <.input type="hidden" name="pass_name" value={@pass.type} />
+            <.input type="hidden" name="payment_method" value="barion" />
+            <button
+              type="submit"
+              class="w-full rounded-full bg-[#00AEEF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0098d6]"
+            >
+              Fizetés Barionnal
+            </button>
+          </.form>
+
+          <%= if dummy_payment_available?() do %>
+            <.form
+              for={%{}}
+              id={"confirm-purchase-dummy-#{@pass.key}"}
+              action={~p"/berletek/purchase"}
+              method="post"
+            >
+              <.input type="hidden" name="pass_name" value={@pass.type} />
+              <.input type="hidden" name="payment_method" value="dummy" />
+              <button
+                type="submit"
+                class="w-full rounded-full bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-500"
+              >
+                Dummy fizetés (dev/test)
+              </button>
+            </.form>
+          <% end %>
+        </div>
 
         <.link
           href="#"

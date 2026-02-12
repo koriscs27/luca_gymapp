@@ -12,11 +12,33 @@ defmodule LucaGymapp.Payments do
     Application.get_env(:luca_gymapp, :payment_needed, true)
   end
 
+  def dummy_payment_available? do
+    Application.get_env(:luca_gymapp, :dummy_payment_enabled, false)
+  end
+
   def start_season_pass_payment(%User{} = user, pass_name, redirect_url, callback_url) do
     if payment_needed?() do
       do_start_barion_payment(user, pass_name, redirect_url, callback_url)
     else
       {:ok, :skipped}
+    end
+  end
+
+  def start_dummy_season_pass_payment(%User{} = user, pass_name) do
+    with true <- dummy_payment_available?() or {:error, :dummy_payment_not_available},
+         {:ok, type_def} <- SeasonPasses.validate_purchase(user, pass_name),
+         {:ok, payment} <- create_payment(user, type_def, "dummy") do
+      payment =
+        payment
+        |> Payment.changeset(%{
+          payment_id: "dummy-" <> Ecto.UUID.generate(),
+          provider_response: %{"status" => "Succeeded", "source" => "dummy"},
+          status: "paid",
+          barion_status: "Succeeded"
+        })
+        |> Repo.update!()
+
+      maybe_finalize_payment(payment)
     end
   end
 
@@ -63,7 +85,7 @@ defmodule LucaGymapp.Payments do
   defp do_start_barion_payment(%User{} = user, pass_name, redirect_url, callback_url) do
     with {:ok, type_def} <- SeasonPasses.validate_purchase(user, pass_name),
          :ok <- validate_barion_config(),
-         {:ok, payment} <- create_payment(user, type_def) do
+         {:ok, payment} <- create_payment(user, type_def, "barion") do
       case Barion.start_payment(%{
              pos_key: barion_pos_key(),
              payee_email: barion_payee_email(),
@@ -99,10 +121,11 @@ defmodule LucaGymapp.Payments do
     end
   end
 
-  defp create_payment(%User{} = user, type_def) do
+  defp create_payment(%User{} = user, type_def, payment_method) do
     %Payment{}
     |> Payment.changeset(%{
       user_id: user.id,
+      payment_method: payment_method,
       pass_name: type_def.type,
       amount_huf: type_def.price_huf,
       currency: "HUF",

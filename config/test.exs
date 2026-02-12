@@ -66,6 +66,7 @@ config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
 config :luca_gymapp, payment_needed: false
+config :luca_gymapp, dummy_payment_enabled: true
 
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,

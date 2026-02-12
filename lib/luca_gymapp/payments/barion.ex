@@ -47,14 +47,22 @@ defmodule LucaGymapp.Payments.Barion do
     }
 
     request = Req.new(base_url: api_base_url, headers: [{"x-pos-key", pos_key}])
-    Logger.warning("barion_start_request url=#{api_base_url}/v2/Payment/Start payload=#{inspect(payload)}")
+
+    Logger.warning(
+      "barion_start_request url=#{api_base_url}/v2/Payment/Start payload=#{inspect(payload)}"
+    )
 
     case Req.post(request, url: "/v2/Payment/Start", json: payload) do
       {:ok,
-       %{status: 200, body: %{"PaymentId" => payment_id, "GatewayUrl" => gateway_url} = body} = response} ->
+       %{status: 200, body: %{"PaymentId" => payment_id, "GatewayUrl" => gateway_url} = body} =
+           response} ->
         if has_errors?(body) do
           request_id = request_id_from_response(response)
-          Logger.warning("barion_start_errors request_id=#{request_id || "n/a"} body=#{inspect(body)}")
+
+          Logger.warning(
+            "barion_start_errors request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+          )
+
           {:error, {:barion_error, body}}
         else
           {:ok, %{payment_id: payment_id, gateway_url: gateway_url, raw: body}}
