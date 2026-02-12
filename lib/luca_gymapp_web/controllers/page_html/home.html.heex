@@ -1,5 +1,5 @@
 <div class={[
-  "gym-hero min-h-screen text-white",
+  "gym-hero min-h-screen text-[#7a1c1c]",
   @current_user && "gym-hero--authed"
 ]}>
   <div class={[
@@ -10,11 +10,11 @@
   <div class="relative">
     <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 pb-6 pt-6 sm:px-8 lg:px-10">
       <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#d6c2a1]/55 ring-1 ring-[#7a1c1c]/20">
           <img src={~p"/images/logo.svg"} alt="PL logo" class="h-8 w-8" />
         </div>
         <div class="leading-tight">
-          <p class="text-xs uppercase tracking-[0.2em] text-white/70">Luca Gym</p>
+          <p class="text-xs uppercase tracking-[0.2em] text-[#7a1c1c]/70">Luca Gym</p>
           <p class="text-lg font-semibold">Mozgás. Erő. Egyensúly.</p>
         </div>
       </div>
@@ -22,34 +22,34 @@
       <nav class="hidden items-center gap-8 text-sm font-medium md:flex">
         <.link
           href={~p"/berletek"}
-          class="transition hover:text-white/80"
+          class="transition hover:text-[#7a1c1c]/80"
         >
           Bérletek
         </.link>
         <.link
           href={~p"/foglalas"}
-          class="transition hover:text-white/80"
+          class="transition hover:text-[#7a1c1c]/80"
         >
           Foglalás
         </.link>
         <%= if @current_user_is_admin do %>
           <.link
             href={~p"/admin/foglalas"}
-            class="transition hover:text-white/80"
+            class="transition hover:text-[#7a1c1c]/80"
           >
             Foglalások
           </.link>
         <% end %>
         <.link
           href="#rolam"
-          class="transition hover:text-white/80"
+          class="transition hover:text-[#7a1c1c]/80"
         >
           Rólam
         </.link>
         <%= if @current_user do %>
           <.link
             href={~p"/profile"}
-            class="transition hover:text-white/80"
+            class="transition hover:text-[#7a1c1c]/80"
             id="profile-link"
           >
             Profil
@@ -63,7 +63,7 @@
             <button
               id="logout-button"
               type="submit"
-              class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+              class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
             >
               Kijelentkezés
             </button>
@@ -71,7 +71,7 @@
         <% else %>
           <.link
             href="#login-modal"
-            class="rounded-full border border-white/30 px-4 py-2 text-white transition hover:border-white/60 hover:bg-white/10"
+            class="rounded-full border border-[#7a1c1c]/35 px-4 py-2 text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
           >
             Bejelentkezés
           </.link>
@@ -80,7 +80,7 @@
 
       <.link
         href="#mobile-menu"
-        class="md:hidden inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 p-2 text-white transition hover:bg-white/10"
+        class="md:hidden inline-flex items-center justify-center rounded-full border border-[#7a1c1c]/35 bg-[#d6c2a1]/35 p-2 text-[#7a1c1c] transition hover:bg-[#d6c2a1]/55"
         aria-label="Menü megnyitása"
       >
         <.icon name="hero-bars-3" class="h-6 w-6" />
@@ -89,23 +89,23 @@
 
     <section class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-5 pb-16 pt-6 sm:px-8 lg:px-10 lg:pb-24">
       <div class="max-w-2xl">
-        <p class="text-sm uppercase tracking-[0.4em] text-white/70">Luca Gym</p>
+        <p class="text-sm uppercase tracking-[0.4em] text-[#7a1c1c]/70">Luca Gym</p>
         <h1 class="mt-4 text-balance text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
           Egy hely, ahol az edzés fókuszált, a légkör motiváló, a fejlődés biztos.
         </h1>
-        <p class="mt-5 text-lg text-white/80">
+        <p class="mt-5 text-lg text-[#7a1c1c]/80">
           Modern felszerelés, személyre szabott edzéstervek és barátságos közösség. Kezdd el ma!
         </p>
         <div class="mt-8 flex flex-wrap gap-4">
           <.link
             href={~p"/foglalas"}
-            class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white/90"
+            class="rounded-full bg-[#d6c2a1] px-6 py-3 text-sm font-semibold text-[#7a1c1c] transition hover:bg-[#cdb592]"
           >
             Óra foglalása
           </.link>
           <.link
             href={~p"/berletek"}
-            class="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/10"
+            class="rounded-full border border-[#7a1c1c]/40 px-6 py-3 text-sm font-semibold text-[#7a1c1c] transition hover:border-[#7a1c1c]/70 hover:bg-[#d6c2a1]/35"
           >
             Bérletek megtekintése
           </.link>
@@ -113,45 +113,45 @@
       </div>
 
       <div class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Nyitvatartás</p>
+        <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
+          <p class="text-sm text-[#7a1c1c]/70">Nyitvatartás</p>
           <p class="mt-2 text-xl font-semibold">H-P 6:00-22:00</p>
-          <p class="text-sm text-white/70">Sz 8:00-20:00</p>
+          <p class="text-sm text-[#7a1c1c]/70">Sz 8:00-20:00</p>
         </div>
-        <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Edzőink</p>
+        <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
+          <p class="text-sm text-[#7a1c1c]/70">Edzőink</p>
           <p class="mt-2 text-xl font-semibold">5 szakértő</p>
-          <p class="text-sm text-white/70">Erő, mobilitás, állóképesség</p>
+          <p class="text-sm text-[#7a1c1c]/70">Erő, mobilitás, állóképesség</p>
         </div>
-        <div class="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur">
-          <p class="text-sm text-white/70">Kezdő csomag</p>
+        <div class="rounded-2xl border border-[#d6c2a1] bg-white p-5 backdrop-blur">
+          <p class="text-sm text-[#7a1c1c]/70">Kezdő csomag</p>
           <p class="mt-2 text-xl font-semibold">7 nap próba</p>
-          <p class="text-sm text-white/70">Felrázunk a rutinból</p>
+          <p class="text-sm text-[#7a1c1c]/70">Felrázunk a rutinból</p>
         </div>
       </div>
     </section>
   </div>
 </div>
 
-<section id="mobile-menu" class="scroll-mt-20 bg-white/95 px-5 py-6 text-neutral-900 md:hidden">
-  <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Menü</p>
+<section id="mobile-menu" class="scroll-mt-20 bg-white px-5 py-6 text-[#7a1c1c] md:hidden">
+  <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Menü</p>
   <div class="mt-4 grid gap-3 text-base font-medium">
-    <.link href={~p"/berletek"} class="rounded-xl border border-neutral-200 px-4 py-3">
+    <.link href={~p"/berletek"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
       Bérletek
     </.link>
-    <.link href={~p"/foglalas"} class="rounded-xl border border-neutral-200 px-4 py-3">
+    <.link href={~p"/foglalas"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
       Foglalás
     </.link>
     <%= if @current_user_is_admin do %>
-      <.link href={~p"/admin/foglalas"} class="rounded-xl border border-neutral-200 px-4 py-3">
+      <.link href={~p"/admin/foglalas"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
         Foglalások
       </.link>
     <% end %>
-    <.link href="#rolam" class="rounded-xl border border-neutral-200 px-4 py-3">Rólam</.link>
+    <.link href="#rolam" class="rounded-xl border border-[#d6c2a1] px-4 py-3">Rólam</.link>
     <%= if @current_user do %>
       <.link
         href={~p"/profile"}
-        class="rounded-xl border border-neutral-200 px-4 py-3"
+        class="rounded-xl border border-[#d6c2a1] px-4 py-3"
         id="profile-link-mobile"
       >
         Profil
@@ -160,13 +160,13 @@
         <button
           id="logout-button-mobile"
           type="submit"
-          class="w-full rounded-xl border border-neutral-200 px-4 py-3 text-left"
+          class="w-full rounded-xl border border-[#d6c2a1] px-4 py-3 text-left"
         >
           Kijelentkezés
         </button>
       </.form>
     <% else %>
-      <.link href="#login-modal" class="rounded-xl border border-neutral-200 px-4 py-3">
+      <.link href="#login-modal" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
         Bejelentkezés
       </.link>
     <% end %>
@@ -175,12 +175,12 @@
 
 <section
   id="rolam"
-  class="scroll-mt-20 bg-neutral-100 px-5 py-16 text-neutral-900 sm:px-8 lg:px-10"
+  class="scroll-mt-20 bg-[#d6c2a1]/30 px-5 py-16 text-[#7a1c1c] sm:px-8 lg:px-10"
 >
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Rólam</p>
+    <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Rólam</p>
     <h2 class="text-3xl font-semibold">Luca – edző, mentor, motivátor.</h2>
-    <p class="max-w-3xl text-neutral-600">
+    <p class="max-w-3xl text-[#7a1c1c]/80">
       Több mint 8 év tapasztalat, személyre szabott edzéstervek, és egy közösség, ahol mindenki
       számít. A célom, hogy erősebbnek és magabiztosabbnak érezd magad minden edzés után.
     </p>
@@ -190,24 +190,24 @@
 <%= if !@current_user do %>
   <section
     id="bejelentkezes"
-    class="scroll-mt-20 bg-neutral-950 px-5 py-16 text-white sm:px-8 lg:px-10"
+    class="scroll-mt-20 bg-[#d6c2a1]/45 px-5 py-16 text-[#7a1c1c] sm:px-8 lg:px-10"
   >
     <div class="mx-auto flex w-full max-w-6xl flex-col gap-4">
-      <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bejelentkezés</p>
+      <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Bejelentkezés</p>
       <h2 class="text-3xl font-semibold">Lépj be a fiókodba.</h2>
-      <p class="text-white/70">
+      <p class="text-[#7a1c1c]/80">
         Foglalásaid és bérleteid kezelése egy helyen.
       </p>
       <div class="mt-4 flex flex-wrap gap-4">
         <.link
           href="#login-modal"
-          class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white/90"
+          class="rounded-full bg-[#d6c2a1] px-6 py-3 text-sm font-semibold text-[#7a1c1c] transition hover:bg-[#cdb592]"
         >
           Bejelentkezés
         </.link>
         <.link
           href={~p"/berletek"}
-          class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/70 hover:bg-white/10"
+          class="rounded-full border border-[#7a1c1c]/35 px-6 py-3 text-sm font-semibold text-[#7a1c1c] transition hover:border-[#7a1c1c]/60 hover:bg-[#d6c2a1]/35"
         >
           Vissza a bérletekhez
         </.link>
@@ -220,14 +220,14 @@
     <div class="login-modal__panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bejelentkezés</p>
-          <h3 id="login-title" class="mt-1 text-2xl font-semibold text-neutral-900">
+          <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Bejelentkezés</p>
+          <h3 id="login-title" class="mt-1 text-2xl font-semibold text-[#7a1c1c]">
             Üdv újra itt!
           </h3>
         </div>
         <.link
           href="#"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d6c2a1] text-[#7a1c1c]/70 transition hover:border-[#7a1c1c]/30 hover:text-[#7a1c1c]"
           aria-label="Bezárás"
         >
           <.icon name="hero-x-mark" class="h-4 w-4" />
@@ -240,7 +240,7 @@
         <div class="text-right text-sm">
           <.link
             href={~p"/password/forgot"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
+            class="font-semibold text-[#7a1c1c] transition hover:text-[#651717]"
           >
             Elfelejtetted a jelszót?
           </.link>
@@ -248,7 +248,7 @@
         <div class="text-right text-sm">
           <.link
             href={~p"/confirm-email/new"}
-            class="font-semibold text-amber-600 transition hover:text-amber-500"
+            class="font-semibold text-[#7a1c1c] transition hover:text-[#651717]"
           >
             Nem kaptad meg a megerősítő e-mailt?
           </.link>
@@ -256,14 +256,14 @@
         <button
           id="login-submit"
           type="submit"
-          class="w-full cursor-pointer rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800 hover:shadow-sm"
+          class="w-full cursor-pointer rounded-xl bg-[#d6c2a1] px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] transition hover:bg-[#cdb592] hover:shadow-sm"
         >
           Bejelentkezés
         </button>
         <.link
           id="google-login-button"
           href={~p"/auth/google"}
-          class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"
+          class="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-[#d6c2a1] bg-white px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] shadow-sm transition hover:border-[#7a1c1c]/30 hover:bg-[#d6c2a1]/15"
         >
           <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white">
             <svg
@@ -295,17 +295,17 @@
       </.form>
 
       <div class="mt-4 flex items-center justify-between text-sm">
-        <span class="text-neutral-500">Nincs még fiókod?</span>
+        <span class="text-[#7a1c1c]/70">Nincs még fiókod?</span>
         <.link
           href={~p"/register"}
-          class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-amber-200/80 transition hover:bg-amber-100 hover:text-amber-800"
+          class="inline-flex items-center rounded-full bg-[#d6c2a1]/35 px-3 py-1 font-semibold text-[#7a1c1c] ring-1 ring-[#d6c2a1] transition hover:bg-[#d6c2a1]/55 hover:text-[#651717]"
         >
           Regisztrálj
         </.link>
       </div>
 
       <%= if error = Phoenix.Flash.get(@flash, :error) do %>
-        <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p class="mt-4 rounded-lg border border-[#d6c2a1] bg-[#d6c2a1]/20 px-3 py-2 text-sm text-[#7a1c1c]">
           {error}
         </p>
       <% end %>
@@ -323,30 +323,30 @@
       >
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-emerald-500">
+            <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">
               Sikeres regisztráció
             </p>
             <h3
               id="registration-success-title"
-              class="mt-1 text-2xl font-semibold text-neutral-900"
+              class="mt-1 text-2xl font-semibold text-[#7a1c1c]"
             >
               Nézd meg az e-mailjeidet
             </h3>
           </div>
           <.link
             href="#"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d6c2a1] text-[#7a1c1c]/70 transition hover:border-[#7a1c1c]/30 hover:text-[#7a1c1c]"
             aria-label="Bezárás"
           >
             <.icon name="hero-x-mark" class="h-4 w-4" />
           </.link>
         </div>
-        <div class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div class="mt-4 rounded-xl border border-[#d6c2a1] bg-[#d6c2a1]/20 px-4 py-3 text-sm text-[#7a1c1c]">
           {info}
         </div>
         <.link
           href="#login-modal"
-          class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+          class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#d6c2a1] px-4 py-2.5 text-sm font-semibold text-[#7a1c1c] transition hover:bg-[#cdb592]"
         >
           Bejelentkezés
         </.link>
