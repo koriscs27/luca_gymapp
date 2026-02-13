@@ -123,6 +123,12 @@ defmodule LucaGymappWeb.PageController do
         MapSet.new()
       end
 
+    full_slot_keys =
+      case type do
+        :cross -> Bookings.list_cross_full_slot_keys(week_start, week_end)
+        _ -> MapSet.new()
+      end
+
     admin_slot_form = Phoenix.Component.to_form(%{}, as: :admin_slot)
     admin_publish_form = Phoenix.Component.to_form(%{}, as: :admin_publish)
     admin_delete_form = Phoenix.Component.to_form(%{}, as: :admin_delete)
@@ -144,6 +150,7 @@ defmodule LucaGymappWeb.PageController do
       booking_days: ordered_days,
       booking_availability: %{},
       booked_slot_keys: booked_slot_keys,
+      full_slot_keys: full_slot_keys,
       week_offset: week_offset,
       week_start: week_start,
       week_end: week_end,
@@ -233,6 +240,14 @@ defmodule LucaGymappWeb.PageController do
         log_booking_error("personal", current_user_id, :slot_not_available)
         generic_error(conn, ~p"/foglalas?type=personal&view=week")
 
+      {:error, :booking_closed} ->
+        log_booking_error("personal", current_user_id, :booking_closed)
+        booking_error(conn, :booking_closed, ~p"/foglalas?type=personal&view=week")
+
+      {:error, :too_early_to_book} ->
+        log_booking_error("personal", current_user_id, :too_early_to_book)
+        booking_error(conn, :too_early_to_book, ~p"/foglalas?type=personal&view=week")
+
       _ ->
         log_booking_error("personal", current_user_id, :unknown)
         generic_error(conn, ~p"/foglalas?type=personal&view=week")
@@ -278,6 +293,10 @@ defmodule LucaGymappWeb.PageController do
       {:error, :slot_not_available} ->
         log_booking_error("cross", current_user_id, :slot_not_available)
         generic_error(conn, ~p"/foglalas?type=cross&view=week")
+
+      {:error, :booking_closed} ->
+        log_booking_error("cross", current_user_id, :booking_closed)
+        booking_error(conn, :booking_closed, ~p"/foglalas?type=cross&view=week")
 
       _ ->
         log_booking_error("cross", current_user_id, :unknown)
@@ -782,9 +801,7 @@ defmodule LucaGymappWeb.PageController do
   defp calendar_capacity(:personal), do: 1
 
   defp calendar_capacity(:cross) do
-    Application.get_env(:luca_gymapp, :booking_schedule, %{})
-    |> Map.get(:cross, %{})
-    |> Map.get(:max_overlap, 0)
+    Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
   end
 
   defp calendar_capacity(_), do: 1
@@ -837,6 +854,20 @@ defmodule LucaGymappWeb.PageController do
     |> put_flash(:error, "A művelet nem sikerült. Próbáld újra.")
     |> redirect(to: redirect_path)
   end
+
+  defp booking_error(conn, :booking_closed, redirect_path) do
+    conn
+    |> put_flash(:error, "Erre az időpontra már nem lehet foglalni, mert elmúlt.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp booking_error(conn, :too_early_to_book, redirect_path) do
+    conn
+    |> put_flash(:error, "A személyi edzést legalább 6 óráva az edzés kezdete előtt kell lefoglalni.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp booking_error(conn, _reason, redirect_path), do: generic_error(conn, redirect_path)
 
   defp pass_purchase_error(conn, :active_pass_exists, redirect_path) do
     conn

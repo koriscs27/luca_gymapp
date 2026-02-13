@@ -11,7 +11,7 @@ defmodule LucaGymapp.BookingsTest do
     user = create_user()
 
     now = DateTime.utc_now() |> DateTime.truncate(:second)
-    base_time = DateTime.add(now, 2 * 60 * 60, :second)
+    base_time = DateTime.add(now, 8 * 60 * 60, :second)
     step_seconds = 30 * 60
 
     parent = self()
@@ -48,7 +48,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "cross", 2, Date.add(Date.utc_today(), 30))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("personal", start_time, end_time)
@@ -61,7 +61,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "personal", 0, Date.add(Date.utc_today(), 30))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("personal", start_time, end_time)
@@ -74,7 +74,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "personal", 2, Date.add(Date.utc_today(), -1))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("personal", start_time, end_time)
@@ -122,6 +122,8 @@ defmodule LucaGymapp.BookingsTest do
   end
 
   test "cross bookings reject when max overlap exceeded" do
+    max_overlap = Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
+
     start_time =
       DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
 
@@ -145,8 +147,8 @@ defmodule LucaGymapp.BookingsTest do
     success_count = Enum.count(results, &match?({:ok, _}, &1))
     error_count = Enum.count(results, &match?({:error, :capacity_reached}, &1))
 
-    assert success_count == 8
-    assert error_count == 2
+    assert success_count == max_overlap
+    assert error_count == 10 - max_overlap
 
     remaining_occasions =
       Enum.map(passes, fn pass ->
@@ -154,8 +156,22 @@ defmodule LucaGymapp.BookingsTest do
         pass.occasions
       end)
 
-    assert Enum.count(remaining_occasions, &(&1 == 0)) == 8
-    assert Enum.count(remaining_occasions, &(&1 == 1)) == 2
+    assert Enum.count(remaining_occasions, &(&1 == 0)) == max_overlap
+    assert Enum.count(remaining_occasions, &(&1 == 1)) == 10 - max_overlap
+  end
+
+  test "personal booking fails when start time is less than 6 hours away" do
+    user = create_user()
+    _pass = create_pass(user, "personal", 1, Date.add(Date.utc_today(), 30))
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:error, :too_early_to_book} =
+             Bookings.book_personal_training(user, start_time, end_time)
   end
 
   defp create_user do

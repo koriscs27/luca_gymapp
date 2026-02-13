@@ -11,6 +11,7 @@ config :luca_gymapp,
   ecto_repos: [LucaGymapp.Repo],
   generators: [timestamp_type: :utc_datetime],
   payment_needed: true,
+  cross_max_overlap: 8,
   coach_email: "lucapankotai41@gmail.com",
   mailgun: [
     api_key: System.get_env("MAILGUN_API_KEY"),

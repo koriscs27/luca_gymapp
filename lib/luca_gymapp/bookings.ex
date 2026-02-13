@@ -67,6 +67,27 @@ defmodule LucaGymapp.Bookings do
     |> slot_keys_from_ranges()
   end
 
+  def list_cross_full_slot_keys(%Date{} = week_start, %Date{} = week_end) do
+    max_overlap = Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
+
+    if max_overlap <= 0 do
+      MapSet.new()
+    else
+      week_start_dt = DateTime.new!(week_start, ~T[00:00:00], "Etc/UTC")
+      week_end_dt = DateTime.new!(Date.add(week_end, 1), ~T[00:00:00], "Etc/UTC")
+
+      CrossBooking
+      |> where([booking], booking.status == "booked")
+      |> where([booking], booking.start_time >= ^week_start_dt)
+      |> where([booking], booking.start_time < ^week_end_dt)
+      |> group_by([booking], [booking.start_time, booking.end_time])
+      |> having([booking], count(booking.id) >= ^max_overlap)
+      |> select([booking], {booking.start_time, booking.end_time})
+      |> Repo.all()
+      |> slot_keys_from_ranges()
+    end
+  end
+
   def list_user_appointments(user_id) do
     personal =
       PersonalBooking
@@ -444,10 +465,7 @@ defmodule LucaGymapp.Bookings do
   end
 
   defp enforce_cross_capacity!(%DateTime{} = start_time, %DateTime{} = end_time) do
-    max_overlap =
-      Application.get_env(:luca_gymapp, :booking_schedule, %{})
-      |> Map.get(:cross, %{})
-      |> Map.get(:max_overlap, 0)
+    max_overlap = Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
 
     count =
       CrossBooking
@@ -492,7 +510,7 @@ defmodule LucaGymapp.Bookings do
       seconds_until_start <= 0 ->
         Repo.rollback(:booking_closed)
 
-      seconds_until_start > 12 * 60 * 60 ->
+      seconds_until_start < 6 * 60 * 60 ->
         Repo.rollback(:too_early_to_book)
 
       true ->
