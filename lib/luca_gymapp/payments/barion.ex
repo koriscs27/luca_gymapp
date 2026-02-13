@@ -14,6 +14,7 @@ defmodule LucaGymapp.Payments.Barion do
         callback_url: callback_url
       }) do
     api_base_url = barion_api_base_url()
+    start_url = "#{api_base_url}/v2/Payment/Start"
     pos_key = String.trim(pos_key)
     payee_email = String.trim(payee_email)
 
@@ -36,6 +37,7 @@ defmodule LucaGymapp.Payments.Barion do
           "Items" => [
             %{
               "Name" => pass_name,
+              "Description" => pass_name,
               "Quantity" => 1,
               "Unit" => "db",
               "UnitPrice" => amount_huf,
@@ -49,7 +51,7 @@ defmodule LucaGymapp.Payments.Barion do
     request = Req.new(base_url: api_base_url, headers: [{"x-pos-key", pos_key}])
 
     Logger.warning(
-      "barion_start_request url=#{api_base_url}/v2/Payment/Start payload=#{inspect(payload)}"
+      "barion_start_request url=#{start_url} payload=#{inspect(payload)}"
     )
 
     case Req.post(request, url: "/v2/Payment/Start", json: payload) do
@@ -60,7 +62,7 @@ defmodule LucaGymapp.Payments.Barion do
           request_id = request_id_from_response(response)
 
           Logger.warning(
-            "barion_start_errors request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+            "barion_start_errors url=#{start_url} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
           )
 
           {:error, {:barion_error, body}}
@@ -72,19 +74,20 @@ defmodule LucaGymapp.Payments.Barion do
         request_id = request_id_from_response(response)
 
         Logger.warning(
-          "barion_start_failed status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+          "barion_start_failed url=#{start_url} status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
         )
 
         {:error, {:barion_http_error, status, body}}
 
       {:error, error} ->
-        Logger.error("barion_start_failed error=#{inspect(error)}")
+        Logger.error("barion_start_failed url=#{start_url} error=#{inspect(error)}")
         {:error, {:barion_request_failed, error}}
     end
   end
 
   def payment_state(payment_id) when is_binary(payment_id) do
     api_base_url = barion_api_base_url()
+    state_url = "#{api_base_url}/v4/Payment/#{payment_id}/paymentstate"
 
     pos_key =
       barion_pos_key()
@@ -100,13 +103,13 @@ defmodule LucaGymapp.Payments.Barion do
         request_id = request_id_from_response(response)
 
         Logger.warning(
-          "barion_state_failed status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+          "barion_state_failed url=#{state_url} status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
         )
 
         {:error, {:barion_http_error, status, body}}
 
       {:error, error} ->
-        Logger.error("barion_state_failed error=#{inspect(error)}")
+        Logger.error("barion_state_failed url=#{state_url} error=#{inspect(error)}")
         {:error, {:barion_request_failed, error}}
     end
   end
