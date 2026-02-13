@@ -41,7 +41,41 @@ defmodule LucaGymapp.Accounts.UserEmail do
     """)
   end
 
+  def booking_cancelled_by_admin_email(user, type, booking) do
+    from_address = mail_from()
+
+    new()
+    |> to({user.name || user.email, user.email})
+    |> from(from_address)
+    |> subject("Foglalas torolve: #{humanize_booking_type(type)}")
+    |> text_body("""
+    Szia!
+
+    A kovetkezo foglalasodat a coach torolte:
+    #{format_booking_window(booking)}
+
+    Ha kerdesed van, valaszolj erre az e-mailre.
+    """)
+  end
+
   defp mail_from do
     Application.get_env(:luca_gymapp, LucaGymapp.Mailer)[:default_from] || "no-reply@localhost"
   end
+
+  defp format_booking_window(booking) do
+    start_time = format_datetime(booking.start_time)
+    end_time = format_datetime(booking.end_time)
+    "#{start_time} - #{end_time}"
+  end
+
+  defp format_datetime(%DateTime{} = datetime) do
+    Calendar.strftime(datetime, "%Y-%m-%d %H:%M UTC")
+  end
+
+  defp format_datetime(_), do: "-"
+
+  defp humanize_booking_type(:personal), do: "Szemelyi edzes"
+  defp humanize_booking_type(:cross), do: "Cross trening"
+  defp humanize_booking_type(value) when is_binary(value), do: String.capitalize(value)
+  defp humanize_booking_type(_), do: "Edzes"
 end

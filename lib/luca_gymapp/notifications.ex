@@ -1,12 +1,33 @@
 defmodule LucaGymapp.Notifications do
   require Logger
 
+  alias LucaGymapp.Accounts.UserEmail
+  alias LucaGymapp.Mailer
+
   def deliver_booking_notification(user, type, booking) do
     deliver_coach_email(user, type, booking, "New booking", "Booked")
   end
 
   def deliver_booking_cancellation_notification(user, type, booking) do
     deliver_coach_email(user, type, booking, "Booking cancelled", "Cancelled")
+  end
+
+  def deliver_user_booking_cancellation_by_admin_notification(user, type, booking) do
+    email = UserEmail.booking_cancelled_by_admin_email(user, type, booking)
+
+    case Mailer.deliver(email) do
+      {:ok, _} = ok ->
+        ok
+
+      {:error, reason} = error ->
+        Logger.error("Admin cancellation email failed",
+          user_id: user.id,
+          to: user.email,
+          reason: inspect(reason)
+        )
+
+        error
+    end
   end
 
   defp deliver_coach_email(user, type, booking, subject_prefix, status_label) do

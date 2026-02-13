@@ -1,9 +1,11 @@
 defmodule LucaGymappWeb.PageControllerTest do
   use LucaGymappWeb.ConnCase
+  import Swoosh.TestAssertions
 
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Bookings.CrossBooking
+  alias LucaGymapp.Bookings.PersonalBooking
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses
   alias LucaGymapp.SeasonPasses.SeasonPass
@@ -202,6 +204,38 @@ defmodule LucaGymappWeb.PageControllerTest do
              "Ehhez a foglaláshoz nincs érvényes bérleted."
   end
 
+  test "booking page lists all active passes in selected category", %{conn: conn} do
+    user =
+      %User{
+        email: "multi-pass-booking@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{
+      pass_name: "alpha_pass",
+      pass_type: "personal",
+      occasions: 1,
+      purchase_timestamp: DateTime.add(DateTime.utc_now() |> DateTime.truncate(:second), -1, :day)
+    })
+
+    insert_pass(user.id, %{
+      pass_name: "beta_pass",
+      pass_type: "personal",
+      occasions: 2,
+      purchase_timestamp: DateTime.utc_now() |> DateTime.truncate(:second)
+    })
+
+    conn =
+      conn |> init_test_session(%{user_id: user.id}) |> get(~p"/foglalas?type=personal&week=0")
+
+    html = html_response(conn, 200)
+
+    assert html =~ "Alpha pass"
+    assert html =~ "Beta pass"
+  end
+
   test "booking a past cross slot shows a specific message", %{conn: conn} do
     user =
       %User{
@@ -357,6 +391,127 @@ defmodule LucaGymappWeb.PageControllerTest do
 
     assert html =~ "Foglalva"
     assert html =~ "Lemond"
+  end
+
+  test "admin can cancel personal booking and user receives email", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-personal-cancel@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    booked_user =
+      %User{
+        email: "booked-personal@example.com",
+        password_hash: "hash",
+        name: "Booked Personal",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    start_time = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    end_time = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+
+    pass =
+      insert_pass(booked_user.id, %{
+        pass_name: "admin_cancel_personal",
+        pass_type: "personal",
+        occasions: 0
+      })
+
+    booking =
+      %PersonalBooking{}
+      |> PersonalBooking.changeset(%{
+        user_name: "Booked Personal",
+        start_time: start_time,
+        end_time: end_time,
+        booking_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
+        status: "booked",
+        pass_id: pass.pass_id
+      })
+      |> Ecto.Changeset.put_change(:user_id, booked_user.id)
+      |> Repo.insert!()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/booking/delete", %{
+        "admin_booking_delete" => %{
+          "type" => "personal",
+          "booking_id" => Integer.to_string(booking.id),
+          "week" => "0"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/admin/foglalas?week=0"
+    assert Phoenix.Flash.get(conn.assigns.flash, :info) == "A foglalas torolve lett."
+
+    cancelled = Repo.get!(PersonalBooking, booking.id)
+    assert cancelled.status == "cancelled"
+
+    reloaded_pass = Repo.get_by!(SeasonPass, pass_id: pass.pass_id)
+    assert reloaded_pass.occasions == 1
+
+    assert_email_sent(to: {booked_user.name, booked_user.email})
+  end
+
+  test "admin can cancel cross booking and user receives email", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-cross-cancel@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    booked_user =
+      %User{
+        email: "booked-cross@example.com",
+        password_hash: "hash",
+        name: "Booked Cross",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    start_time = DateTime.new!(monday, ~T[17:00:00], "Etc/UTC")
+    end_time = DateTime.new!(monday, ~T[18:00:00], "Etc/UTC")
+
+    pass =
+      insert_pass(booked_user.id, %{
+        pass_name: "admin_cancel_cross",
+        pass_type: "cross",
+        occasions: 0
+      })
+
+    booking = insert_cross_booking(booked_user.id, pass.pass_id, start_time, end_time)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/booking/delete", %{
+        "admin_booking_delete" => %{
+          "type" => "cross",
+          "booking_id" => Integer.to_string(booking.id),
+          "week" => "0"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/admin/foglalas?week=0"
+    assert Phoenix.Flash.get(conn.assigns.flash, :info) == "A foglalas torolve lett."
+
+    cancelled = Repo.get!(CrossBooking, booking.id)
+    assert cancelled.status == "cancelled"
+
+    reloaded_pass = Repo.get_by!(SeasonPass, pass_id: pass.pass_id)
+    assert reloaded_pass.occasions == 1
+
+    assert_email_sent(to: {booked_user.name, booked_user.email})
   end
 
   defp insert_pass(user_id, attrs) do

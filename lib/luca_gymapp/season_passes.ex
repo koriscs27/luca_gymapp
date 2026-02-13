@@ -75,6 +75,18 @@ defmodule LucaGymapp.SeasonPasses do
     |> Repo.one()
   end
 
+  def active_passes_by_type(user_id, pass_type) when is_binary(pass_type) do
+    today = Date.utc_today()
+
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> where([pass], pass.pass_type == ^pass_type)
+    |> where([pass], pass.expiry_date >= ^today)
+    |> where([pass], pass.pass_type == "other" or pass.occasions > 0)
+    |> order_by([pass], desc: pass.purchase_timestamp)
+    |> Repo.all()
+  end
+
   def latest_passes_by_type(user_id) do
     %{
       personal: latest_pass_by_type(user_id, "personal"),

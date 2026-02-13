@@ -101,6 +101,27 @@ defmodule LucaGymapp.BookingsTest do
              Bookings.book_personal_training(user_two, start_time, end_time)
   end
 
+  test "personal booking selects one valid pass when multiple are available" do
+    user = create_user()
+
+    earlier_expiry_pass = create_pass(user, "personal", 1, Date.add(Date.utc_today(), 10))
+    later_expiry_pass = create_pass(user, "personal", 1, Date.add(Date.utc_today(), 20))
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:ok, _booking} = Bookings.book_personal_training(user, start_time, end_time)
+
+    earlier_expiry_pass = Repo.get_by!(SeasonPass, pass_id: earlier_expiry_pass.pass_id)
+    later_expiry_pass = Repo.get_by!(SeasonPass, pass_id: later_expiry_pass.pass_id)
+
+    assert earlier_expiry_pass.occasions == 0
+    assert later_expiry_pass.occasions == 1
+  end
+
   test "personal booking respects configured max overlap" do
     previous = Application.get_env(:luca_gymapp, :personal_max_overlap)
     Application.put_env(:luca_gymapp, :personal_max_overlap, 2)

@@ -363,6 +363,24 @@ defmodule LucaGymapp.Bookings do
     end
   end
 
+  def admin_cancel_booking(type, booking_id) when is_integer(booking_id) do
+    Repo.transaction(fn ->
+      booking = get_admin_booking_for_update!(type, booking_id)
+
+      booking =
+        booking
+        |> Ecto.Changeset.change(status: "cancelled")
+        |> Repo.update()
+        |> case do
+          {:ok, booking} -> booking
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+
+      increment_pass_occasions!(booking.pass_id)
+      booking
+    end)
+  end
+
   defp slot_type_from_booking(:personal), do: "personal"
   defp slot_type_from_booking(:cross), do: "cross"
   defp slot_type_from_booking(value) when is_binary(value), do: value
@@ -409,6 +427,32 @@ defmodule LucaGymapp.Bookings do
     end
   end
 
+  defp get_admin_booking_for_update!(:personal, booking_id) do
+    PersonalBooking
+    |> where([booking], booking.id == ^booking_id)
+    |> where([booking], booking.status == "booked")
+    |> lock("FOR UPDATE")
+    |> preload(:user)
+    |> Repo.one()
+    |> case do
+      nil -> Repo.rollback(:not_found)
+      booking -> booking
+    end
+  end
+
+  defp get_admin_booking_for_update!(:cross, booking_id) do
+    CrossBooking
+    |> where([booking], booking.id == ^booking_id)
+    |> where([booking], booking.status == "booked")
+    |> lock("FOR UPDATE")
+    |> preload(:user)
+    |> Repo.one()
+    |> case do
+      nil -> Repo.rollback(:not_found)
+      booking -> booking
+    end
+  end
+
   defp lock_personal_bookings_table! do
     case Repo.query("LOCK TABLE personal_bookings IN ACCESS EXCLUSIVE MODE") do
       {:ok, _result} -> :ok
@@ -432,6 +476,7 @@ defmodule LucaGymapp.Bookings do
     |> where([pass], pass.occasions > 0)
     |> where([pass], pass.expiry_date >= ^today)
     |> order_by([pass], asc: pass.expiry_date, asc: pass.purchase_timestamp)
+    |> limit(1)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
@@ -449,6 +494,7 @@ defmodule LucaGymapp.Bookings do
     |> where([pass], pass.occasions > 0)
     |> where([pass], pass.expiry_date >= ^today)
     |> order_by([pass], asc: pass.expiry_date, asc: pass.purchase_timestamp)
+    |> limit(1)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do

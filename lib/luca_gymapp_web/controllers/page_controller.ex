@@ -4,6 +4,7 @@ defmodule LucaGymappWeb.PageController do
   alias LucaGymapp.Accounts
   alias LucaGymapp.Booking
   alias LucaGymapp.Bookings
+  alias LucaGymapp.Notifications
   alias LucaGymapp.Payments
   alias LucaGymapp.SeasonPasses
   require Logger
@@ -135,12 +136,14 @@ defmodule LucaGymappWeb.PageController do
     admin_delete_form = Phoenix.Component.to_form(%{}, as: :admin_delete)
     admin_upload_form = Phoenix.Component.to_form(%{}, as: :admin_upload)
 
-    current_pass =
+    current_passes =
       if current_user_id do
         case type do
-          :personal -> SeasonPasses.latest_pass_by_type(current_user_id, "personal")
-          :cross -> SeasonPasses.latest_pass_by_type(current_user_id, "cross")
+          :personal -> SeasonPasses.active_passes_by_type(current_user_id, "personal")
+          :cross -> SeasonPasses.active_passes_by_type(current_user_id, "cross")
         end
+      else
+        []
       end
 
     render(conn, :booking,
@@ -159,7 +162,7 @@ defmodule LucaGymappWeb.PageController do
       admin_publish_form: admin_publish_form,
       admin_delete_form: admin_delete_form,
       admin_upload_form: admin_upload_form,
-      current_pass: current_pass,
+      current_passes: current_passes,
       draft_add_keys: draft_add_keys,
       admin_draft_changes: draft_change_count
     )
@@ -177,6 +180,7 @@ defmodule LucaGymappWeb.PageController do
 
       personal_calendar = build_admin_calendar(:personal, week_start, week_end)
       cross_calendar = build_admin_calendar(:cross, week_start, week_end)
+      admin_booking_delete_form = Phoenix.Component.to_form(%{}, as: :admin_booking_delete)
 
       render(conn, :admin_bookings,
         current_user: current_user_id,
@@ -185,7 +189,8 @@ defmodule LucaGymappWeb.PageController do
         week_start: week_start,
         week_end: week_end,
         personal_calendar: personal_calendar,
-        cross_calendar: cross_calendar
+        cross_calendar: cross_calendar,
+        admin_booking_delete_form: admin_booking_delete_form
       )
     else
       false ->
@@ -728,6 +733,51 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
+  def admin_cancel_booking(
+        conn,
+        %{"admin_booking_delete" => %{"type" => type, "booking_id" => booking_id, "week" => week}}
+      ) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin,
+         {type, _} <- parse_booking_type(type),
+         {booking_id, _} <- Integer.parse(booking_id),
+         {:ok, booking} <- Bookings.admin_cancel_booking(type, booking_id) do
+      if booking.user do
+        _ =
+          Notifications.deliver_user_booking_cancellation_by_admin_notification(
+            booking.user,
+            type,
+            booking
+          )
+      end
+
+      conn
+      |> put_flash(:info, "A foglalas torolve lett.")
+      |> redirect(to: ~p"/admin/foglalas?week=#{week}")
+    else
+      false ->
+        Logger.warning(
+          "admin_cancel_booking_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/admin/foglalas")
+
+      {:error, :not_found} ->
+        Logger.warning(
+          "admin_cancel_booking_error reason=not_found admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/admin/foglalas?week=#{week}")
+
+      _ ->
+        Logger.error("admin_cancel_booking_error reason=unknown admin_user_id=#{current_user_id}")
+        generic_error(conn, ~p"/admin/foglalas?week=#{week}")
+    end
+  end
+
   defp current_user_from_session(conn) do
     case get_session(conn, :user_id) do
       nil ->
@@ -789,7 +839,7 @@ defmodule LucaGymappWeb.PageController do
 
             %{
               slot: slot,
-              bookings: Enum.map(slot_bookings, &booking_display_name/1),
+              bookings: Enum.map(slot_bookings, &booking_entry/1),
               remaining: remaining
             }
           end)
@@ -816,6 +866,9 @@ defmodule LucaGymappWeb.PageController do
 
   defp booking_display_name(booking) do
     cond do
+      booking.user && is_binary(booking.user.name) && booking.user.name != "" ->
+        booking.user.name
+
       is_binary(booking.user_name) and booking.user_name != "" ->
         booking.user_name
 
@@ -825,6 +878,13 @@ defmodule LucaGymappWeb.PageController do
       true ->
         "Ismeretlen"
     end
+  end
+
+  defp booking_entry(booking) do
+    %{
+      id: booking.id,
+      display_name: booking_display_name(booking)
+    }
   end
 
   defp slot_key_from_booking(booking) do
