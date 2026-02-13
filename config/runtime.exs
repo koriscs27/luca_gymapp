@@ -56,18 +56,7 @@ barion_base_url =
       _ -> "https://secure.test.barion.com"
     end
 
-barion_pos_key =
-  case barion_env do
-    "prod" ->
-      trimmed_env.("BARION_POS_KEY") ||
-        trimmed_env.("BARION_LIVE_POS_KEY") ||
-        "CHANGE_ME_POS_KEY"
-
-    _ ->
-      trimmed_env.("BARION_TEST_POS_KEY") ||
-        trimmed_env.("BARION_POS_KEY") ||
-        "CHANGE_ME_POS_KEY"
-  end
+barion_pos_key = trimmed_env.("BARION_POS_KEY") || "CHANGE_ME_POS_KEY"
 
 config :luca_gymapp, :barion,
   env: barion_env,

@@ -38,10 +38,6 @@ defmodule LucaGymappWeb.PageHTML do
     |> season_pass_label()
   end
 
-  def dummy_payment_available? do
-    Application.get_env(:luca_gymapp, :dummy_payment_enabled, false)
-  end
-
   attr :pass, :map, required: true
 
   def payment_modal(assigns) do
@@ -143,24 +139,6 @@ defmodule LucaGymappWeb.PageHTML do
               />
             </span>
           </div>
-
-          <%= if dummy_payment_available?() do %>
-            <.form
-              for={%{}}
-              id={"confirm-purchase-dummy-#{@pass.key}"}
-              action={~p"/berletek/purchase"}
-              method="post"
-            >
-              <.input type="hidden" name="pass_name" value={@pass.type} />
-              <.input type="hidden" name="payment_method" value="dummy" />
-              <button
-                type="submit"
-                class="w-full rounded-full bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-500"
-              >
-                Dummy fizetés (dev/test)
-              </button>
-            </.form>
-          <% end %>
         </div>
 
         <.link

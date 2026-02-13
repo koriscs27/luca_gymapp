@@ -107,13 +107,13 @@ defmodule LucaGymappWeb.ProfileControllerTest do
   end
 
   test "refresh is disabled for non-barion payments", %{conn: conn, user: user} do
-    _dummy =
+    _cash =
       create_payment(user.id, %{
-        payment_id: "dummy-1",
-        payment_method: "dummy"
+        payment_id: "cash-1",
+        payment_method: "cash"
       })
 
-    conn = patch(conn, ~p"/profile/payments/dummy-1/refresh")
+    conn = patch(conn, ~p"/profile/payments/cash-1/refresh")
 
     assert redirected_to(conn) == ~p"/profile"
 

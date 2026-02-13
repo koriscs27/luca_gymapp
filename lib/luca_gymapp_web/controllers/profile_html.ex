@@ -29,7 +29,6 @@ defmodule LucaGymappWeb.ProfileHTML do
   def format_booking_type(_type), do: "Egyéb"
 
   def format_payment_method("barion"), do: "Barion"
-  def format_payment_method("dummy"), do: "Dummy"
   def format_payment_method("cash"), do: "Készpénz"
   def format_payment_method(_), do: "Ismeretlen"
 

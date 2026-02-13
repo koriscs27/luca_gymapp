@@ -127,7 +127,7 @@ defmodule LucaGymappWeb.PageControllerTest do
       |> init_test_session(%{user_id: user.id})
       |> post(~p"/berletek/purchase", %{
         "pass_name" => "1_alkalmas_jegy",
-        "payment_method" => "dummy"
+        "payment_method" => "barion"
       })
 
     assert redirected_to(conn) == ~p"/berletek"

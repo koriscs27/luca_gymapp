@@ -361,7 +361,7 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def purchase_season_pass(conn, %{"pass_name" => pass_name} = params) do
+  def purchase_season_pass(conn, %{"pass_name" => pass_name}) do
     current_user_id = get_session(conn, :user_id)
 
     if current_user_id do
@@ -369,61 +369,32 @@ defmodule LucaGymappWeb.PageController do
         {:ok, user} ->
           case SeasonPasses.validate_purchase(user, pass_name) do
             {:ok, _type_def} ->
-              payment_method = Map.get(params, "payment_method", "barion")
+              redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
+              callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
 
-              case payment_method do
-                "barion" ->
-                  redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
-                  callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
+              case Payments.start_season_pass_payment(
+                     user,
+                     pass_name,
+                     redirect_url,
+                     callback_url
+                   ) do
+                {:ok, :skipped} ->
+                  complete_pass_purchase(conn, user, pass_name)
 
-                  case Payments.start_season_pass_payment(
-                         user,
-                         pass_name,
-                         redirect_url,
-                         callback_url
-                       ) do
-                    {:ok, :skipped} ->
-                      complete_pass_purchase(conn, user, pass_name)
+                {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
+                  redirect(conn, external: gateway_url)
 
-                    {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
-                      redirect(conn, external: gateway_url)
+                {:error, :missing_barion_payee_email} ->
+                  Logger.error("payment_error reason=missing_payee_email pass_name=#{pass_name}")
 
-                    {:error, :missing_barion_payee_email} ->
-                      Logger.error(
-                        "payment_error reason=missing_payee_email pass_name=#{pass_name}"
-                      )
-
-                      generic_error(conn, ~p"/berletek")
-
-                    {:error, reason} ->
-                      Logger.error(
-                        "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
-                      )
-
-                      pass_purchase_error(conn, reason, ~p"/berletek")
-                  end
-
-                "dummy" ->
-                  if Payments.dummy_payment_available?() do
-                    case Payments.start_dummy_season_pass_payment(user, pass_name) do
-                      {:ok, _payment} ->
-                        conn
-                        |> put_flash(:info, "Sikeres fizetes. A berleted aktivalva lett.")
-                        |> redirect(to: ~p"/berletek")
-
-                      {:error, reason} ->
-                        Logger.error(
-                          "dummy_payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
-                        )
-
-                        pass_purchase_error(conn, reason, ~p"/berletek")
-                    end
-                  else
-                    generic_error(conn, ~p"/berletek")
-                  end
-
-                _ ->
                   generic_error(conn, ~p"/berletek")
+
+                {:error, reason} ->
+                  Logger.error(
+                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                  )
+
+                  pass_purchase_error(conn, reason, ~p"/berletek")
               end
 
             {:error, :active_pass_exists} ->
