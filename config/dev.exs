@@ -127,3 +127,4 @@ config :luca_gymapp, LucaGymapp.Mailer,
   default_from: System.get_env("MAILGUN_FROM") || "no-reply@localhost"
 
 config :luca_gymapp, cross_max_overlap: 2
+config :luca_gymapp, personal_max_overlap: 1

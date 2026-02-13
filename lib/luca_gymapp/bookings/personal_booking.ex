@@ -41,6 +41,5 @@ defmodule LucaGymapp.Bookings.PersonalBooking do
       :pass_id
     ])
     |> validate_inclusion(:status, ["booked", "cancelled"])
-    |> exclusion_constraint(:start_time, name: :personal_bookings_no_overlap)
   end
 end

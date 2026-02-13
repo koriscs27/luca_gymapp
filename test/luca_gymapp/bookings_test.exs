@@ -97,8 +97,35 @@ defmodule LucaGymapp.BookingsTest do
 
     assert {:ok, _booking} = Bookings.book_personal_training(user_one, start_time, end_time)
 
-    assert {:error, %Ecto.Changeset{}} =
+    assert {:error, :capacity_reached} =
              Bookings.book_personal_training(user_two, start_time, end_time)
+  end
+
+  test "personal booking respects configured max overlap" do
+    previous = Application.get_env(:luca_gymapp, :personal_max_overlap)
+    Application.put_env(:luca_gymapp, :personal_max_overlap, 2)
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :personal_max_overlap, previous)
+    end)
+
+    users = Enum.map(1..3, fn _ -> create_user() end)
+
+    Enum.each(users, fn user ->
+      create_pass(user, "personal", 1, Date.add(Date.utc_today(), 30))
+    end)
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:ok, _} = Bookings.book_personal_training(Enum.at(users, 0), start_time, end_time)
+    assert {:ok, _} = Bookings.book_personal_training(Enum.at(users, 1), start_time, end_time)
+
+    assert {:error, :capacity_reached} =
+             Bookings.book_personal_training(Enum.at(users, 2), start_time, end_time)
   end
 
   test "cross booking fails with wrong pass type" do

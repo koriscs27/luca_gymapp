@@ -16,6 +16,7 @@ defmodule LucaGymapp.Bookings do
       enforce_slot_exists!("personal", start_time, end_time)
       lock_personal_bookings_table!()
       pass = get_valid_personal_pass!(user.id)
+      enforce_personal_capacity!(start_time, end_time)
       booking = create_personal_booking!(user, pass, start_time, end_time)
       decrement_pass_occasions!(pass)
       booking
@@ -90,6 +91,7 @@ defmodule LucaGymapp.Bookings do
   end
 
   def list_personal_taken_slot_keys(%Date{} = week_start, %Date{} = week_end) do
+    max_overlap = Application.get_env(:luca_gymapp, :personal_max_overlap, 1)
     week_start_dt = DateTime.new!(week_start, ~T[00:00:00], "Etc/UTC")
     week_end_dt = DateTime.new!(Date.add(week_end, 1), ~T[00:00:00], "Etc/UTC")
 
@@ -97,6 +99,8 @@ defmodule LucaGymapp.Bookings do
     |> where([booking], booking.status == "booked")
     |> where([booking], booking.start_time >= ^week_start_dt)
     |> where([booking], booking.start_time < ^week_end_dt)
+    |> group_by([booking], [booking.start_time, booking.end_time])
+    |> having([booking], count(booking.id) >= ^max_overlap)
     |> select([booking], {booking.start_time, booking.end_time})
     |> Repo.all()
     |> slot_keys_from_ranges()
@@ -490,6 +494,34 @@ defmodule LucaGymapp.Bookings do
 
     count =
       CrossBooking
+      |> where([booking], booking.status == "booked")
+      |> where(
+        [booking],
+        fragment(
+          "tsrange(?, ?, '[)') && tsrange(?, ?, '[)')",
+          booking.start_time,
+          booking.end_time,
+          ^start_time,
+          ^end_time
+        )
+      )
+      |> select([booking], booking.id)
+      |> lock("FOR UPDATE")
+      |> Repo.all()
+      |> length()
+
+    if count >= max_overlap do
+      Repo.rollback(:capacity_reached)
+    else
+      :ok
+    end
+  end
+
+  defp enforce_personal_capacity!(%DateTime{} = start_time, %DateTime{} = end_time) do
+    max_overlap = Application.get_env(:luca_gymapp, :personal_max_overlap, 1)
+
+    count =
+      PersonalBooking
       |> where([booking], booking.status == "booked")
       |> where(
         [booking],

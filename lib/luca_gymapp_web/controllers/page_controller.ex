@@ -799,7 +799,9 @@ defmodule LucaGymappWeb.PageController do
     }
   end
 
-  defp calendar_capacity(:personal), do: 1
+  defp calendar_capacity(:personal) do
+    Application.get_env(:luca_gymapp, :personal_max_overlap, 1)
+  end
 
   defp calendar_capacity(:cross) do
     Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
