@@ -38,14 +38,25 @@ defmodule LucaGymapp.Notifications do
     base_url = Keyword.get(mailgun, :base_url)
     from = Keyword.get(mailgun, :from)
 
+    Logger.warning("coach_email_debug cancellation trigger",
+      coach_email: coach_email,
+      type: type,
+      user_email: user.email,
+      start_time: inspect(booking.start_time),
+      end_time: inspect(booking.end_time)
+    )
+
     cond do
       is_nil(coach_email) or coach_email == "" ->
+        Logger.warning("coach_email_debug skipped: missing coach_email")
         :skipped
 
       is_nil(api_key) or api_key == "" ->
+        Logger.warning("coach_email_debug skipped: missing mailgun api_key")
         :skipped
 
       is_nil(domain) or domain == "" ->
+        Logger.warning("coach_email_debug skipped: missing mailgun domain")
         :skipped
 
       true ->
@@ -79,7 +90,13 @@ defmodule LucaGymapp.Notifications do
     subject = "#{subject_prefix}: #{humanize_type(type)}"
     text = booking_text(user, type, booking, status_label)
 
-    req = Req.new(base_url: base_url, auth: {:basic, "api", api_key})
+    Logger.warning("coach_email_debug outgoing mail",
+      to: to,
+      subject: subject,
+      text: text
+    )
+
+    req = Req.new(base_url: base_url, auth: {:basic, "api:" <> api_key})
 
     case Req.post(req,
            url: "/#{domain}/messages",
