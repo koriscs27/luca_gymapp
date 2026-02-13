@@ -533,14 +533,14 @@ defmodule LucaGymappWeb.PageController do
           "admin_purchase_error reason=once_per_user admin_user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/berletek")
+        admin_pass_purchase_error(conn, :once_per_user, ~p"/berletek")
 
       {:error, :active_pass_exists} ->
         Logger.warning(
           "admin_purchase_error reason=active_pass_exists admin_user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/berletek")
+        admin_pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
 
       {:error, :invalid_type} ->
         Logger.warning(
@@ -980,6 +980,27 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp pass_purchase_error(conn, _reason, redirect_path), do: generic_error(conn, redirect_path)
+
+  defp admin_pass_purchase_error(conn, :active_pass_exists, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A kiválasztott felhasználónak már van aktív bérlete ebben a kategóriában."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp admin_pass_purchase_error(conn, :once_per_user, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A kiválasztott felhasználó ezt a bérletet csak egyszer vásárolhatja meg."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp admin_pass_purchase_error(conn, _reason, redirect_path),
+    do: generic_error(conn, redirect_path)
 
   defp log_booking_error(type, user_id, reason) do
     case user_id do

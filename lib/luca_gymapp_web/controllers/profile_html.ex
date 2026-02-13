@@ -33,10 +33,17 @@ defmodule LucaGymappWeb.ProfileHTML do
   def format_payment_method(_), do: "Ismeretlen"
 
   def format_payment_status("pending"), do: "Folyamatban"
+  def format_payment_status("started"), do: "Folyamatban"
   def format_payment_status("authorized"), do: "Jóváhagyva"
   def format_payment_status("paid"), do: "Sikeres"
   def format_payment_status("failed"), do: "Sikertelen"
   def format_payment_status(_), do: "Ismeretlen"
+
+  def payment_refreshable?(payment) do
+    payment.payment_method == "barion" and
+      is_binary(payment.payment_id) and
+      payment.status in ["pending", "started", "authorized"]
+  end
 
   def format_huf(amount) when is_integer(amount) do
     amount

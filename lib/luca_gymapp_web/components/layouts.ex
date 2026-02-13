@@ -33,6 +33,10 @@ defmodule LucaGymappWeb.Layouts do
     default: nil,
     doc: "optional back link map with :href, :label, and optional :id"
 
+  attr :content_max_width_class, :string,
+    default: "max-w-2xl",
+    doc: "content container max width class for the main layout area"
+
   attr :current_scope, :map,
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
@@ -95,7 +99,7 @@ defmodule LucaGymappWeb.Layouts do
       <% end %>
 
       <main class="px-4 py-20 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-2xl space-y-4">
+        <div class={["mx-auto space-y-4", @content_max_width_class]}>
           {render_slot(@inner_block)}
         </div>
       </main>

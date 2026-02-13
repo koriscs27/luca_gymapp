@@ -514,6 +514,49 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert_email_sent(to: {booked_user.name, booked_user.email})
   end
 
+  test "admin purchase shows specific error when target user already has active pass", %{
+    conn: conn
+  } do
+    admin =
+      %User{
+        email: "admin-pass-error@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "target-pass-error@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(target_user.id, %{
+      pass_name: "10_alkalmas_berlet",
+      pass_type: "personal",
+      occasions: 3,
+      expiry_date: Date.add(Date.utc_today(), 30)
+    })
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/berletek/admin/purchase", %{
+        "admin_purchase" => %{
+          "user_id" => Integer.to_string(target_user.id),
+          "pass_name" => "1_alkalmas_jegy"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/berletek"
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A kiválasztott felhasználónak már van aktív bérlete ebben a kategóriában."
+  end
+
   defp insert_pass(user_id, attrs) do
     %SeasonPass{}
     |> SeasonPass.changeset(
