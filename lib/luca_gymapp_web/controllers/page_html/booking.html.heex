@@ -85,7 +85,7 @@
               </p>
             </div>
             <span class="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/70">
-              {@booking_type == :personal && "Személyi"}{@booking_type == :cross && "Cross"}
+              {if @booking_type == :personal, do: "Személyi", else: "Cross"}
             </span>
           </div>
         <% else %>

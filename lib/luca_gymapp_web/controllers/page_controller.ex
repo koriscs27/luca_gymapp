@@ -329,7 +329,12 @@ defmodule LucaGymappWeb.PageController do
           "booking_cancel_error type=personal reason=too_late user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        cancellation_error(
+          conn,
+          :too_late_to_cancel,
+          :personal,
+          ~p"/foglalas?type=personal&view=week"
+        )
 
       _ ->
         Logger.error(
@@ -364,7 +369,7 @@ defmodule LucaGymappWeb.PageController do
           "booking_cancel_error type=cross reason=too_late user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        cancellation_error(conn, :too_late_to_cancel, :cross, ~p"/foglalas?type=cross&view=week")
 
       _ ->
         Logger.error("booking_cancel_error type=cross reason=unknown user_id=#{current_user_id}")
@@ -880,6 +885,27 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp booking_error(conn, _reason, redirect_path), do: generic_error(conn, redirect_path)
+
+  defp cancellation_error(conn, :too_late_to_cancel, :personal, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A személyi edzést legalább 6 órával az edzés kezdete előtt lehet lemondani."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp cancellation_error(conn, :too_late_to_cancel, :cross, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A cross edzést legalább 1 órával az edzés kezdete előtt lehet lemondani."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp cancellation_error(conn, _reason, _type, redirect_path),
+    do: generic_error(conn, redirect_path)
 
   defp pass_purchase_error(conn, :active_pass_exists, redirect_path) do
     conn
