@@ -71,9 +71,9 @@ defmodule LucaGymappWeb.PageController do
 
     view = :week
 
-    week_offset = parse_week_offset(params["week"])
-
-    base_date = Date.add(Date.utc_today(), week_offset * 7)
+    today = Date.utc_today()
+    week_offset = params["week"] |> parse_week_offset() |> normalize_week_offset(is_admin)
+    base_date = Date.add(today, week_offset * 7)
     {week_start, week_end} = Booking.week_range(base_date)
 
     slots = Bookings.list_calendar_slots_for_week(type, week_start, week_end)
@@ -112,7 +112,10 @@ defmodule LucaGymappWeb.PageController do
         {slots, MapSet.new(), 0}
       end
 
-    ordered_days = Booking.ordered_days_from_slots(slots, week_start)
+    ordered_days =
+      slots
+      |> Booking.ordered_days_from_slots(week_start)
+      |> filter_visible_booking_days(today, week_offset, is_admin)
 
     booked_slot_keys =
       if current_user_id do
@@ -155,6 +158,7 @@ defmodule LucaGymappWeb.PageController do
       booking_availability: %{},
       booked_slot_keys: booked_slot_keys,
       full_slot_keys: full_slot_keys,
+      can_go_previous_week: is_admin or week_offset > 0,
       week_offset: week_offset,
       week_start: week_start,
       week_end: week_end,
@@ -812,6 +816,17 @@ defmodule LucaGymappWeb.PageController do
         0
     end
   end
+
+  defp normalize_week_offset(week_offset, true), do: week_offset
+  defp normalize_week_offset(week_offset, false), do: max(week_offset, 0)
+
+  defp filter_visible_booking_days(days, _today, _week_offset, true), do: days
+
+  defp filter_visible_booking_days(days, today, 0, false) do
+    Enum.reject(days, &(Date.compare(&1.date, today) == :lt))
+  end
+
+  defp filter_visible_booking_days(days, _today, _week_offset, false), do: days
 
   defp parse_time_param(value) when is_binary(value) do
     value =

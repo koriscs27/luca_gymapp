@@ -236,6 +236,49 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert html =~ "Beta pass"
   end
 
+  test "users cannot navigate to previous week and week offset is clamped at current week", %{
+    conn: conn
+  } do
+    user =
+      %User{
+        email: "week-clamp-user@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> get(~p"/foglalas?type=personal&week=-1")
+
+    html = html_response(conn, 200)
+
+    assert html =~ "Előző hét"
+    assert html =~ "cursor-not-allowed"
+    refute html =~ ~s(href="/foglalas?type=personal&amp;week=-1")
+  end
+
+  test "admins can still navigate to previous week from current week", %{conn: conn} do
+    admin =
+      %User{
+        email: "week-clamp-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(~p"/foglalas?type=personal&week=0")
+
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(href="/foglalas?type=personal&amp;week=-1")
+  end
+
   test "booking a past cross slot shows a specific message", %{conn: conn} do
     user =
       %User{
@@ -276,9 +319,7 @@ defmodule LucaGymappWeb.PageControllerTest do
       }
       |> Repo.insert!()
 
-    monday = Date.beginning_of_week(Date.utc_today(), :monday)
-    start_time = DateTime.new!(monday, ~T[17:00:00], "Etc/UTC")
-    end_time = DateTime.new!(monday, ~T[18:00:00], "Etc/UTC")
+    {start_time, end_time, week_offset} = future_slot_and_week()
     insert_calendar_slot("cross", start_time, end_time)
 
     user_a =
@@ -306,7 +347,11 @@ defmodule LucaGymappWeb.PageControllerTest do
     insert_cross_booking(user_a.id, pass_a.pass_id, start_time, end_time)
     insert_cross_booking(user_b.id, pass_b.pass_id, start_time, end_time)
 
-    conn = conn |> init_test_session(%{user_id: user.id}) |> get(~p"/foglalas?type=cross&week=0")
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> get(~p"/foglalas?type=cross&week=#{week_offset}")
+
     html = html_response(conn, 200)
 
     assert html =~ "MEGTELT"
@@ -354,9 +399,7 @@ defmodule LucaGymappWeb.PageControllerTest do
   end
 
   test "cross slot shows booked for user even when capacity reached", %{conn: conn} do
-    monday = Date.beginning_of_week(Date.utc_today(), :monday)
-    start_time = DateTime.new!(monday, ~T[17:00:00], "Etc/UTC")
-    end_time = DateTime.new!(monday, ~T[18:00:00], "Etc/UTC")
+    {start_time, end_time, week_offset} = future_slot_and_week()
     insert_calendar_slot("cross", start_time, end_time)
 
     user_a =
@@ -385,7 +428,9 @@ defmodule LucaGymappWeb.PageControllerTest do
     insert_cross_booking(user_b.id, pass_b.pass_id, start_time, end_time)
 
     conn =
-      conn |> init_test_session(%{user_id: user_a.id}) |> get(~p"/foglalas?type=cross&week=0")
+      conn
+      |> init_test_session(%{user_id: user_a.id})
+      |> get(~p"/foglalas?type=cross&week=#{week_offset}")
 
     html = html_response(conn, 200)
 
@@ -614,5 +659,15 @@ defmodule LucaGymappWeb.PageControllerTest do
     })
     |> Ecto.Changeset.put_change(:user_id, user_id)
     |> Repo.insert!()
+  end
+
+  defp future_slot_and_week do
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    week_offset = Date.diff(DateTime.to_date(start_time), Date.utc_today()) |> div(7)
+
+    {start_time, end_time, week_offset}
   end
 end

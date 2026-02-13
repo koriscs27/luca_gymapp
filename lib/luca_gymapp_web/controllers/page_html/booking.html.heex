@@ -156,12 +156,18 @@
         </div>
 
         <div class="flex gap-2">
-          <.link
+          <%= if @can_go_previous_week do %>
+            <.link
             href={~p"/foglalas?type=#{@booking_type}&week=#{@week_offset - 1}"}
             class="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-600 transition-transform duration-150 hover:border-neutral-300 active:scale-95"
           >
-            Előző hét
-          </.link>
+              Előző hét
+            </.link>
+          <% else %>
+            <span class="cursor-not-allowed rounded-full border border-neutral-200 bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-400">
+              Előző hét
+            </span>
+          <% end %>
           <.link
             href={~p"/foglalas?type=#{@booking_type}&week=#{@week_offset + 1}"}
             class="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-600 transition-transform duration-150 hover:border-neutral-300 active:scale-95"
