@@ -35,6 +35,7 @@ defmodule LucaGymapp.Bookings do
     Repo.transaction(fn ->
       enforce_booking_window!(:cross, start_time, end_time)
       enforce_slot_exists!("cross", start_time, end_time)
+      lock_cross_bookings_table!()
       pass = get_valid_cross_pass!(user.id)
       enforce_cross_capacity!(start_time, end_time)
       booking = create_cross_booking!(user, pass, start_time, end_time)
@@ -410,6 +411,13 @@ defmodule LucaGymapp.Bookings do
 
   defp lock_personal_bookings_table! do
     case Repo.query("LOCK TABLE personal_bookings IN ACCESS EXCLUSIVE MODE") do
+      {:ok, _result} -> :ok
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp lock_cross_bookings_table! do
+    case Repo.query("LOCK TABLE cross_bookings IN ACCESS EXCLUSIVE MODE") do
       {:ok, _result} -> :ok
       {:error, reason} -> Repo.rollback(reason)
     end
