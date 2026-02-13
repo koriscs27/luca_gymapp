@@ -68,19 +68,19 @@
     </div>
 
     <%= if @current_user do %>
-      <div class="rounded-2xl border border-white/15 bg-white/5 px-5 py-4">
+      <div class="w-full max-w-sm self-start rounded-2xl border border-white/10 bg-white/5 px-4 py-4 min-h-[148px]">
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">
           Aktív bérlet
         </p>
         <%= if @current_passes != [] do %>
-          <div class="mt-3 space-y-2">
+          <div class="mt-2 flex w-full flex-col items-start gap-2">
             <%= for pass <- @current_passes do %>
-              <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/15 bg-white/5 px-3 py-2">
+              <div class="flex w-full max-w-[320px] min-h-[102px] flex-col items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
                 <div>
-                  <p class="text-lg font-semibold text-white">
+                  <p class="text-base font-semibold text-white">
                     {season_pass_label(pass.pass_name)}
                   </p>
-                  <p class="mt-1 text-sm text-white/70">
+                  <p class="mt-0.5 text-xs text-white/70">
                     Alkalmak: {pass.occasions} · Lejárat: {format_date(pass.expiry_date)}
                   </p>
                 </div>
