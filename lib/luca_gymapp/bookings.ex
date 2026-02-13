@@ -14,6 +14,7 @@ defmodule LucaGymapp.Bookings do
     Repo.transaction(fn ->
       enforce_booking_window!(:personal, start_time, end_time)
       enforce_slot_exists!("personal", start_time, end_time)
+      lock_personal_bookings_table!()
       pass = get_valid_personal_pass!(user.id)
       booking = create_personal_booking!(user, pass, start_time, end_time)
       decrement_pass_occasions!(pass)
@@ -86,6 +87,19 @@ defmodule LucaGymapp.Bookings do
       |> Repo.all()
       |> slot_keys_from_ranges()
     end
+  end
+
+  def list_personal_taken_slot_keys(%Date{} = week_start, %Date{} = week_end) do
+    week_start_dt = DateTime.new!(week_start, ~T[00:00:00], "Etc/UTC")
+    week_end_dt = DateTime.new!(Date.add(week_end, 1), ~T[00:00:00], "Etc/UTC")
+
+    PersonalBooking
+    |> where([booking], booking.status == "booked")
+    |> where([booking], booking.start_time >= ^week_start_dt)
+    |> where([booking], booking.start_time < ^week_end_dt)
+    |> select([booking], {booking.start_time, booking.end_time})
+    |> Repo.all()
+    |> slot_keys_from_ranges()
   end
 
   def list_user_appointments(user_id) do
@@ -387,6 +401,13 @@ defmodule LucaGymapp.Bookings do
 
       _ ->
         :ok
+    end
+  end
+
+  defp lock_personal_bookings_table! do
+    case Repo.query("LOCK TABLE personal_bookings IN ACCESS EXCLUSIVE MODE") do
+      {:ok, _result} -> :ok
+      {:error, reason} -> Repo.rollback(reason)
     end
   end
 

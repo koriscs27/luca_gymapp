@@ -82,6 +82,25 @@ defmodule LucaGymapp.BookingsTest do
     assert {:error, :no_valid_pass} = Bookings.book_personal_training(user, start_time, end_time)
   end
 
+  test "personal slot cannot be booked by two different users" do
+    user_one = create_user()
+    user_two = create_user()
+
+    _pass_one = create_pass(user_one, "personal", 1, Date.add(Date.utc_today(), 30))
+    _pass_two = create_pass(user_two, "personal", 1, Date.add(Date.utc_today(), 30))
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:ok, _booking} = Bookings.book_personal_training(user_one, start_time, end_time)
+
+    assert {:error, %Ecto.Changeset{}} =
+             Bookings.book_personal_training(user_two, start_time, end_time)
+  end
+
   test "cross booking fails with wrong pass type" do
     user = create_user()
     _pass = create_pass(user, "personal", 2, Date.add(Date.utc_today(), 30))

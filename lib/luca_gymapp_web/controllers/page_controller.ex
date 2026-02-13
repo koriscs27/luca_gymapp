@@ -126,6 +126,7 @@ defmodule LucaGymappWeb.PageController do
     full_slot_keys =
       case type do
         :cross -> Bookings.list_cross_full_slot_keys(week_start, week_end)
+        :personal -> Bookings.list_personal_taken_slot_keys(week_start, week_end)
         _ -> MapSet.new()
       end
 
@@ -226,7 +227,7 @@ defmodule LucaGymappWeb.PageController do
 
       {:error, :no_valid_pass} ->
         log_booking_error("personal", current_user_id, :no_valid_pass)
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        booking_error(conn, :no_valid_pass, ~p"/foglalas?type=personal&view=week")
 
       {:error, :capacity_reached} ->
         log_booking_error("personal", current_user_id, :capacity_reached)
@@ -280,7 +281,7 @@ defmodule LucaGymappWeb.PageController do
 
       {:error, :no_valid_pass} ->
         log_booking_error("cross", current_user_id, :no_valid_pass)
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        booking_error(conn, :no_valid_pass, ~p"/foglalas?type=cross&view=week")
 
       {:error, :capacity_reached} ->
         log_booking_error("cross", current_user_id, :capacity_reached)
@@ -867,6 +868,12 @@ defmodule LucaGymappWeb.PageController do
       :error,
       "A személyi edzést legalább 6 óráva az edzés kezdete előtt kell lefoglalni."
     )
+    |> redirect(to: redirect_path)
+  end
+
+  defp booking_error(conn, :no_valid_pass, redirect_path) do
+    conn
+    |> put_flash(:error, "Ehhez a foglaláshoz nincs érvényes bérleted.")
     |> redirect(to: redirect_path)
   end
 
