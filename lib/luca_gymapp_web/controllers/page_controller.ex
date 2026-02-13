@@ -863,7 +863,10 @@ defmodule LucaGymappWeb.PageController do
 
   defp booking_error(conn, :too_early_to_book, redirect_path) do
     conn
-    |> put_flash(:error, "A személyi edzést legalább 6 óráva az edzés kezdete előtt kell lefoglalni.")
+    |> put_flash(
+      :error,
+      "A személyi edzést legalább 6 óráva az edzés kezdete előtt kell lefoglalni."
+    )
     |> redirect(to: redirect_path)
   end
 
