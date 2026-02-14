@@ -18,6 +18,7 @@ defmodule LucaGymappWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/rolam", PageController, :rolam
     get "/berletek", PageController, :berletek
     get "/foglalas", PageController, :booking
     get "/barion/return", BarionController, :return

@@ -21,6 +21,16 @@ defmodule LucaGymappWeb.PageController do
     )
   end
 
+  def rolam(conn, _params) do
+    {conn, current_user} = current_user_from_session(conn)
+    current_user_is_admin = !!(current_user && current_user.admin)
+
+    render(conn, :rolam,
+      current_user: current_user,
+      current_user_is_admin: current_user_is_admin
+    )
+  end
+
   def berletek(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
     {conn, current_user} = current_user_from_session(conn)

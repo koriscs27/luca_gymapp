@@ -15,6 +15,15 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert html_response(conn, 200) =~ "Luca Gym"
   end
 
+  test "GET /rolam", %{conn: conn} do
+    conn = get(conn, ~p"/rolam")
+    html = html_response(conn, 200)
+
+    assert html =~ "Luca - edző, mentor, motivátor."
+    assert html =~ "rolam-video-1"
+    assert html =~ "rolam-video-2"
+  end
+
   test "berletek purchase buttons are inactive for guests", %{conn: conn} do
     conn = get(conn, ~p"/berletek")
     html = html_response(conn, 200)

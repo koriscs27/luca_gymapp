@@ -67,6 +67,35 @@
       </.link>
     </div>
 
+    <%= if !@current_user_is_admin do %>
+      <div
+        id="booking-gym-pass-warning"
+        class="rounded-2xl border-2 border-amber-300 bg-amber-100/95 p-5 text-amber-950 shadow-lg shadow-amber-900/20"
+      >
+        <div class="flex items-start gap-3">
+          <.icon
+            name="hero-exclamation-triangle"
+            class="mt-0.5 h-5 w-5 shrink-0"
+          />
+          <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em]">Fontos tudnivaló</p>
+            <p class="text-sm leading-relaxed">
+              A bérletek csak a személyi edzés díját fedezik, az edzőtermi belépést nem.
+              Az edzőterem használatához külön belépő szükséges, amit itt tudsz megvenni:
+              <a
+                href="https://fogarasi.sxlfitness.hu/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-semibold underline decoration-amber-900/70 underline-offset-2 transition hover:text-amber-700"
+              >
+                fogarasi.sxlfitness.hu
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%= if @current_user do %>
       <div class="w-full max-w-sm self-start rounded-2xl border border-white/10 bg-white/5 px-4 py-4 min-h-[148px]">
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">

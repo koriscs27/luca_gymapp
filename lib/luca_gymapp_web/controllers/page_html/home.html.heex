@@ -45,7 +45,7 @@
         <% end %>
 
         <.link
-          href="#rolam"
+          href={~p"/rolam"}
           class="transition hover:text-[#7a1c1c]/80"
         >
           Rólam
@@ -115,7 +115,7 @@
               </.link>
             <% end %>
 
-            <.link href="#rolam" class="rounded-xl border border-[#d6c2a1] px-4 py-3">
+            <.link href={~p"/rolam"} class="rounded-xl border border-[#d6c2a1] px-4 py-3">
               Rólam
             </.link>
             <%= if @current_user do %>
@@ -186,22 +186,6 @@
     </section>
   </div>
 </div>
-
-<section
-  id="rolam"
-  class="scroll-mt-20 bg-[#d6c2a1]/30 px-5 py-16 text-[#7a1c1c] sm:px-8 lg:px-10"
->
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/70">Rólam</p>
-
-    <h2 class="text-3xl font-semibold">Luca – edző, mentor, motivátor.</h2>
-
-    <p class="max-w-3xl text-[#7a1c1c]/80">
-      Több mint 8 év tapasztalat, személyre szabott edzéstervek, és egy közösség, ahol mindenki
-      számít. A célom, hogy erősebbnek és magabiztosabbnak érezd magad minden edzés után.
-    </p>
-  </div>
-</section>
 
 <%= if !@current_user do %>
   <section
