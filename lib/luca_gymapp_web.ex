@@ -17,7 +17,8 @@ defmodule LucaGymappWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths,
+    do: ~w(assets fonts images favicon.ico robots.txt Lucakondi4k.mp4 Lucakondi2_4k_web.mp4)
 
   def router do
     quote do
