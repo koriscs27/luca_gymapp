@@ -25,7 +25,7 @@ defmodule LucaGymappWeb.PageController do
     form = Phoenix.Component.to_form(%{"email" => "", "password" => ""}, as: :user)
     {conn, current_user} = current_user_from_session(conn)
     current_user_id = current_user && current_user.id
-    is_admin = current_user && current_user.admin
+    is_admin = !!(current_user && current_user.admin)
     season_passes = SeasonPasses.list_type_definitions()
     season_pass_categories = SeasonPasses.group_by_category(season_passes)
 
@@ -61,7 +61,7 @@ defmodule LucaGymappWeb.PageController do
   def booking(conn, params) do
     {conn, current_user} = current_user_from_session(conn)
     current_user_id = current_user && current_user.id
-    is_admin = current_user && current_user.admin
+    is_admin = !!(current_user && current_user.admin)
 
     type =
       case params["type"] do
@@ -819,6 +819,7 @@ defmodule LucaGymappWeb.PageController do
 
   defp normalize_week_offset(week_offset, true), do: week_offset
   defp normalize_week_offset(week_offset, false), do: max(week_offset, 0)
+  defp normalize_week_offset(week_offset, _), do: max(week_offset, 0)
 
   defp filter_visible_booking_days(days, _today, _week_offset, true), do: days
 
@@ -827,6 +828,7 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp filter_visible_booking_days(days, _today, _week_offset, false), do: days
+  defp filter_visible_booking_days(days, _today, _week_offset, _), do: days
 
   defp parse_time_param(value) when is_binary(value) do
     value =
