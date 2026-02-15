@@ -99,13 +99,13 @@ defmodule LucaGymappWeb.PageHTML do
             <.input type="hidden" name="payment_method" value="barion" />
             <button
               type="submit"
-              class="inline-flex w-full items-center justify-center rounded-xl bg-[#00AEEF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0098d6]"
+              class="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
               aria-label="Fizetés Barionnal"
             >
               <img
-                src="https://docs.barion.com/images/b/bd/Barion_official_logo.png"
+                src={~p"/images/Barion_official_logo.png"}
                 alt="Barion"
-                class="h-5 w-auto brightness-0 invert"
+                class="h-5 w-auto"
                 loading="lazy"
               />
             </button>
