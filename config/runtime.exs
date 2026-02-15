@@ -44,33 +44,33 @@ config :luca_gymapp, :turnstile,
 
 config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")
 
-barion_env =
-  trimmed_env.("BARION_ENV") ||
-    case config_env() do
-      :prod -> "prod"
-      _ -> "test"
-    end
-
-barion_base_url =
-  trimmed_env.("BARION_BASE_URL") ||
-    case barion_env do
-      "prod" -> "https://secure.barion.com"
-      _ -> "https://secure.test.barion.com"
-    end
-
-barion_pos_key = trimmed_env.("BARION_POS_KEY") || "CHANGE_ME_POS_KEY"
+barion_pos_key = trimmed_env.("BARION_POS_KEY")
 
 config :luca_gymapp, :barion,
-  env: barion_env,
-  base_url: barion_base_url,
-  api_base_url:
-    trimmed_env.("BARION_API_BASE_URL") ||
-      (case barion_env do
-         "prod" -> "https://api.barion.com"
-         _ -> "https://api.test.barion.com"
-       end),
+  base_url: trimmed_env.("BARION_BASE_URL"),
+  api_base_url: trimmed_env.("BARION_API_BASE_URL"),
   pos_key: barion_pos_key,
   payee_email: trimmed_env.("BARION_PAYEE_EMAIL")
+
+if config_env() in [:dev, :prod] do
+  mailgun_base_url = trimmed_env.("MAILGUN_BASE_URL") || "https://api.mailgun.net/v3"
+  mailgun_from = trimmed_env.("MAILGUN_FROM") || "no-reply@localhost"
+
+  config :luca_gymapp, :coach_email, trimmed_env.("COACH_EMAIL")
+
+  config :luca_gymapp, :mailgun,
+    api_key: trimmed_env.("MAILGUN_API_KEY"),
+    domain: trimmed_env.("MAILGUN_DOMAIN"),
+    base_url: mailgun_base_url,
+    from: mailgun_from
+
+  config :luca_gymapp, LucaGymapp.Mailer,
+    adapter: Swoosh.Adapters.Mailgun,
+    api_key: trimmed_env.("MAILGUN_API_KEY"),
+    domain: trimmed_env.("MAILGUN_DOMAIN"),
+    base_url: mailgun_base_url,
+    default_from: mailgun_from
+end
 
 if config_env() == :prod do
   database_url =
@@ -118,12 +118,6 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :swoosh, :api_client, Swoosh.ApiClient.Req
-
-  config :luca_gymapp, LucaGymapp.Mailer,
-    adapter: Swoosh.Adapters.Mailgun,
-    api_key: System.get_env("MAILGUN_API_KEY"),
-    domain: System.get_env("MAILGUN_DOMAIN"),
-    default_from: System.get_env("MAILGUN_FROM")
 
   # ## SSL Support
   #

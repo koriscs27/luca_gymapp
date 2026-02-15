@@ -13,13 +13,6 @@ config :luca_gymapp,
   payment_needed: true,
   personal_max_overlap: 1,
   cross_max_overlap: 8,
-  coach_email: "lucapankotai41@gmail.com",
-  mailgun: [
-    api_key: System.get_env("MAILGUN_API_KEY"),
-    domain: System.get_env("MAILGUN_DOMAIN"),
-    base_url: System.get_env("MAILGUN_BASE_URL", "https://api.mailgun.net/v3"),
-    from: System.get_env("MAILGUN_FROM", "Luca Gym <no-reply@localhost>")
-  ],
   season_pass_types: %{
     :"1_alkalmas_jegy" => %{price_huf: 5_000, occasions: 1},
     :"5_alkalmas_kezdo" => %{price_huf: 15_000, occasions: 5, once_per_user: true},
