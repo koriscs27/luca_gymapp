@@ -42,6 +42,8 @@ config :luca_gymapp, :turnstile,
   site_key: System.get_env("TURNSTILE_SITE_KEY"),
   secret_key: System.get_env("TURNSTILE_SECRET_KEY")
 
+config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")
+
 barion_env =
   trimmed_env.("BARION_ENV") ||
     case config_env() do
