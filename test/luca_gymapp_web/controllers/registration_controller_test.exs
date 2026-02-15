@@ -89,11 +89,11 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
   end
 
   test "rejects registration when captcha is missing", %{conn: conn} do
-    previous_value = Application.get_env(:luca_gymapp, :enforce_turnstile_in_test, false)
-    Application.put_env(:luca_gymapp, :enforce_turnstile_in_test, true)
+    previous_value = Application.get_env(:luca_gymapp, :turnstile_required, false)
+    Application.put_env(:luca_gymapp, :turnstile_required, true)
 
     on_exit(fn ->
-      Application.put_env(:luca_gymapp, :enforce_turnstile_in_test, previous_value)
+      Application.put_env(:luca_gymapp, :turnstile_required, previous_value)
     end)
 
     params = %{

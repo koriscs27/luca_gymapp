@@ -26,6 +26,7 @@ config :swoosh, local: false
 
 # Do not print debug messages in production
 config :logger, level: :info
+config :luca_gymapp, turnstile_required: true
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.

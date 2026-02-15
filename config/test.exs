@@ -68,6 +68,7 @@ config :phoenix_live_view,
 config :luca_gymapp, payment_needed: false
 config :luca_gymapp, cross_max_overlap: 2
 config :luca_gymapp, personal_max_overlap: 1
+config :luca_gymapp, turnstile_required: false
 
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
