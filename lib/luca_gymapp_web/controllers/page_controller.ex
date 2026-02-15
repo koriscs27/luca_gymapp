@@ -435,7 +435,7 @@ defmodule LucaGymappWeb.PageController do
 
                 {:error, reason} ->
                   Logger.error(
-                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name}"
+                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name} reason=#{inspect(reason)}"
                   )
 
                   pass_purchase_error(conn, reason, ~p"/berletek")

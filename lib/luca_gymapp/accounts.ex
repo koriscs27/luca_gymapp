@@ -134,10 +134,9 @@ defmodule LucaGymapp.Accounts do
         ok
 
       {:error, reason} = error ->
-        Logger.error("Confirmation email failed",
+        Logger.error("Confirmation email failed reason=#{inspect(reason)}",
           user_id: user.id,
-          to: user.email,
-          reason: inspect(reason)
+          to: user.email
         )
 
         error
@@ -194,10 +193,9 @@ defmodule LucaGymapp.Accounts do
               ok
 
             {:error, reason} = error ->
-              Logger.error("Password reset email failed",
+              Logger.error("Password reset email failed reason=#{inspect(reason)}",
                 user_id: user.id,
-                to: user.email,
-                reason: inspect(reason)
+                to: user.email
               )
 
               error

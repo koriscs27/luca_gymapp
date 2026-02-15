@@ -62,6 +62,7 @@ defmodule LucaGymapp.MixProject do
       {:multipart, "~> 0.4"},
       {:plug, "~> 1.16"},
       {:req, "~> 0.5"},
+      {:castore, "~> 1.0"},
       {:ueberauth, "~> 0.10.8"},
       {:ueberauth_google, "~> 0.12.1"},
       {:telemetry_metrics, "~> 1.0"},

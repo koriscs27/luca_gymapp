@@ -2,6 +2,7 @@ defmodule LucaGymappWeb.RegistrationController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Accounts
+  require Logger
 
   def new(conn, _params) do
     form = Phoenix.Component.to_form(%{}, as: :user)
@@ -106,15 +107,11 @@ defmodule LucaGymappWeb.RegistrationController do
         |> to_string()
 
       response =
-        Req.post(
-          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-          form: %{
-            secret: secret_key,
-            response: token,
-            remoteip: remote_ip
-          },
-          receive_timeout: 10_000
-        )
+        safe_turnstile_request(%{
+          secret: secret_key,
+          response: token,
+          remoteip: remote_ip
+        })
 
       case response do
         {:ok, %{status: 200, body: %{"success" => true}}} ->
@@ -134,6 +131,22 @@ defmodule LucaGymappWeb.RegistrationController do
           {:error, :turnstile_unavailable}
       end
     end
+  end
+
+  defp safe_turnstile_request(form) do
+    Req.post(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      form: form,
+      receive_timeout: 10_000
+    )
+  rescue
+    exception ->
+      Logger.warning("turnstile_request_exception reason=#{Exception.message(exception)}")
+      {:error, :turnstile_unavailable}
+  catch
+    kind, reason ->
+      Logger.warning("turnstile_request_exception kind=#{kind} reason=#{inspect(reason)}")
+      {:error, :turnstile_unavailable}
   end
 
   defp turnstile_site_key do

@@ -78,7 +78,7 @@ defmodule LucaGymapp.Payments.Barion do
         {:error, {:barion_http_error, status, body}}
 
       {:error, error} ->
-        Logger.error("barion_start_failed url=#{start_url} error=#{inspect(error)}")
+        Logger.error("barion_start_failed url=#{start_url} reason=#{inspect(error)}")
         {:error, {:barion_request_failed, error}}
     end
   end
@@ -107,7 +107,7 @@ defmodule LucaGymapp.Payments.Barion do
         {:error, {:barion_http_error, status, body}}
 
       {:error, error} ->
-        Logger.error("barion_state_failed url=#{state_url} error=#{inspect(error)}")
+        Logger.error("barion_state_failed url=#{state_url} reason=#{inspect(error)}")
         {:error, {:barion_request_failed, error}}
     end
   end

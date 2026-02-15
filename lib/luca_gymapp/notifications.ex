@@ -20,10 +20,9 @@ defmodule LucaGymapp.Notifications do
         ok
 
       {:error, reason} = error ->
-        Logger.error("Admin cancellation email failed",
+        Logger.error("Admin cancellation email failed reason=#{inspect(reason)}",
           user_id: user.id,
-          to: user.email,
-          reason: inspect(reason)
+          to: user.email
         )
 
         error
@@ -111,7 +110,8 @@ defmodule LucaGymapp.Notifications do
         :ok
 
       {:ok, %{status: status, body: body}} ->
-        Logger.error("Mailgun booking email failed",
+        Logger.error(
+          "Mailgun booking email failed reason=#{inspect({:mailgun_http_error, status, body})}",
           status: status,
           body: inspect(body)
         )
@@ -119,7 +119,7 @@ defmodule LucaGymapp.Notifications do
         {:error, :mailgun_failed}
 
       {:error, reason} ->
-        Logger.error("Mailgun booking email error", reason: inspect(reason))
+        Logger.error("Mailgun booking email error reason=#{inspect(reason)}")
         {:error, :mailgun_failed}
     end
   end
