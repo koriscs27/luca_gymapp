@@ -50,7 +50,7 @@ defmodule LucaGymappWeb.Layouts do
         <header class="navbar px-4 sm:px-6 lg:px-8">
           <div class="flex-1">
             <a href="/" class="flex-1 flex w-fit items-center gap-2">
-              <img src={~p"/images/logo.svg"} width="36" />
+              <img src={~p"/images/logo_3.svg"} width="52" />
               <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
             </a>
           </div>
@@ -78,7 +78,7 @@ defmodule LucaGymappWeb.Layouts do
           <div class="flex items-center justify-between gap-4">
             <%= if @show_logo do %>
               <a href="/" class="flex w-fit items-center gap-2">
-                <img src={~p"/images/logo.svg"} width="36" />
+                <img src={~p"/images/logo_3.svg"} width="52" />
                 <span class="text-sm font-semibold">Luca Gym</span>
               </a>
             <% else %>
