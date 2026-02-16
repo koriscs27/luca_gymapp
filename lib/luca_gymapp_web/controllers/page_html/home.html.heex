@@ -245,7 +245,7 @@
         </.link>
       </div>
 
-      <.form for={@form} id="login-form" action={~p"/login"} class="mt-6 space-y-4">
+      <.form for={@form} id="login-form" action={~p"/login"} class="auth-form mt-6 space-y-4">
         <.input field={@form[:email]} type="email" label="E-mail" required />
         <.input field={@form[:password]} type="password" label="Jelszó" required />
         <div class="text-right text-sm">

@@ -5,9 +5,40 @@ defmodule LucaGymapp.SeasonPasses do
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
 
+  @token_replacements %{
+    "berlet" => "bérlet",
+    "kezdo" => "kezdő",
+    "honapos" => "hónapos",
+    "etrend" => "étrend"
+  }
+
   def season_pass_types do
     Application.get_env(:luca_gymapp, :season_pass_types, %{})
   end
+
+  def display_name(type) when is_atom(type) do
+    type
+    |> Atom.to_string()
+    |> display_name()
+  end
+
+  def display_name(type) when is_binary(type) do
+    normalized_type = String.trim(type)
+
+    case normalized_type do
+      "" ->
+        "-"
+
+      _ ->
+        normalized_type
+        |> String.split("_", trim: true)
+        |> Enum.map(&replace_token/1)
+        |> Enum.join(" ")
+        |> maybe_capitalize()
+    end
+  end
+
+  def display_name(_), do: "-"
 
   def list_type_definitions do
     season_pass_types()
@@ -17,7 +48,7 @@ defmodule LucaGymapp.SeasonPasses do
       %{
         key: key,
         type: type,
-        name: humanize_type(type),
+        name: display_name(type),
         category: category_for_type(type),
         price_huf: Map.fetch!(config, :price_huf),
         occasions: Map.get(config, :occasions, 0),
@@ -101,7 +132,7 @@ defmodule LucaGymapp.SeasonPasses do
            :ok <- enforce_once_per_user(user.id, type_def),
            :ok <- enforce_no_active_pass(user.id, type_def) do
         now = DateTime.utc_now() |> DateTime.truncate(:second)
-        expiry_date = now |> DateTime.add(60 * 24 * 60 * 60, :second) |> DateTime.to_date()
+        expiry_date = now |> DateTime.to_date() |> Date.shift(month: 3)
         payment_id = Keyword.get(opts, :payment_id)
         payment_method = Keyword.get(opts, :payment_method, "cash")
 
@@ -213,11 +244,19 @@ defmodule LucaGymapp.SeasonPasses do
     end
   end
 
-  defp humanize_type(type) do
-    type
-    |> String.replace("_", " ")
-    |> String.replace_prefix("cross ", "Cross ")
-    |> String.trim()
-    |> String.capitalize()
+  defp replace_token("cross"), do: "Cross"
+
+  defp replace_token(token) do
+    Map.get(@token_replacements, token, token)
+  end
+
+  defp maybe_capitalize(""), do: "-"
+
+  defp maybe_capitalize(value) do
+    if String.match?(value, ~r/^[[:digit:]]/u) do
+      value
+    else
+      String.capitalize(value)
+    end
   end
 end

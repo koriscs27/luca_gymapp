@@ -14,22 +14,22 @@ config :luca_gymapp,
   personal_max_overlap: 1,
   cross_max_overlap: 8,
   season_pass_types: %{
-    :"1_alkalmas_jegy" => %{price_huf: 5_000, occasions: 1},
+    :"1_alkalmas_jegy" => %{price_huf: 6_000, occasions: 1},
     :"5_alkalmas_kezdo" => %{price_huf: 15_000, occasions: 5, once_per_user: true},
+    :"5_alkalmas_berlet" => %{price_huf: 25_000, occasions: 5},
     :"10_alkalmas_berlet" => %{price_huf: 45_000, occasions: 10},
-    :"1_honapos_etrend" => %{price_huf: 10_000},
-    cross_8_alkalmas_berlet: %{price_huf: 27_000, occasions: 8},
-    cross_12_alkalmas_berlet: %{price_huf: 45_000, occasions: 12}
+    cross_1_alkalmas_jegy: %{price_huf: 2_500, occasions: 1},
+    cross_10_alkalmas_berlet: %{price_huf: 23_000, occasions: 10}
   },
   booking_schedule: %{
     personal: %{
       default_view: :week,
       availability: %{
-        monday: [%{from: ~T[08:00:00], to: ~T[16:00:00]}],
+        monday: [%{from: ~T[08:00:00], to: ~T[18:00:00]}],
         tuesday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
-        wednesday: [%{from: ~T[08:00:00], to: ~T[16:00:00]}],
+        wednesday: [%{from: ~T[08:00:00], to: ~T[18:00:00]}],
         thursday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
-        friday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
+        friday: [%{from: ~T[11:00:00], to: ~T[14:00:00]}],
         saturday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}]
       }
     },

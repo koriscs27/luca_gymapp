@@ -382,6 +382,28 @@ body {
 .booking-confirm-modal .text-neutral-400 {
   color: #94a3b8;
 }
+
+.auth-form :is(input, select, textarea),
+.auth-form :is(.input, .select, .textarea) {
+  color-scheme: light;
+  background-color: #ffffff;
+  color: #7a1c1c;
+  -webkit-text-fill-color: #7a1c1c;
+}
+
+.auth-form :is(input, select, textarea)::placeholder,
+.auth-form :is(.input, .select, .textarea)::placeholder {
+  color: rgba(122, 28, 28, 0.55);
+}
+
+.auth-form :is(input, textarea):-webkit-autofill,
+.auth-form :is(input, textarea):-webkit-autofill:hover,
+.auth-form :is(input, textarea):-webkit-autofill:focus {
+  -webkit-text-fill-color: #7a1c1c;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
 .login-modal {
   position: fixed;
   inset: 0;

@@ -9,10 +9,10 @@ defmodule LucaGymapp.SeasonPassesTest do
   test "cannot buy two active cross passes" do
     user = create_user()
 
-    assert {:ok, _pass} = SeasonPasses.purchase_season_pass(user, "cross_8_alkalmas_berlet")
+    assert {:ok, _pass} = SeasonPasses.purchase_season_pass(user, "cross_1_alkalmas_jegy")
 
     assert {:error, :active_pass_exists} =
-             SeasonPasses.purchase_season_pass(user, "cross_12_alkalmas_berlet")
+             SeasonPasses.purchase_season_pass(user, "cross_10_alkalmas_berlet")
   end
 
   test "cannot buy two active personal passes" do
@@ -38,21 +38,21 @@ defmodule LucaGymapp.SeasonPassesTest do
 
     _legacy_pass =
       create_pass(user, %{
-        pass_name: "cross_8_alkalmas_berlet",
-        pass_type: "cross_8_alkalmas_berlet",
+        pass_name: "cross_1_alkalmas_jegy",
+        pass_type: "cross_1_alkalmas_jegy",
         occasions: 8,
         purchase_price: 27_000,
         expiry_date: Date.add(Date.utc_today(), 30)
       })
 
     assert {:error, :active_pass_exists} =
-             SeasonPasses.purchase_season_pass(user, "cross_12_alkalmas_berlet")
+             SeasonPasses.purchase_season_pass(user, "cross_10_alkalmas_berlet")
   end
 
   test "can buy one cross and one personal pass together" do
     user = create_user()
 
-    assert {:ok, _cross_pass} = SeasonPasses.purchase_season_pass(user, "cross_8_alkalmas_berlet")
+    assert {:ok, _cross_pass} = SeasonPasses.purchase_season_pass(user, "cross_1_alkalmas_jegy")
     assert {:ok, _personal_pass} = SeasonPasses.purchase_season_pass(user, "10_alkalmas_berlet")
   end
 
@@ -80,22 +80,22 @@ defmodule LucaGymapp.SeasonPassesTest do
   test "can buy a new cross pass when the old one has 0 occasions" do
     user = create_user()
 
-    assert {:ok, pass} = SeasonPasses.purchase_season_pass(user, "cross_8_alkalmas_berlet")
+    assert {:ok, pass} = SeasonPasses.purchase_season_pass(user, "cross_1_alkalmas_jegy")
     pass = update_pass(pass, %{occasions: 0})
 
     assert pass.occasions == 0
-    assert {:ok, _new_pass} = SeasonPasses.purchase_season_pass(user, "cross_12_alkalmas_berlet")
+    assert {:ok, _new_pass} = SeasonPasses.purchase_season_pass(user, "cross_10_alkalmas_berlet")
   end
 
   test "can buy a new cross pass when the old one is expired" do
     user = create_user()
 
-    assert {:ok, pass} = SeasonPasses.purchase_season_pass(user, "cross_8_alkalmas_berlet")
+    assert {:ok, pass} = SeasonPasses.purchase_season_pass(user, "cross_1_alkalmas_jegy")
     yesterday = Date.add(Date.utc_today(), -1)
     pass = update_pass(pass, %{expiry_date: yesterday})
 
     assert pass.expiry_date == yesterday
-    assert {:ok, _new_pass} = SeasonPasses.purchase_season_pass(user, "cross_12_alkalmas_berlet")
+    assert {:ok, _new_pass} = SeasonPasses.purchase_season_pass(user, "cross_10_alkalmas_berlet")
   end
 
   test "once-per-user passes cannot be purchased twice even after expiry" do
@@ -107,6 +107,13 @@ defmodule LucaGymapp.SeasonPassesTest do
 
     assert {:error, :once_per_user} =
              SeasonPasses.purchase_season_pass(user, "5_alkalmas_kezdo")
+  end
+
+  test "display_name returns accented Hungarian labels" do
+    assert SeasonPasses.display_name("10_alkalmas_berlet") == "10 alkalmas bérlet"
+    assert SeasonPasses.display_name("cross_8_alkalmas_berlet") == "Cross 8 alkalmas bérlet"
+    assert SeasonPasses.display_name("1_honapos_etrend") == "1 hónapos étrend"
+    assert SeasonPasses.display_name("egyedi_berlet") == "Egyedi bérlet"
   end
 
   defp create_user do

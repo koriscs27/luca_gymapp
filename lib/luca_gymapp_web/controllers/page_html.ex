@@ -5,6 +5,7 @@ defmodule LucaGymappWeb.PageHTML do
   See the `page_html` directory for all templates available.
   """
   use LucaGymappWeb, :html
+  alias LucaGymapp.SeasonPasses
 
   embed_templates "page_html/*"
 
@@ -25,17 +26,11 @@ defmodule LucaGymappWeb.PageHTML do
   def format_date(_date), do: "-"
 
   def season_pass_label(type) when is_binary(type) do
-    type
-    |> String.replace("_", " ")
-    |> String.replace_prefix("cross ", "Cross ")
-    |> String.trim()
-    |> String.capitalize()
+    SeasonPasses.display_name(type)
   end
 
   def season_pass_label(type) when is_atom(type) do
-    type
-    |> Atom.to_string()
-    |> season_pass_label()
+    SeasonPasses.display_name(type)
   end
 
   attr :pass, :map, required: true
@@ -49,21 +44,21 @@ defmodule LucaGymappWeb.PageHTML do
       aria-modal="true"
       aria-labelledby={"payment-title-#{@pass.key}"}
     >
-      <a href="#" class="booking-confirm-modal__overlay" aria-label="Bezárás"></a>
+      <a href="#" class="booking-confirm-modal__overlay" aria-label="BezĂˇrĂˇs"></a>
       <div class="booking-confirm-modal__panel">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérlet vásárlás</p>
+            <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">BĂ©rlet vĂˇsĂˇrlĂˇs</p>
 
             <h3 id={"payment-title-#{@pass.key}"} class="mt-1 text-xl font-semibold text-neutral-900">
-              Fizetési mód
+              FizetĂ©si mĂłd
             </h3>
           </div>
 
           <.link
             href="#"
             class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-            aria-label="Bezárás"
+            aria-label="BezĂˇrĂˇs"
           >
             <.icon name="hero-x-mark" class="h-4 w-4" />
           </.link>
@@ -74,7 +69,7 @@ defmodule LucaGymappWeb.PageHTML do
 
           <div class="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
             <span class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm">
-              Ár: {format_huf(@pass.price_huf)} Ft
+              Ăr: {format_huf(@pass.price_huf)} Ft
             </span>
             <%= if @pass.occasions > 0 do %>
               <span class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm">
@@ -82,7 +77,7 @@ defmodule LucaGymappWeb.PageHTML do
               </span>
             <% else %>
               <span class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm">
-                Időtartam: 1 hónap
+                Időtartam: 3 hónap
               </span>
             <% end %>
           </div>
@@ -100,7 +95,7 @@ defmodule LucaGymappWeb.PageHTML do
             <button
               type="submit"
               class="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
-              aria-label="Fizetés Barionnal"
+              aria-label="FizetĂ©s Barionnal"
             >
               <img
                 src={~p"/images/Barion_official_logo.png"}
@@ -112,7 +107,7 @@ defmodule LucaGymappWeb.PageHTML do
           </.form>
           <div
             class="mt-1.5 flex items-center justify-center gap-1.5"
-            aria-label="Elfogadott kártyák"
+            aria-label="Elfogadott kĂˇrtyĂˇk"
           >
             <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
               <img
@@ -145,7 +140,7 @@ defmodule LucaGymappWeb.PageHTML do
           href="#"
           class="mt-3 inline-flex w-full justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:border-neutral-300"
         >
-          Mégse
+          MĂ©gse
         </.link>
       </div>
     </div>

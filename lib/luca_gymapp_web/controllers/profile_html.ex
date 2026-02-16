@@ -3,6 +3,7 @@ defmodule LucaGymappWeb.ProfileHTML do
   This module contains profile templates.
   """
   use LucaGymappWeb, :html
+  alias LucaGymapp.SeasonPasses
 
   embed_templates "profile_html/*"
 
@@ -56,15 +57,9 @@ defmodule LucaGymappWeb.ProfileHTML do
   def format_huf(_), do: "0"
 
   def season_pass_label(type) when is_binary(type) do
-    type
-    |> String.trim()
-    |> String.split("_", trim: true)
-    |> List.last()
-    |> case do
-      nil -> "-"
-      value -> String.capitalize(value)
-    end
+    SeasonPasses.display_name(type)
   end
 
+  def season_pass_label(type) when is_atom(type), do: SeasonPasses.display_name(type)
   def season_pass_label(_), do: "-"
 end
