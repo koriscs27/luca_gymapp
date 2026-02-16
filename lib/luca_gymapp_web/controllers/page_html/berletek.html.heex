@@ -4,14 +4,18 @@
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p class="text-xs uppercase tracking-[0.3em] text-white/60">Bérletek</p>
-          
+
           <h1 class="mt-3 text-3xl font-semibold text-white">Személyre szabott bérletek.</h1>
-          
+
           <p class="mt-3 max-w-2xl text-white/70">
             Válassz a bérletek közül, és indítsd el a foglalást egy kattintással.
           </p>
+
+          <p class="mt-2 text-sm font-semibold text-[#7a1c1c]/85">
+            Fontos: minden bérlet 3 hónapig érvényes a vásárlás dátumától.
+          </p>
         </div>
-        
+
         <div class="flex items-center gap-3">
           <%= if !@current_user do %>
             <.link
@@ -61,7 +65,7 @@
       <% end %>
     </div>
   </section>
-  
+
   <%= if error = Phoenix.Flash.get(@flash, :error) do %>
     <div
       class="booking-error-modal"
@@ -73,7 +77,7 @@
         <div class="flex items-start justify-between gap-4">
           <div>
             <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérlet hiba</p>
-            
+
             <h3
               id="purchase-error-title"
               class="mt-1 text-2xl font-semibold text-neutral-900"
@@ -81,7 +85,7 @@
               Nem sikerült a vásárlás
             </h3>
           </div>
-          
+
           <.link
             href={~p"/berletek"}
             class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
@@ -90,11 +94,11 @@
             <.icon name="hero-x-mark" class="h-4 w-4" />
           </.link>
         </div>
-        
+
         <p class="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {error}
         </p>
-        
+
         <div class="mt-6">
           <.link
             href={~p"/berletek"}
@@ -106,20 +110,20 @@
       </div>
     </div>
   <% end %>
-  
+
   <%= if @current_user_is_admin do %>
     <section class="bg-transparent px-5 py-16 text-neutral-900 sm:px-8 lg:px-10">
       <div class="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <div>
           <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Admin</p>
-          
+
           <h2 class="mt-3 text-3xl font-semibold">Bérlet hozzáadása felhasználónak</h2>
-          
+
           <p class="mt-4 text-neutral-600">
             Válaszd ki a felhasználót és a bérlet típusát, majd hozd létre a bérletet.
           </p>
         </div>
-        
+
         <.form
           for={@admin_form}
           id="admin-pass-form"
@@ -184,7 +188,7 @@
         </section>
       <% end %>
     <% end %>
-    
+
     <section
       id="berletek"
       class="scroll-mt-20 bg-white px-5 py-16 text-neutral-900 sm:px-8 lg:px-10"
@@ -192,45 +196,45 @@
       <div class="mx-auto flex w-full max-w-6xl flex-col gap-12">
         <div class="max-w-3xl">
           <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bérletek</p>
-          
+
           <h2 class="mt-3 text-3xl font-semibold">Itt látod az érvényes bérleteidet.</h2>
 
           <p class="mt-4 text-neutral-600">
             Ha van aktív bérleted, itt jelenik meg. Válaszd ki a számodra megfelelő kategóriát és vásárolj új bérletet.
           </p>
         </div>
-        
+
         <div class="space-y-10">
           <section>
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Személyi edzés</p>
-                
+
                 <h3 class="mt-2 text-2xl font-semibold">Alkalmas bérletek</h3>
               </div>
             </div>
-            
+
             <div class="mt-6 grid gap-6 md:grid-cols-3">
               <%= for pass <- Map.get(@season_pass_categories, :szemelyi_edzes, []) do %>
                 <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
                   <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Személyi</p>
-                  
+
                   <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-                  
+
                   <p class="mt-3 text-2xl font-semibold text-neutral-900">
                     {format_huf(pass.price_huf)} Ft
                   </p>
-                  
+
                   <div class="mt-4 space-y-2 text-sm text-neutral-600">
                     <%= if pass.occasions > 0 do %>
                       <p>{pass.occasions} alkalom</p>
                     <% end %>
-                    
+
                     <%= if pass.once_per_user do %>
                       <p>Egyszer vásárolható</p>
                     <% end %>
                   </div>
-                  
+
                   <div class="mt-6">
                     <%= if @current_user do %>
                       <.link
@@ -239,7 +243,8 @@
                         class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
                       >
                         Vásárlás
-                      </.link> <.payment_modal pass={pass} />
+                      </.link>
+                      <.payment_modal pass={pass} />
                     <% else %>
                       <button
                         id={"purchase-button-#{pass.key}"}
@@ -255,33 +260,33 @@
               <% end %>
             </div>
           </section>
-          
+
           <section>
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Cross</p>
-                
+
                 <h3 class="mt-2 text-2xl font-semibold">Cross bérletek</h3>
               </div>
             </div>
-            
+
             <div class="mt-6 grid gap-6 md:grid-cols-2">
               <%= for pass <- Map.get(@season_pass_categories, :cross, []) do %>
                 <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
                   <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Cross</p>
-                  
+
                   <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-                  
+
                   <p class="mt-3 text-2xl font-semibold text-neutral-900">
                     {format_huf(pass.price_huf)} Ft
                   </p>
-                  
+
                   <div class="mt-4 space-y-2 text-sm text-neutral-600">
                     <%= if pass.occasions > 0 do %>
                       <p>{pass.occasions} alkalom</p>
                     <% end %>
                   </div>
-                  
+
                   <div class="mt-6">
                     <%= if @current_user do %>
                       <.link
@@ -290,7 +295,8 @@
                         class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
                       >
                         Vásárlás
-                      </.link> <.payment_modal pass={pass} />
+                      </.link>
+                      <.payment_modal pass={pass} />
                     <% else %>
                       <button
                         id={"purchase-button-#{pass.key}"}
@@ -306,27 +312,27 @@
               <% end %>
             </div>
           </section>
-          
+
           <section>
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Egyéb</p>
-                
+
                 <h3 class="mt-2 text-2xl font-semibold">Kiegészítő csomagok</h3>
               </div>
             </div>
-            
+
             <div class="mt-6 grid gap-6 md:grid-cols-2">
               <%= for pass <- Map.get(@season_pass_categories, :egyeb, []) do %>
                 <div class="flex h-full flex-col rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
                   <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Egyéb</p>
-                  
+
                   <h4 class="mt-3 text-xl font-semibold">{pass.name}</h4>
-                  
+
                   <p class="mt-3 text-2xl font-semibold text-neutral-900">
                     {format_huf(pass.price_huf)} Ft
                   </p>
-                  
+
                   <div class="mt-4 space-y-2 text-sm text-neutral-600">
                     <%= if pass.occasions > 0 do %>
                       <p>{pass.occasions} alkalom</p>
@@ -334,7 +340,7 @@
                       <p>Időtartam: 3 hónap</p>
                     <% end %>
                   </div>
-                  
+
                   <div class="mt-6">
                     <%= if @current_user do %>
                       <.link
@@ -343,7 +349,8 @@
                         class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
                       >
                         Vásárlás
-                      </.link> <.payment_modal pass={pass} />
+                      </.link>
+                      <.payment_modal pass={pass} />
                     <% else %>
                       <button
                         id={"purchase-button-#{pass.key}"}
@@ -360,19 +367,19 @@
             </div>
           </section>
         </div>
-        
+
         <%= if !@current_user do %>
           <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
             <div>
               <p class="text-sm font-semibold text-neutral-900">
                 A vásárláshoz bejelentkezés kell
               </p>
-              
+
               <p class="mt-1 text-sm text-neutral-600">
                 Lépj be a fiókodba, hogy elindítsd a vásárlást.
               </p>
             </div>
-            
+
             <.link
               href="#login-modal"
               class="inline-flex rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
@@ -383,7 +390,7 @@
         <% end %>
       </div>
     </section>
-    
+
     <%= if !@current_user do %>
       <div
         id="login-modal"
@@ -400,7 +407,7 @@
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Bejelentkezés</p>
-              
+
               <h3
                 id="login-title"
                 class="mt-1 text-2xl font-semibold text-neutral-900"
@@ -408,7 +415,7 @@
                 Üdv újra itt!
               </h3>
             </div>
-            
+
             <.link
               href="#"
               class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
@@ -417,12 +424,12 @@
               <.icon name="hero-x-mark" class="h-4 w-4" />
             </.link>
           </div>
-          
+
           <.form
             for={@form}
             id="login-form"
             action={~p"/login"}
-            class="mt-6 space-y-4"
+            class="auth-form mt-6 space-y-4"
           >
             <.input field={@form[:email]} type="email" label="E-mail" required />
             <.input
@@ -448,7 +455,7 @@
                 Nem kaptad meg a megerősítő e-mailt?
               </.link>
             </div>
-            
+
             <button
               id="login-submit"
               type="submit"
@@ -489,7 +496,7 @@
               Folytatás Google-fiókkal
             </.link>
           </.form>
-          
+
           <div class="mt-4 flex items-center justify-between text-sm">
             <span class="text-neutral-500">Nincs még fiókod?</span>
             <.link
@@ -499,7 +506,7 @@
               Regisztrálj
             </.link>
           </div>
-          
+
           <%= if login_error = Phoenix.Flash.get(@flash, :login_error) do %>
             <p
               id="login-error-message"
