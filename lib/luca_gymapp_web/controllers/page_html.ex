@@ -97,43 +97,15 @@ defmodule LucaGymappWeb.PageHTML do
               class="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
               aria-label="Fizetés Barionnal"
             >
-              <img
-                src={~p"/images/Barion_official_logo.png"}
-                alt="Barion"
-                class="h-5 w-auto"
-                loading="lazy"
-              />
+              Fizetes Barionnal
             </button>
           </.form>
-          <div
-            class="mt-1.5 flex items-center justify-center gap-1.5"
-            aria-label="Elfogadott kártyák"
-          >
-            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/960px-Former_Visa_%28company%29_logo.svg.png"
-                alt="Visa"
-                class="h-3.5 w-auto"
-                loading="lazy"
-              />
-            </span>
-            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/750px-Mastercard-logo.svg.png"
-                alt="Mastercard"
-                class="h-3.5 w-auto"
-                loading="lazy"
-              />
-            </span>
-            <span class="inline-flex h-5 items-center rounded border border-neutral-200 bg-white px-1">
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Maestro_2016.svg/440px-Maestro_2016.svg.png"
-                alt="Maestro"
-                class="h-3.5 w-auto"
-                loading="lazy"
-              />
-            </span>
-          </div>
+          <img
+            src={~p"/images/barion-smart-banner-light.svg"}
+            alt="Barion Smart Banner"
+            class="mx-auto mt-1.5 w-full max-w-[340px]"
+            loading="lazy"
+          />
         </div>
 
         <.link
