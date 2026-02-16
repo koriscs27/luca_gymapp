@@ -387,14 +387,20 @@ body {
 .auth-form :is(.input, .select, .textarea) {
   color-scheme: light;
   background-color: #ffffff;
+  border-color: #d1d5db;
   color: #7a1c1c;
   -webkit-text-fill-color: #7a1c1c;
+}
+
+.auth-form :is(input, select, textarea):focus,
+.auth-form :is(.input, .select, .textarea):focus {
+  border-color: #94a3b8;
 }
 
 .auth-form .label,
 .auth-form .label-text,
 .auth-form .label-text-alt {
-  color: #334155;
+  color: rgba(122, 28, 28, 0.82);
 }
 
 .auth-form :is(input, select, textarea)::placeholder,
