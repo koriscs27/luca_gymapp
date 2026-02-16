@@ -182,6 +182,13 @@ defmodule LucaGymappWeb.PageController do
     )
   end
 
+  def aszf(conn, params) do
+    return_to = params |> Map.get("return_to") |> normalize_return_to()
+    aszf_content = load_aszf_draft_content()
+
+    render(conn, :aszf, aszf_content: aszf_content, return_to: return_to)
+  end
+
   def admin_bookings(conn, params) do
     current_user_id = get_session(conn, :user_id)
 
@@ -802,6 +809,36 @@ defmodule LucaGymappWeb.PageController do
           nil -> {delete_session(conn, :user_id), nil}
           user -> {conn, user}
         end
+    end
+  end
+
+  defp normalize_return_to(path) when is_binary(path) do
+    decoded_path = URI.decode(path)
+    parsed = URI.parse(decoded_path)
+
+    cond do
+      parsed.scheme != nil or parsed.host != nil ->
+        "/berletek"
+
+      is_binary(parsed.path) and String.starts_with?(parsed.path, "/") ->
+        case parsed.fragment do
+          nil -> parsed.path
+          fragment -> parsed.path <> "#" <> fragment
+        end
+
+      true ->
+        "/berletek"
+    end
+  end
+
+  defp normalize_return_to(_), do: "/berletek"
+
+  defp load_aszf_draft_content do
+    path = Path.join(:code.priv_dir(:luca_gymapp), "legal/aszf_draft.md")
+
+    case File.read(path) do
+      {:ok, content} -> content
+      {:error, _reason} -> "Az ÁSZF tervezet jelenleg nem elérhető."
     end
   end
 

@@ -89,12 +89,40 @@ defmodule LucaGymappWeb.PageHTML do
             id={"confirm-purchase-barion-#{@pass.key}"}
             action={~p"/berletek/purchase"}
             method="post"
+            class="purchase-terms-form space-y-3"
           >
             <.input type="hidden" name="pass_name" value={@pass.type} />
             <.input type="hidden" name="payment_method" value="barion" />
+            <label
+              for={"accept-aszf-#{@pass.key}"}
+              class="flex items-start gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700"
+            >
+              <input
+                id={"accept-aszf-#{@pass.key}"}
+                name="accept_aszf"
+                type="checkbox"
+                value="true"
+                required
+                data-aszf-checkbox
+                class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-neutral-900"
+              />
+              <span>
+                Elolvastam és elfogadom az <.link
+                  href={
+                    "/aszf?return_to=" <>
+                      URI.encode_www_form("/berletek#purchase-#{@pass.key}")
+                  }
+                  class="font-semibold underline underline-offset-2"
+                >
+                  ÁSZF-et
+                </.link>.
+              </span>
+            </label>
             <button
               type="submit"
-              class="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+              data-aszf-submit
+              disabled
+              class="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:border-neutral-200 disabled:hover:bg-white disabled:hover:shadow-sm"
               aria-label="Fizetés Barionnal"
             >
               Fizetes Barionnal

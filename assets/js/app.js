@@ -179,6 +179,34 @@ document.addEventListener("click", event => {
   togglePasswordField(toggleButton)
 })
 
+const initAszfPurchaseForms = () => {
+  const forms = document.querySelectorAll(".purchase-terms-form")
+
+  forms.forEach(form => {
+    const checkbox = form.querySelector("[data-aszf-checkbox]")
+    const submitButton = form.querySelector("[data-aszf-submit]")
+
+    if (!checkbox || !submitButton) {
+      return
+    }
+
+    submitButton.disabled = !checkbox.checked
+
+    if (form.dataset.aszfBound === "true") {
+      return
+    }
+
+    checkbox.addEventListener("change", () => {
+      submitButton.disabled = !checkbox.checked
+    })
+
+    form.dataset.aszfBound = "true"
+  })
+}
+
+document.addEventListener("DOMContentLoaded", initAszfPurchaseForms)
+window.addEventListener("phx:page-loading-stop", initAszfPurchaseForms)
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

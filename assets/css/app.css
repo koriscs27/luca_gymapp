@@ -416,6 +416,15 @@ body {
   box-shadow: 0 0 0 1000px #ffffff inset;
 }
 
+.purchase-terms-form [data-aszf-submit]:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.purchase-terms-form [data-aszf-submit]:not(:disabled) {
+  opacity: 1;
+}
+
 .login-modal {
   position: fixed;
   inset: 0;
