@@ -11,8 +11,10 @@ defmodule LucaGymappWeb.RegistrationController do
 
   def create(conn, %{"user" => user_params} = params) do
     turnstile_token = Map.get(params, "cf-turnstile-response")
+    accept_adatkezelesi = Map.get(params, "accept_adatkezelesi")
 
     with :ok <- verify_turnstile(conn, turnstile_token),
+         :ok <- verify_adatkezelesi_acceptance(accept_adatkezelesi),
          {:ok, user} <- Accounts.register_user(user_params) do
       Accounts.deliver_confirmation_instructions(user)
 
@@ -35,6 +37,13 @@ defmodule LucaGymappWeb.RegistrationController do
 
       {:error, :turnstile_not_configured} ->
         render_register_error(conn, user_params, "A robotellenőrzés nincs beállítva.")
+
+      {:error, :adatkezelesi_not_accepted} ->
+        render_register_error(
+          conn,
+          user_params,
+          "A regisztraciohoz el kell fogadnod az Adatkezelesi Tajekoztatot."
+        )
 
       {:error, changeset} ->
         error_message =
@@ -132,6 +141,9 @@ defmodule LucaGymappWeb.RegistrationController do
       end
     end
   end
+
+  defp verify_adatkezelesi_acceptance(value) when value in ["true", "on", "1"], do: :ok
+  defp verify_adatkezelesi_acceptance(_), do: {:error, :adatkezelesi_not_accepted}
 
   defp safe_turnstile_request(form) do
     Req.post(

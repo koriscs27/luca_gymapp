@@ -70,6 +70,31 @@
         </p>
       <% end %>
 
+      <label
+        for="register-accept-adatkezelesi"
+        class="mt-4 flex items-start gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700"
+      >
+        <input
+        id="register-accept-adatkezelesi"
+        name="accept_adatkezelesi"
+        type="checkbox"
+        value="true"
+        required
+        data-register-terms-checkbox
+        class="mt-0.5 h-4 w-4 rounded border-neutral-300 text-neutral-900"
+      />
+        <span>
+          Elolvastam és elfogadom az
+          <.link
+        id="register-adatkezelesi-link"
+        href={"/adatkezelesi-tajekoztato?return_to=" <> URI.encode_www_form("/register")}
+        class="font-semibold text-amber-600 underline decoration-amber-500/50 underline-offset-2 transition hover:text-amber-500"
+      >
+            Adatkezelesi Tajekoztatot
+          </.link>.
+        </span>
+      </label>
+
       <button
         id="register-submit"
         type="submit"

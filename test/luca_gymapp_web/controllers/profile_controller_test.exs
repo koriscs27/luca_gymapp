@@ -121,6 +121,16 @@ defmodule LucaGymappWeb.ProfileControllerTest do
              "Ehhez a fizetési módhoz nem elérhető frissítés."
   end
 
+  test "profile shows links to ASZF and adatkezelesi tajekoztato", %{conn: conn} do
+    conn = get(conn, ~p"/profile")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="profile-aszf-link")
+    assert html =~ ~s(href="/aszf?return_to=%2Fprofile")
+    assert html =~ ~s(id="profile-adatkezelesi-link")
+    assert html =~ ~s(href="/adatkezelesi-tajekoztato?return_to=%2Fprofile")
+  end
+
   defp create_payment(user_id, attrs) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 

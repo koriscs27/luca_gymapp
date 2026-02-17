@@ -49,6 +49,38 @@ window.liveSocket = liveSocket
 const turnstileScriptUrl = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
 let turnstileScriptPromise = null
 
+const setRegisterSubmitButtonState = (submitButton, enabled) => {
+  if (!submitButton) {
+    return
+  }
+
+  submitButton.disabled = !enabled
+
+  if (enabled) {
+    submitButton.classList.remove("cursor-not-allowed", "bg-neutral-300")
+    submitButton.classList.add("bg-neutral-900", "hover:bg-neutral-800")
+  } else {
+    submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
+    submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
+  }
+}
+
+const updateRegisterSubmitState = form => {
+  if (!form) {
+    return
+  }
+
+  const submitButton = form.querySelector("[data-turnstile-submit]")
+  const consentCheckbox = form.querySelector("[data-register-terms-checkbox]")
+  const tokenInput = form.querySelector("#turnstile-token")
+  const hasTurnstileWidget = !!form.querySelector("[data-turnstile]")
+
+  const consentAccepted = consentCheckbox ? consentCheckbox.checked : true
+  const hasTurnstileToken = !hasTurnstileWidget || !!(tokenInput && tokenInput.value)
+
+  setRegisterSubmitButtonState(submitButton, consentAccepted && hasTurnstileToken)
+}
+
 const ensureTurnstileLoaded = () => {
   if (window.turnstile) {
     return Promise.resolve()
@@ -77,12 +109,10 @@ const renderTurnstileWidgets = () => {
     return
   }
 
-  const submitButton = document.querySelector("[data-turnstile-submit]")
-  if (submitButton) {
-    submitButton.disabled = true
-    submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
-    submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
-  }
+  widgets.forEach(widget => {
+    const form = widget.closest("form")
+    updateRegisterSubmitState(form)
+  })
 
   ensureTurnstileLoaded()
     .then(() => {
@@ -96,38 +126,28 @@ const renderTurnstileWidgets = () => {
           return
         }
 
-        const tokenInput = document.getElementById("turnstile-token")
+        const form = widget.closest("form")
+        const tokenInput = form && form.querySelector("#turnstile-token")
+
         window.turnstile.render(widget, {
           sitekey,
           callback: token => {
             if (tokenInput) {
               tokenInput.value = token
             }
-            if (submitButton) {
-              submitButton.disabled = false
-              submitButton.classList.remove("cursor-not-allowed", "bg-neutral-300")
-              submitButton.classList.add("bg-neutral-900", "hover:bg-neutral-800")
-            }
+            updateRegisterSubmitState(form)
           },
           "expired-callback": () => {
             if (tokenInput) {
               tokenInput.value = ""
             }
-            if (submitButton) {
-              submitButton.disabled = true
-              submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
-              submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
-            }
+            updateRegisterSubmitState(form)
           },
           "error-callback": () => {
             if (tokenInput) {
               tokenInput.value = ""
             }
-            if (submitButton) {
-              submitButton.disabled = true
-              submitButton.classList.add("cursor-not-allowed", "bg-neutral-300")
-              submitButton.classList.remove("bg-neutral-900", "hover:bg-neutral-800")
-            }
+            updateRegisterSubmitState(form)
           },
         })
 
@@ -135,15 +155,47 @@ const renderTurnstileWidgets = () => {
       })
     })
     .catch(() => {
-      const tokenInput = document.getElementById("turnstile-token")
-      if (tokenInput) {
-        tokenInput.value = ""
-      }
+      widgets.forEach(widget => {
+        const form = widget.closest("form")
+        const tokenInput = form && form.querySelector("#turnstile-token")
+
+        if (tokenInput) {
+          tokenInput.value = ""
+        }
+
+        updateRegisterSubmitState(form)
+      })
     })
 }
 
 document.addEventListener("DOMContentLoaded", renderTurnstileWidgets)
 window.addEventListener("phx:page-loading-stop", renderTurnstileWidgets)
+
+const initRegisterConsentForms = () => {
+  const forms = document.querySelectorAll("#register-form")
+
+  forms.forEach(form => {
+    const consentCheckbox = form.querySelector("[data-register-terms-checkbox]")
+    if (!consentCheckbox) {
+      return
+    }
+
+    updateRegisterSubmitState(form)
+
+    if (form.dataset.registerConsentBound === "true") {
+      return
+    }
+
+    consentCheckbox.addEventListener("change", () => {
+      updateRegisterSubmitState(form)
+    })
+
+    form.dataset.registerConsentBound = "true"
+  })
+}
+
+document.addEventListener("DOMContentLoaded", initRegisterConsentForms)
+window.addEventListener("phx:page-loading-stop", initRegisterConsentForms)
 
 const togglePasswordField = toggleButton => {
   const fieldContainer = toggleButton.closest("[data-password-field]")

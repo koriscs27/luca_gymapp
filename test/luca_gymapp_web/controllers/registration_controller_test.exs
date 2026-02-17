@@ -15,7 +15,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
       phone_number: "+3612345678"
     }
 
-    conn = post(conn, ~p"/register", user: params)
+    conn = post(conn, ~p"/register", user: params, accept_adatkezelesi: "true")
 
     assert redirected_to(conn) == "/#registration-success"
 
@@ -39,7 +39,8 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
           email: "dup@example.com",
           password: "masik-123",
           password_confirmation: "masik-123"
-        }
+        },
+        accept_adatkezelesi: "true"
       )
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
@@ -49,7 +50,8 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
   end
 
   test "rejects registration without password", %{conn: conn} do
-    conn = post(conn, ~p"/register", user: %{email: "nincs@jelszo.hu"})
+    conn =
+      post(conn, ~p"/register", user: %{email: "nincs@jelszo.hu"}, accept_adatkezelesi: "true")
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
              "A regisztráció sikertelen. Ellenőrizd az adatokat."
@@ -64,7 +66,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
       password_confirmation: "nem-ugyanaz"
     }
 
-    conn = post(conn, ~p"/register", user: params)
+    conn = post(conn, ~p"/register", user: params, accept_adatkezelesi: "true")
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
              "A megadott jelszavak nem egyeznek."
@@ -79,7 +81,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
       password_confirmation: "titkos-jelszo-123"
     }
 
-    conn = post(conn, ~p"/register", user: params)
+    conn = post(conn, ~p"/register", user: params, accept_adatkezelesi: "true")
 
     assert redirected_to(conn) == "/#registration-success"
     info_flash = Phoenix.Flash.get(conn.assigns.flash, :info)
@@ -102,9 +104,33 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
       password_confirmation: "titkos-jelszo-123"
     }
 
-    conn = post(conn, ~p"/register", user: params)
+    conn = post(conn, ~p"/register", user: params, accept_adatkezelesi: "true")
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Kérlek igazold, hogy nem vagy robot."
     assert html_response(conn, 200) =~ "Regisztráció"
+  end
+
+  test "register page shows adatkezelesi tajekoztato link", %{conn: conn} do
+    conn = get(conn, ~p"/register")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="register-accept-adatkezelesi")
+    assert html =~ ~s(id="register-adatkezelesi-link")
+    assert html =~ ~s(href="/adatkezelesi-tajekoztato?return_to=%2Fregister")
+  end
+
+  test "rejects registration when adatkezelesi is not accepted", %{conn: conn} do
+    params = %{
+      email: "nincs-elfogadas@example.com",
+      password: "titkos-jelszo-123",
+      password_confirmation: "titkos-jelszo-123"
+    }
+
+    conn = post(conn, ~p"/register", user: params)
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A regisztraciohoz el kell fogadnod az Adatkezelesi Tajekoztatot."
+
+    assert html_response(conn, 200) =~ ~s(id="register-form")
   end
 end

@@ -21,6 +21,7 @@ defmodule LucaGymappWeb.Router do
     get "/rolam", PageController, :rolam
     get "/berletek", PageController, :berletek
     get "/aszf", PageController, :aszf
+    get "/adatkezelesi-tajekoztato", PageController, :adatkezelesi_tajekoztato
     get "/foglalas", PageController, :booking
     get "/barion/return", BarionController, :return
     get "/barion/check/:payment_id", BarionController, :check

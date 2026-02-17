@@ -45,7 +45,19 @@ Technikai hiba esetén a felhasználó a kapcsolati e-mail címen kérhet segít
 9. Elállás, lemondás, visszatérítés
 Digitális szolgáltatás esetén a visszatérítés és lemondás feltételeit a hatályos jogszabályok és az egyedi
 szolgáltatási feltételek szerint kell meghatározni.
-[IDE ÍRJÁTOK BE A VÉGLEGES VISSZATÉRÍTÉSI SZABÁLYZATOT]
+A Fogyasztó kifejezetten tudomásul veszi, hogy a szolgáltatás teljesítése a vásárlást követően azonnal
+megkezdődik, ezért a 45/2014. (II. 26.) Korm. rendelet alapján fennálló 14 napos indokolás nélküli elállási
+jogát elveszítheti.
+
+A Szolgáltató hibás teljesítése esetén (különösen, ha a szolgáltatás tartósan nem elérhető, vagy a hozzáférés
+nem biztosított) a Fogyasztó elsősorban kijavítást vagy a szolgáltatás ismételt biztosítását kérheti.
+Amennyiben ez ésszerű határidőn belül nem teljesíthető, a Fogyasztó arányos díjcsökkentésre vagy a szerződés
+megszüntetésére és időarányos visszatérítésre jogosult.
+
+A visszatérítési igényt a vásárlástól számított 14 napon belül, illetve hibás teljesítés esetén a hiba
+észlelését követően haladéktalanul, írásban kell jelezni a [SUPPORT_EMAIL] címen, a rendelés azonosítójának
+megadásával. A Szolgáltató a jogos visszatérítést legkésőbb 14 napon belül, az eredeti fizetési móddal azonos
+módon teljesíti.
 
 10. Panaszkezelés
 A felhasználó panaszát az 1. pontban megadott elérhetőségeken teheti meg.

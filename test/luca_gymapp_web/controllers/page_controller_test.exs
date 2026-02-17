@@ -24,6 +24,22 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert html =~ "rolam-video-2"
   end
 
+  test "GET /aszf supports return_to and renders back link", %{conn: conn} do
+    conn = get(conn, ~p"/aszf?return_to=%2Fprofile")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="aszf-back-button")
+    assert html =~ ~s(href="/profile")
+  end
+
+  test "GET /adatkezelesi-tajekoztato supports return_to and renders back link", %{conn: conn} do
+    conn = get(conn, ~p"/adatkezelesi-tajekoztato?return_to=%2Fprofile")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="adatkezelesi-back-button")
+    assert html =~ ~s(href="/profile")
+  end
+
   test "berletek purchase buttons are inactive for guests", %{conn: conn} do
     conn = get(conn, ~p"/berletek")
     html = html_response(conn, 200)

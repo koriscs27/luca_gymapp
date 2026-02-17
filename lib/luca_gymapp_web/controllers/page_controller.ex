@@ -189,6 +189,16 @@ defmodule LucaGymappWeb.PageController do
     render(conn, :aszf, aszf_content: aszf_content, return_to: return_to)
   end
 
+  def adatkezelesi_tajekoztato(conn, params) do
+    return_to = params |> Map.get("return_to") |> normalize_return_to()
+    adatkezelesi_tajekoztato_content = load_adatkezelesi_tajekoztato_draft_content()
+
+    render(conn, :adatkezelesi_tajekoztato,
+      adatkezelesi_tajekoztato_content: adatkezelesi_tajekoztato_content,
+      return_to: return_to
+    )
+  end
+
   def admin_bookings(conn, params) do
     current_user_id = get_session(conn, :user_id)
 
@@ -844,6 +854,15 @@ defmodule LucaGymappWeb.PageController do
 
   defp parse_booking_type("cross"), do: {:cross, :cross}
   defp parse_booking_type(_), do: {:personal, :personal}
+
+  defp load_adatkezelesi_tajekoztato_draft_content do
+    path = Path.join(:code.priv_dir(:luca_gymapp), "legal/adatkezelesi_tajekoztato_draft.md")
+
+    case File.read(path) do
+      {:ok, content} -> content
+      {:error, _reason} -> "Az adatkezelesi tajekoztato tervezet jelenleg nem erheto el."
+    end
+  end
 
   defp week_offset_from_date(%Date{} = date) do
     today = Date.utc_today()
