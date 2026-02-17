@@ -43,6 +43,7 @@ config :luca_gymapp, :turnstile,
   secret_key: System.get_env("TURNSTILE_SECRET_KEY")
 
 config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")
+config :luca_gymapp, :barion_pixel_id, trimmed_env.("BARION_PIXEL_ID")
 
 barion_pos_key = trimmed_env.("BARION_POS_KEY")
 

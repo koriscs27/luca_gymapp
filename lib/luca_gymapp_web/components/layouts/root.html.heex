@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+  <% barion_pixel_id = Application.get_env(:luca_gymapp, :barion_pixel_id) %>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -29,8 +30,36 @@
         window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
       })();
     </script>
+    <%= if barion_pixel_id do %>
+      <script>
+        window["bp"] = window["bp"] || function () {
+          (window["bp"].q = window["bp"].q || []).push(arguments);
+        };
+        window["bp"].l = 1 * new Date();
+
+        const scriptElement = document.createElement("script");
+        const firstScript = document.getElementsByTagName("script")[0];
+        scriptElement.async = true;
+        scriptElement.src = "https://pixel.barion.com/bp.js";
+        firstScript.parentNode.insertBefore(scriptElement, firstScript);
+        window["barion_pixel_id"] = "<%= barion_pixel_id %>";
+
+        bp("init", "addBarionPixelId", window["barion_pixel_id"]);
+      </script>
+    <% end %>
   </head>
   <body class="min-h-screen flex flex-col">
+    <%= if barion_pixel_id do %>
+      <noscript>
+        <img
+          height="1"
+          width="1"
+          style="display:none"
+          alt="Barion Pixel"
+          src={"https://pixel.barion.com/a.gif?ba_pixel_id=#{URI.encode_www_form(barion_pixel_id)}&ev=contentView&noscript=1"}
+        />
+      </noscript>
+    <% end %>
     <main class="flex-1">
       {@inner_content}
     </main>
