@@ -14,7 +14,7 @@ defmodule LucaGymappWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     html = html_response(conn, 200)
 
-    assert html =~ "Luca Gym"
+    assert html =~ "PL logo"
     assert html =~ "home-video-personal"
   end
 
