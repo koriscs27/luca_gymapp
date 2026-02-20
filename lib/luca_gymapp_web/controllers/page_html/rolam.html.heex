@@ -1,36 +1,16 @@
 <div class="gym-page">
-  <section class="bg-transparent px-5 pb-8 pt-10 text-white sm:px-8 lg:px-10">
-    <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p class="text-xs uppercase tracking-[0.3em] text-white/60">Rólam</p>
-          <h1 class="mt-3 text-3xl font-semibold text-white">Luca - edző, mentor, motivátor.</h1>
-          <p class="mt-3 max-w-2xl text-white/70">
-            Több mint 8 év tapasztalat, személyre szabott edzéstervek és közösségközpontú szemlélet.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <.link
-            href={~p"/foglalas"}
-            class="inline-flex rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-          >
-            Foglalás
-          </.link>
-          <.link
-            href={~p"/"}
-            class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
-          >
-            Vissza a főoldalra
-          </.link>
-        </div>
-      </div>
+  <section class="bg-transparent px-5 pb-16 pt-10 text-white sm:px-8 lg:px-10">
+    <div class="mx-auto mb-4 flex w-full max-w-6xl justify-end">
+      <.link
+        href={~p"/"}
+        class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+      >
+        Vissza a főoldalra
+      </.link>
     </div>
-  </section>
 
-  <section class="bg-transparent px-5 pb-16 text-white sm:px-8 lg:px-10">
     <div class="mx-auto grid w-full max-w-6xl gap-6 grid-cols-1">
-      <article class="rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur">
+      <article class="order-1 rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur">
         <div class="mb-3 flex items-center justify-between">
           <p class="text-xs uppercase tracking-[0.25em] text-white/60">Cross</p>
         </div>
@@ -50,25 +30,24 @@
         </div>
       </article>
 
-      <article class="rounded-2xl border border-white/15 bg-black/30 p-5 backdrop-blur">
-        <div class="mb-3 flex items-center justify-between">
-          <p class="text-xs uppercase tracking-[0.25em] text-white/60">Személyi Edzés</p>
-        </div>
+      <div class="order-2">
+        <p class="text-xs uppercase tracking-[0.3em] text-white/60">Rólam</p>
 
-        <div class="aspect-video w-full overflow-hidden rounded-xl bg-black">
-          <video
-            id="rolam-video-2"
-            class="h-full w-full object-cover"
-            controls
-            controlsList="nodownload"
-            preload="metadata"
-            playsinline
-          >
-            <source src="/Lucakondi2_4k_web.mp4" type="video/mp4" />
-            A böngésző nem támogatja a videó lejátszását.
-          </video>
+        <div class="mt-3 max-w-4xl space-y-4 text-white/80">
+          <p>
+            Pankotai Luca vagyok, személyi edző és aktív kézilabdázó. Gyerekkorom óta a sport határozza meg az életemet, a kézilabda pedig az a mozgásforma, amely igazán magával ragadott és ennek köszönhetően szerettem meg az erőnléti edzéseket.
+          </p>
+          <p>
+            Közvetlen, energikus és empatikus személyiség vagyok, akivel könnyű megtalálni a közös hangot. Számomra az edzés nem csupán feladatok sorozata, hanem közös munka és bizalom. Nemcsak edzőként állok melletted, hanem partnerként is, aki motivál, támogat és végigkísér az úton.
+          </p>
+          <p>
+            Az évek során rengeteget tanultam a test működéséről, a teljesítmény határairól, a regeneráció fontosságáról és saját tapasztalatból a sérülésekből való felépülésről is. Ezek az élmények formáltak igazán tudatos sportolóvá és edzővé. Pontosan tudom, mennyire fontos a megelőzés, a fokozatosság és az, hogy testileg-lelkileg egyaránt figyeljünk magunkra.
+          </p>
+          <p>
+            Személyi edzőként az a célom, hogy megtaláljuk számodra azt az edzésformát, ritmust és szemléletet, amely hosszú távon is fenntartható és eredményes. Legyen szó erőnléti fejlődésről, rehabilitációról vagy egyszerűen arról, hogy magabiztosabban és energikusabban érezd magad a mindennapokban.
+          </p>
         </div>
-      </article>
+      </div>
     </div>
   </section>
 </div>

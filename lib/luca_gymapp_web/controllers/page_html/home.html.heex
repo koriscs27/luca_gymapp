@@ -152,11 +152,12 @@
           <p class="text-sm uppercase tracking-[0.4em] text-[#7a1c1c]/70">Luca Gym</p>
 
           <h1 class="mt-4 text-balance text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
-            Egy hely, ahol az edzés fókuszált, a légkör motiváló, a fejlődés biztos.
+            Ne csak álmodj a változásról, kezdj el dolgozni érte ma!
           </h1>
 
           <p class="mt-5 text-lg text-[#7a1c1c]/80">
-            Modern felszerelés, személyre szabott edzéstervek és barátságos közösség. Kezdd el ma!
+            Tudatos edzéstervezés, mérhető eredmények, hosszú távú életmódváltás.
+            Építsünk együtt egy erősebb verziót belőled.
           </p>
 
           <div class="mt-8 flex flex-wrap gap-4">
@@ -205,6 +206,30 @@
     </section>
   </div>
 </div>
+
+<section class="bg-[#d6c2a1]/30 px-5 py-16 text-[#7a1c1c] sm:px-8 lg:px-10">
+  <div class="mx-auto grid w-full max-w-6xl gap-6">
+    <article class="rounded-2xl border border-[#7a1c1c]/20 bg-white/70 p-5 shadow-sm backdrop-blur">
+      <div class="mb-3 flex items-center justify-between">
+        <p class="text-xs uppercase tracking-[0.25em] text-[#7a1c1c]/70">Szemelyi Edzes</p>
+      </div>
+
+      <div class="aspect-video w-full overflow-hidden rounded-xl bg-black">
+        <video
+          id="home-video-personal"
+          class="h-full w-full object-cover"
+          controls
+          controlsList="nodownload"
+          preload="metadata"
+          playsinline
+        >
+          <source src="/Lucakondi2_4k_web.mp4" type="video/mp4" />
+          A bongeszo nem tamogatja a video lejatszasat.
+        </video>
+      </div>
+    </article>
+  </div>
+</section>
 
 <%= if !@current_user do %>
   <section
