@@ -10,6 +10,8 @@ import Config
 config :luca_gymapp,
   ecto_repos: [LucaGymapp.Repo],
   generators: [timestamp_type: :utc_datetime],
+  coach_contact_email: "pankotailucafitness@gmail.com",
+  coach_contact_phone: "+36705030443",
   payment_needed: true,
   personal_max_overlap: 1,
   cross_max_overlap: 8,

@@ -11,6 +11,7 @@
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
+
     <script>
       (() => {
         const setTheme = (theme) => {
@@ -30,6 +31,7 @@
         window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
       })();
     </script>
+
     <%= if barion_pixel_id do %>
       <script>
         window["bp"] = window["bp"] || function () {
@@ -48,6 +50,7 @@
       </script>
     <% end %>
   </head>
+
   <body class="min-h-screen flex flex-col">
     <%= if barion_pixel_id do %>
       <noscript>
@@ -59,24 +62,42 @@
           src={"https://pixel.barion.com/a.gif?ba_pixel_id=#{URI.encode_www_form(barion_pixel_id)}&ev=contentView&noscript=1"}
         />
       </noscript>
-    <% end %>
+    <% end %>`r`n
     <main class="flex-1">
       {@inner_content}
     </main>
     <% support_email =
       Application.get_env(:luca_gymapp, :support_email) || "support@lucagymapp.local" %>
-    <footer class="border-t-2 border-amber-300 bg-amber-100 px-4 py-5 text-amber-950 shadow-[0_-8px_24px_-20px_rgba(0,0,0,0.7)] sm:px-6 lg:px-8">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-center gap-3 text-center">
-        <.icon name="hero-lifebuoy" class="h-5 w-5 shrink-0" />
-        <p class="text-sm font-semibold">
-          Ha bármilyen problémád van az oldallal, kérlek írj a supportnak:
+    <% coach_email =
+      Application.get_env(:luca_gymapp, :coach_contact_email) || "pankotailucafitness@gmail.com" %>
+    <% coach_phone = Application.get_env(:luca_gymapp, :coach_contact_phone) || "+36705030443" %>
+    <footer class="border-t border-slate-200 bg-slate-50 px-4 py-5 text-slate-700 sm:px-6 lg:px-8">
+      <div class="mx-auto flex w-full max-w-6xl flex-col gap-3 text-center sm:text-left">
+        <div class="flex items-center justify-center gap-2 sm:justify-start">
+          <.icon name="hero-information-circle" class="h-5 w-5 shrink-0 text-slate-500" />
+          <p class="text-sm font-semibold text-slate-800">Kapcsolati információk</p>
+        </div>
+
+        <div class="grid gap-2 text-sm sm:grid-cols-3">
+          <a
+            href={"mailto:#{coach_email}"}
+            class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 underline decoration-slate-400 underline-offset-2 transition hover:bg-slate-100 sm:justify-start"
+          >
+            E-mail: {coach_email}
+          </a>
+          <a
+            href={"tel:#{coach_phone}"}
+            class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 transition hover:bg-slate-100 sm:justify-start"
+          >
+            Telefon: {coach_phone}
+          </a>
           <a
             href={"mailto:#{support_email}"}
-            class="ml-1 inline-flex rounded-full border border-amber-700/40 bg-white px-3 py-1 font-bold text-amber-900 underline decoration-amber-700/70 underline-offset-2 transition hover:bg-amber-50 hover:text-amber-950"
+            class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-1 font-medium text-slate-700 underline decoration-slate-400 underline-offset-2 transition hover:bg-slate-100 sm:justify-start"
           >
-            {support_email}
+            Ügyfélszolgálat: {support_email}
           </a>
-        </p>
+        </div>
       </div>
     </footer>
   </body>
