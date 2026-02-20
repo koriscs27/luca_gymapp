@@ -1,73 +1,73 @@
-ADATKEZELESI TAJEKOZTATO (TERVEZET)
-Luca Gym - online berletvasarlas es kapcsolodo szolgaltatasok
+ADATKEZELÉSI TÁJÉKOZTATÓ (TERVEZET)
+Luca Gym - online bérletvásárlás és kapcsolódó szolgáltatások
 
-Fontos: ez egy minta-tervezet. Nyilvanos hasznalat elott jogasszal szukseges veglegesiteni.
+Fontos: ez egy minta-tervezet. Nyilvános használat előtt jogásszal szükséges véglegesíteni.
 
-1. Adatkezelo adatai
-- Cegnev: [IDE A CEGNEV]
-- Szekhely: [IDE A SZEKHELY]
-- Cegjegyzekszam / nyilvantartasi szam: [IDE AZ AZONOSITO]
-- Adoszam: [IDE AZ ADOSZAM]
+1. Adatkezelő adatai
+- Cégnév: [IDE A CÉGNÉV]
+- Székhely: [IDE A SZÉKHELY]
+- Cégjegyzékszám / nyilvántartási szám: [IDE AZ AZONOSÍTÓ]
+- Adószám: [IDE AZ ADÓSZÁM]
 - E-mail: [IDE A KAPCSOLATI E-MAIL]
-- Telefonszam: [IDE A TELEFONSZAM]
+- Telefonszám: [IDE A TELEFONSZÁM]
 
-2. A tajekoztato celja
-Jelen tajekoztato bemutatja, hogy a szolgaltato milyen szemelyes adatokat, milyen jogalapon,
-milyen celbol, mennyi ideig kezel a weboldal hasznalata, regisztracio, vasarlas, foglalas es
-kapcsolattartas soran.
+2. A tájékoztató célja
+Jelen tájékoztató bemutatja, hogy a szolgáltató milyen személyes adatokat, milyen jogalapon,
+milyen célból, mennyi ideig kezel a weboldal használata, regisztráció, vásárlás, foglalás és
+kapcsolattartás során.
 
-3. Kezelt adatok kore
-A szolgaltato kulonosen az alabbi adatokat kezelheti:
-- azonositasi es kapcsolatfelveteli adatok (nev, e-mail-cim, telefonszam),
-- fiokhoz kapcsolodo adatok (bejelentkezesi adatok, jelszo hash),
-- profil adatok (pl. eletkor, nem, szuletesi datum),
-- vasarlasi es fizetesi adatok (berlet tipusa, osszeg, tranzakcio allapot),
-- foglalasi adatok (foglalas idopontja, tipus, allapot),
-- technikai adatok (IP-cim, naploadatok, hibajegyek).
+3. Kezelt adatok köre
+A szolgáltató különösen az alábbi adatokat kezelheti:
+- azonosítási és kapcsolatfelvételi adatok (név, e-mail-cím, telefonszám),
+- fiókhoz kapcsolódó hitelesítési adatok (bejelentkezési adatok, jelszó kizárólag egyirányú, biztonságos hash formában),
+- profil adatok (pl. életkor, nem, születési dátum),
+- vásárlási és fizetési adatok (bérlet típusa, összeg, tranzakció állapot),
+- foglalási adatok (foglalás időpontja, típus, állapot),
+- technikai adatok (IP-cím, naplóadatok, hibajegyek).
 
-4. Adatkezeles jogalapja es celja
-A szolgaltato az adatokat kulonosen az alabbi jogalapokon kezeli:
-- szerzodes teljesitese (regisztracio, berletvasarlas, foglalas teljesitese),
-- jogi kotelezettseg teljesitese (szamviteli, adozasi kotelezettsegek),
-- jogos erdek (rendszerbiztonsag, csalascsokkentes, visszaeles-megelozes),
-- hozzajarulas (amennyiben adott adatkezelesnel a hozzajarulas a megfelelo jogalap).
+4. Adatkezelés jogalapja és célja
+A szolgáltató az adatokat különösen az alábbi jogalapokon kezeli:
+- szerződés teljesítése (regisztráció, bérletvásárlás, foglalás teljesítése),
+- jogi kötelezettség teljesítése (számviteli, adózási kötelezettségek),
+- jogos érdek (rendszerbiztonság, csaláscsökkentés, visszaélés-megelőzés),
+- hozzájárulás (amennyiben adott adatkezelésnél a hozzájárulás a megfelelő jogalap).
 
-5. Fizetes es kulso szolgaltatok
-A bankkartyas fizetes Barion rendszeren keresztul tortenik. A kartyaadatokat a szolgaltato nem
-tarolja, azok a fizetesi szolgaltato rendszerben kerulnek kezelesre.
+5. Fizetés és külső szolgáltatók
+A bankkártyás fizetés Barion rendszeren keresztül történik. A kártyaadatokat a szolgáltató nem
+tárolja, azok a fizetési szolgáltató rendszerben kerülnek kezelésre.
 
-A weboldal bizonyos funkcioihoz a szolgaltato kulso adatfeldolgozokat vehet igenybe
-(pl. hoszting, e-mail kuldes, fizetesi szolgaltato). Az adatfeldolgozok a szolgaltatoval kotott
-megallapodas alapjan, a vonatkozo jogszabalyok szerint jarhatnak el.
+A weboldal bizonyos funkcióihoz a szolgáltató külső adatfeldolgozókat vehet igénybe
+(pl. hoszting, e-mail küldés, fizetési szolgáltató). Az adatfeldolgozók a szolgáltatóval kötött
+megállapodás alapján, a vonatkozó jogszabályok szerint járhatnak el.
 
-6. Adatmegorzes idotartama
-A szemelyes adatok megorzesi ideje a kezeles celjatol es jogalapjatol fugg. A szolgaltato az adatokat
-csak addig tarolja, amig az a cel teljesitesehez, illetve a jogszabalyi kotelezettsegek teljesitesehez
-szukseges.
+6. Adatmegőrzés időtartama
+A személyes adatok megőrzési ideje a kezelés céljától és jogalapjától függ. A szolgáltató az adatokat
+csak addig tárolja, amíg az a cél teljesítéséhez, illetve a jogszabályi kötelezettségek teljesítéséhez
+szükséges.
 
-7. Erintetti jogok
-Az erintett kerheti:
-- tajekoztatast a szemelyes adatai kezeleserol,
-- adataihoz valo hozzaferest,
-- adatainak helyesbiteset,
-- adatainak torleset (ha annak jogi feltetelei fennallnak),
-- az adatkezeles korlatozasat,
-- adathordozhatosagot,
-- valamint tiltakozhat bizonyos adatkezelesek ellen.
+7. Érintetti jogok
+Az érintett kérheti:
+- tájékoztatást a személyes adatai kezeléséről,
+- adataihoz való hozzáférést,
+- adatainak helyesbítését,
+- adatainak törlését (ha annak jogi feltételei fennállnak),
+- az adatkezelés korlátozását,
+- adathordozhatóságot,
+- valamint tiltakozhat bizonyos adatkezelések ellen.
 
-8. Jogervenyesites
-Az erintett a kerdeseit, kerelemeit vagy panaszat az [SUPPORT_EMAIL] cimen jelezheti.
-Az erintett jogosult tovabba a Nemzeti Adatvedelmi es Informacioszabadsag Hatosaghoz fordulni,
-illetve birosagi jogorvoslattal elni.
+8. Jogérvényesítés
+Az érintett a kérdéseit, kérelmeit vagy panaszát az [SUPPORT_EMAIL] címen jelezheti.
+Az érintett jogosult továbbá a Nemzeti Adatvédelmi és Információszabadság Hatósághoz fordulni,
+illetve bírósági jogorvoslattal élni.
 
-9. Adatbiztonsag
-A szolgaltato megfelelo technikai es szervezesi intezkedeseket alkalmaz a szemelyes adatok vedelme
-erdekeben, ideertve a jogosulatlan hozzaferes, modositas, nyilvanossagra hozatal, torles vagy
-megsemmisites elleni vedelmet.
+9. Adatbiztonság
+A szolgáltató megfelelő technikai és szervezési intézkedéseket alkalmaz a személyes adatok védelme
+érdekében, ideértve a jogosulatlan hozzáférés, módosítás, nyilvánosságra hozatal, törlés vagy
+megsemmisítés elleni védelmet.
 
-10. A tajekoztato modositasa
-A szolgaltato jogosult jelen tajekoztatot egyoldaluan modositani. A mindenkor hatalyos valtozat
-a weboldalon erheto el.
+10. A tájékoztató módosítása
+A szolgáltató jogosult jelen tájékoztatót egyoldalúan módosítani. A mindenkor hatályos változat
+a weboldalon érhető el.
 
-Hatalybalepes tervezett datuma: [IDE DATUM]
-Verzio: DRAFT-1
+Hatálybalépés tervezett dátuma: [IDE DÁTUM]
+Verzió: DRAFT-1

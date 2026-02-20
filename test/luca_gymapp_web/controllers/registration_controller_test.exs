@@ -21,7 +21,8 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
 
     user = Repo.get_by(User, email: "uj@example.com")
     assert user != nil
-    assert user.password_hash == Accounts.hash_password("titkos-jelszo-123")
+    assert is_binary(user.password_hash)
+    assert String.starts_with?(user.password_hash, "pbkdf2_sha256$")
   end
 
   test "shows error when email is already registered", %{conn: conn} do
@@ -129,7 +130,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
     conn = post(conn, ~p"/register", user: params)
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "A regisztraciohoz el kell fogadnod az Adatkezelesi Tajekoztatot."
+             "A regisztrációhoz el kell fogadnod az Adatkezelési Tájékoztatót."
 
     assert html_response(conn, 200) =~ ~s(id="register-form")
   end

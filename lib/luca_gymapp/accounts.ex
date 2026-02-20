@@ -7,6 +7,11 @@ defmodule LucaGymapp.Accounts do
   alias LucaGymapp.Accounts.UserEmail
   alias LucaGymapp.Mailer
 
+  @password_hash_algorithm "pbkdf2_sha256"
+  @password_hash_iterations 210_000
+  @password_hash_key_length 32
+  @password_hash_salt_length 16
+
   def list_users do
     Repo.all(User)
   end
@@ -329,8 +334,18 @@ defmodule LucaGymapp.Accounts do
   def authenticate_user(_, _), do: :error
 
   def hash_password(password) when is_binary(password) do
-    :crypto.hash(:sha256, password)
-    |> Base.encode16(case: :lower)
+    salt = :crypto.strong_rand_bytes(@password_hash_salt_length)
+    digest = derive_password_hash(password, salt, @password_hash_iterations)
+
+    Enum.join(
+      [
+        @password_hash_algorithm,
+        Integer.to_string(@password_hash_iterations),
+        Base.url_encode64(salt, padding: false),
+        Base.url_encode64(digest, padding: false)
+      ],
+      "$"
+    )
   end
 
   def update_user(%User{} = user, attrs) do
@@ -416,8 +431,19 @@ defmodule LucaGymapp.Accounts do
   defp valid_password?(%User{password_hash: nil}, _password), do: false
 
   defp valid_password?(%User{password_hash: password_hash}, password) do
-    password_hash
-    |> Plug.Crypto.secure_compare(hash_password(password))
+    case parse_password_hash(password_hash) do
+      {:ok, iterations, salt, expected_digest} ->
+        computed_digest = derive_password_hash(password, salt, iterations)
+
+        byte_size(expected_digest) == byte_size(computed_digest) and
+          Plug.Crypto.secure_compare(expected_digest, computed_digest)
+
+      :error ->
+        legacy_digest = legacy_hash_password(password)
+
+        byte_size(password_hash) == byte_size(legacy_digest) and
+          Plug.Crypto.secure_compare(password_hash, legacy_digest)
+    end
   end
 
   defp maybe_put_password_hash(attrs, password) do
@@ -468,6 +494,34 @@ defmodule LucaGymapp.Accounts do
 
   defp token_hash(token) do
     :crypto.hash(:sha256, token)
+  end
+
+  defp derive_password_hash(password, salt, iterations) do
+    :crypto.pbkdf2_hmac(:sha256, password, salt, iterations, @password_hash_key_length)
+  end
+
+  defp parse_password_hash(password_hash) when is_binary(password_hash) do
+    case String.split(password_hash, "$", parts: 4) do
+      [@password_hash_algorithm, iterations, salt_b64, digest_b64] ->
+        with {iterations, ""} <- Integer.parse(iterations),
+             true <- iterations > 0,
+             {:ok, salt} <- Base.url_decode64(salt_b64, padding: false),
+             {:ok, digest} <- Base.url_decode64(digest_b64, padding: false) do
+          {:ok, iterations, salt, digest}
+        else
+          _ -> :error
+        end
+
+      _ ->
+        :error
+    end
+  end
+
+  defp parse_password_hash(_password_hash), do: :error
+
+  defp legacy_hash_password(password) when is_binary(password) do
+    :crypto.hash(:sha256, password)
+    |> Base.encode16(case: :lower)
   end
 
   defp confirmation_expired?(%User{email_confirmation_sent_at: nil}), do: true
