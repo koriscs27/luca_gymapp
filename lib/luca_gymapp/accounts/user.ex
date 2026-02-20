@@ -26,9 +26,15 @@ defmodule LucaGymapp.Accounts.User do
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:name, :email, :phone_number, :age, :sex, :password_hash, :birth_date])
+    |> cast(attrs, [:name, :email, :phone_number, :age, :sex, :birth_date])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> unique_constraint(:email)
+  end
+
+  def with_password_changeset(user, attrs) do
+    user
+    |> changeset(attrs)
+    |> cast(attrs, [:password_hash])
   end
 end

@@ -47,7 +47,7 @@ defmodule LucaGymapp.Accounts do
 
   def create_user(attrs \\ %{}) do
     %User{}
-    |> User.changeset(attrs)
+    |> User.with_password_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -466,7 +466,7 @@ defmodule LucaGymapp.Accounts do
       case Repo.get_by(User, email: email) do
         %User{email_confirmed_at: nil} = user ->
           user
-          |> User.changeset(attrs)
+          |> User.with_password_changeset(attrs)
           |> Repo.update()
 
         %User{} ->
