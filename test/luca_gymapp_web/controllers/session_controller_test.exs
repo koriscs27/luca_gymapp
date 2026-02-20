@@ -1,11 +1,21 @@
 defmodule LucaGymappWeb.SessionControllerTest do
-  use LucaGymappWeb.ConnCase, async: true
+  use LucaGymappWeb.ConnCase, async: false
 
   alias LucaGymapp.Accounts
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Repo
+  alias LucaGymapp.Security.RateLimiter
 
   setup do
+    previous_rate_limit = Application.get_env(:luca_gymapp, :rate_limit, [])
+    Application.put_env(:luca_gymapp, :rate_limit, limit: 30, window_seconds: 300)
+    :ok = RateLimiter.reset!()
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :rate_limit, previous_rate_limit)
+      :ok = RateLimiter.reset!()
+    end)
+
     password = "titkos-jelszo-123"
 
     user =
@@ -78,6 +88,18 @@ defmodule LucaGymappWeb.SessionControllerTest do
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
              "A bejelentkezés nem sikerült. Próbáld újra."
 
+    assert redirected_to(conn) == "/#login-modal"
+  end
+
+  test "rate limits login attempts after 30 tries in 5 minutes", %{conn: conn, user: user} do
+    Enum.each(1..30, fn _ ->
+      conn = post(conn, ~p"/login", user: %{email: user.email, password: "rossz-jelszo"})
+      assert redirected_to(conn) == "/#login-modal"
+    end)
+
+    conn = post(conn, ~p"/login", user: %{email: user.email, password: "rossz-jelszo"})
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) == RateLimiter.rate_limited_message()
     assert redirected_to(conn) == "/#login-modal"
   end
 end

@@ -2,6 +2,7 @@ defmodule LucaGymappWeb.PasswordResetController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Accounts
+  alias LucaGymapp.Security.RateLimiter
 
   def new(conn, _params) do
     form = Phoenix.Component.to_form(%{"email" => ""}, as: :password_reset)
@@ -9,17 +10,33 @@ defmodule LucaGymappWeb.PasswordResetController do
   end
 
   def create(conn, %{"password_reset" => %{"email" => email}}) do
-    Accounts.deliver_password_reset_instructions(email)
+    case RateLimiter.allow_request(conn, :password_reset_request, email: email) do
+      :ok ->
+        Accounts.deliver_password_reset_instructions(email)
 
-    conn
-    |> put_flash(:info, "Ha létezik fiók, e-mailt küldtünk erre a címre: #{email}")
-    |> redirect(to: ~p"/password/forgot")
+        conn
+        |> put_flash(:info, "Ha létezik fiók, e-mailt küldtünk erre a címre: #{email}")
+        |> redirect(to: ~p"/password/forgot")
+
+      {:error, :rate_limited} ->
+        conn
+        |> put_flash(:error, RateLimiter.rate_limited_message())
+        |> redirect(to: ~p"/password/forgot")
+    end
   end
 
   def create(conn, _params) do
-    conn
-    |> put_flash(:info, "Ha létezik fiók, e-mailt küldtünk a megadott címre.")
-    |> redirect(to: ~p"/password/forgot")
+    case RateLimiter.allow_request(conn, :password_reset_request) do
+      :ok ->
+        conn
+        |> put_flash(:info, "Ha létezik fiók, e-mailt küldtünk a megadott címre.")
+        |> redirect(to: ~p"/password/forgot")
+
+      {:error, :rate_limited} ->
+        conn
+        |> put_flash(:error, RateLimiter.rate_limited_message())
+        |> redirect(to: ~p"/password/forgot")
+    end
   end
 
   def edit(conn, %{"token" => token}) do

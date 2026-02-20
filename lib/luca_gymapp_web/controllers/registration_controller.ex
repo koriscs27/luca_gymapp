@@ -2,6 +2,7 @@ defmodule LucaGymappWeb.RegistrationController do
   use LucaGymappWeb, :controller
 
   alias LucaGymapp.Accounts
+  alias LucaGymapp.Security.RateLimiter
   require Logger
 
   def new(conn, _params) do
@@ -12,8 +13,10 @@ defmodule LucaGymappWeb.RegistrationController do
   def create(conn, %{"user" => user_params} = params) do
     turnstile_token = Map.get(params, "cf-turnstile-response")
     accept_adatkezelesi = Map.get(params, "accept_adatkezelesi")
+    email = Map.get(user_params, "email")
 
-    with :ok <- verify_turnstile(conn, turnstile_token),
+    with :ok <- RateLimiter.allow_request(conn, :register, email: email),
+         :ok <- verify_turnstile(conn, turnstile_token),
          :ok <- verify_adatkezelesi_acceptance(accept_adatkezelesi),
          {:ok, user} <- Accounts.register_user(user_params) do
       Accounts.deliver_confirmation_instructions(user)
@@ -22,6 +25,9 @@ defmodule LucaGymappWeb.RegistrationController do
       |> put_flash(:info, "Sikeres regisztráció. Küldtünk egy megerősítő e-mailt.")
       |> redirect(to: "/#registration-success")
     else
+      {:error, :rate_limited} ->
+        render_register_error(conn, user_params, RateLimiter.rate_limited_message())
+
       {:error, :turnstile_missing} ->
         render_register_error(conn, user_params, "Kérlek igazold, hogy nem vagy robot.")
 
@@ -63,9 +69,17 @@ defmodule LucaGymappWeb.RegistrationController do
   end
 
   def create(conn, _params) do
-    conn
-    |> put_flash(:error, "A regisztráció sikertelen. Ellenőrizd az adatokat.")
-    |> redirect(to: ~p"/register")
+    case RateLimiter.allow_request(conn, :register) do
+      :ok ->
+        conn
+        |> put_flash(:error, "A regisztráció sikertelen. Ellenőrizd az adatokat.")
+        |> redirect(to: ~p"/register")
+
+      {:error, :rate_limited} ->
+        conn
+        |> put_flash(:error, RateLimiter.rate_limited_message())
+        |> redirect(to: ~p"/register")
+    end
   end
 
   defp email_already_registered?(changeset) do
