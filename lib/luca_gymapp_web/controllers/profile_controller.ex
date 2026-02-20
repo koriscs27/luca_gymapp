@@ -28,7 +28,7 @@ defmodule LucaGymappWeb.ProfileController do
     case Accounts.update_user(user, attrs) do
       {:ok, user} ->
         Logger.info(
-          "profile_update_success user_id=#{user.id} email=#{user.email} name=#{user.name} fields=#{Enum.join(Map.keys(attrs), ",")}"
+          "profile_update_success user_id=#{user.id} fields=#{Enum.join(Map.keys(attrs), ",")}"
         )
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
@@ -44,7 +44,7 @@ defmodule LucaGymappWeb.ProfileController do
 
       {:error, changeset} ->
         Logger.warning(
-          "profile_update_error user_id=#{user.id} email=#{user.email} name=#{user.name} fields=#{Enum.join(Map.keys(attrs), ",")}"
+          "profile_update_error user_id=#{user.id} fields=#{Enum.join(Map.keys(attrs), ",")}"
         )
 
         password_form = Phoenix.Component.to_form(%{}, as: :password)
@@ -85,9 +85,7 @@ defmodule LucaGymappWeb.ProfileController do
 
     case result do
       {:ok, user} ->
-        Logger.info(
-          "password_update_success user_id=#{user.id} email=#{user.email} name=#{user.name}"
-        )
+        Logger.info("password_update_success user_id=#{user.id}")
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         password_form = Phoenix.Component.to_form(%{}, as: :password)
@@ -101,9 +99,7 @@ defmodule LucaGymappWeb.ProfileController do
         )
 
       {:error, changeset} ->
-        Logger.warning(
-          "password_update_error user_id=#{user.id} email=#{user.email} name=#{user.name}"
-        )
+        Logger.warning("password_update_error user_id=#{user.id}")
 
         profile_form = user |> Accounts.change_user() |> Phoenix.Component.to_form()
         {payments, season_passes} = profile_history(user.id)

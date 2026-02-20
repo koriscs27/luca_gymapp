@@ -50,7 +50,9 @@ defmodule LucaGymapp.Payments.Barion do
 
     request = Req.new(base_url: api_base_url, headers: [{"x-pos-key", pos_key}])
 
-    Logger.warning("barion_start_request url=#{start_url} payload=#{inspect(payload)}")
+    Logger.warning(
+      "barion_start_request url=#{start_url} payment_request_id=#{log_value(payment_request_id)}"
+    )
 
     case Req.post(request, url: "/v2/Payment/Start", json: payload) do
       {:ok,
@@ -59,9 +61,7 @@ defmodule LucaGymapp.Payments.Barion do
         if has_errors?(body) do
           request_id = request_id_from_response(response)
 
-          Logger.warning(
-            "barion_start_errors url=#{start_url} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
-          )
+          Logger.warning("barion_start_errors url=#{start_url} request_id=#{request_id || "n/a"}")
 
           {:error, {:barion_error, body}}
         else
@@ -72,7 +72,7 @@ defmodule LucaGymapp.Payments.Barion do
         request_id = request_id_from_response(response)
 
         Logger.warning(
-          "barion_start_failed url=#{start_url} status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+          "barion_start_failed url=#{start_url} status=#{status} request_id=#{request_id || "n/a"}"
         )
 
         {:error, {:barion_http_error, status, body}}
@@ -101,7 +101,7 @@ defmodule LucaGymapp.Payments.Barion do
         request_id = request_id_from_response(response)
 
         Logger.warning(
-          "barion_state_failed url=#{state_url} status=#{status} request_id=#{request_id || "n/a"} body=#{inspect(body)}"
+          "barion_state_failed url=#{state_url} status=#{status} request_id=#{request_id || "n/a"}"
         )
 
         {:error, {:barion_http_error, status, body}}
@@ -162,4 +162,8 @@ defmodule LucaGymapp.Payments.Barion do
   defp normalize_header_value([value | _]), do: to_string(value)
   defp normalize_header_value(value) when is_binary(value), do: value
   defp normalize_header_value(value), do: to_string(value)
+
+  defp log_value(nil), do: "n/a"
+  defp log_value(""), do: "n/a"
+  defp log_value(value), do: to_string(value)
 end

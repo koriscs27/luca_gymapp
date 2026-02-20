@@ -5,7 +5,7 @@ defmodule LucaGymappWeb.BarionController do
   require Logger
 
   def return(conn, %{"paymentId" => payment_id}) do
-    Logger.warning("barion_return payload=#{inspect(conn.query_params)}")
+    Logger.warning("barion_return payment_id=#{payment_id}")
 
     if dev_env?() do
       payment_error(conn)
@@ -31,13 +31,18 @@ defmodule LucaGymappWeb.BarionController do
   end
 
   def return(conn, _params) do
-    Logger.warning("barion_return payload=#{inspect(conn.query_params)}")
+    Logger.warning("barion_return payment_id_missing")
     payment_error(conn)
   end
 
   def callback(conn, params) do
-    Logger.warning("barion_callback payload=#{inspect(params)}")
     payment_id = Map.get(params, "PaymentId") || Map.get(params, "paymentId")
+
+    if is_binary(payment_id) do
+      Logger.warning("barion_callback payment_id=#{payment_id}")
+    else
+      Logger.warning("barion_callback payment_id_missing")
+    end
 
     if is_binary(payment_id) do
       _ = Payments.handle_callback(payment_id)

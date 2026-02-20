@@ -246,7 +246,7 @@ defmodule LucaGymappWeb.PageController do
          {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
          {:ok, booking} <- Bookings.book_personal_training(user, start_dt, end_dt) do
       Logger.info(
-        "booking_success type=personal email=#{user.email} name=#{user.name} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
+        "booking_success type=personal user_id=#{user.id} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
       )
 
       conn
@@ -300,7 +300,7 @@ defmodule LucaGymappWeb.PageController do
          {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
          {:ok, booking} <- Bookings.book_cross_training(user, start_dt, end_dt) do
       Logger.info(
-        "booking_success type=cross email=#{user.email} name=#{user.name} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
+        "booking_success type=cross user_id=#{user.id} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
       )
 
       conn
@@ -452,7 +452,7 @@ defmodule LucaGymappWeb.PageController do
 
                 {:error, reason} ->
                   Logger.error(
-                    "payment_error email=#{user.email} name=#{user.name} pass_name=#{pass_name} reason=#{inspect(reason)}"
+                    "payment_error user_id=#{user.id} pass_name=#{pass_name} reason=#{inspect(reason)}"
                   )
 
                   pass_purchase_error(conn, reason, ~p"/berletek")
@@ -460,21 +460,21 @@ defmodule LucaGymappWeb.PageController do
 
             {:error, :active_pass_exists} ->
               Logger.warning(
-                "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
+                "purchase_error user_id=#{user.id} reason=active_pass_exists pass_name=#{pass_name}"
               )
 
               pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
 
             {:error, :once_per_user} ->
               Logger.warning(
-                "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
+                "purchase_error user_id=#{user.id} reason=once_per_user pass_name=#{pass_name}"
               )
 
               pass_purchase_error(conn, :once_per_user, ~p"/berletek")
 
             {:error, :invalid_type} ->
               Logger.warning(
-                "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
+                "purchase_error user_id=#{user.id} reason=invalid_type pass_name=#{pass_name}"
               )
 
               generic_error(conn, ~p"/berletek")
@@ -500,7 +500,7 @@ defmodule LucaGymappWeb.PageController do
     case SeasonPasses.purchase_season_pass(user, pass_name) do
       {:ok, pass} ->
         Logger.info(
-          "purchase_success email=#{user.email} name=#{user.name} pass_id=#{pass.pass_id} pass_name=#{pass_name}"
+          "purchase_success user_id=#{user.id} pass_id=#{pass.pass_id} pass_name=#{pass_name}"
         )
 
         conn
@@ -509,29 +509,27 @@ defmodule LucaGymappWeb.PageController do
 
       {:error, :once_per_user} ->
         Logger.warning(
-          "purchase_error email=#{user.email} name=#{user.name} reason=once_per_user pass_name=#{pass_name}"
+          "purchase_error user_id=#{user.id} reason=once_per_user pass_name=#{pass_name}"
         )
 
         pass_purchase_error(conn, :once_per_user, ~p"/berletek")
 
       {:error, :active_pass_exists} ->
         Logger.warning(
-          "purchase_error email=#{user.email} name=#{user.name} reason=active_pass_exists pass_name=#{pass_name}"
+          "purchase_error user_id=#{user.id} reason=active_pass_exists pass_name=#{pass_name}"
         )
 
         pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
 
       {:error, :invalid_type} ->
         Logger.warning(
-          "purchase_error email=#{user.email} name=#{user.name} reason=invalid_type pass_name=#{pass_name}"
+          "purchase_error user_id=#{user.id} reason=invalid_type pass_name=#{pass_name}"
         )
 
         generic_error(conn, ~p"/berletek")
 
       {:error, _reason} ->
-        Logger.error(
-          "purchase_error email=#{user.email} name=#{user.name} reason=unknown pass_name=#{pass_name}"
-        )
+        Logger.error("purchase_error user_id=#{user.id} reason=unknown pass_name=#{pass_name}")
 
         generic_error(conn, ~p"/berletek")
     end
@@ -1088,7 +1086,7 @@ defmodule LucaGymappWeb.PageController do
   defp log_booking_error(type, user_id, reason) do
     case user_id do
       nil ->
-        Logger.warning("booking_error type=#{type} reason=#{reason} user_id=nil")
+        Logger.warning("booking_error type=#{type} reason=#{reason} user_id=missing")
 
       id ->
         Logger.warning("booking_error type=#{type} reason=#{reason} user_id=#{id}")

@@ -129,19 +129,17 @@ defmodule LucaGymapp.Accounts do
 
     Logger.info("Sending confirmation email",
       user_id: user.id,
-      to: user.email,
       subject: email.subject
     )
 
     case Mailer.deliver(email) do
       {:ok, _} = ok ->
-        Logger.info("Confirmation email sent", user_id: user.id, to: user.email)
+        Logger.info("Confirmation email sent", user_id: user.id)
         ok
 
       {:error, reason} = error ->
         Logger.error("Confirmation email failed reason=#{inspect(reason)}",
-          user_id: user.id,
-          to: user.email
+          user_id: user.id
         )
 
         error
@@ -188,19 +186,17 @@ defmodule LucaGymapp.Accounts do
 
           Logger.info("Sending password reset email",
             user_id: user.id,
-            to: user.email,
             subject: email_message.subject
           )
 
           case Mailer.deliver(email_message) do
             {:ok, _} = ok ->
-              Logger.info("Password reset email sent", user_id: user.id, to: user.email)
+              Logger.info("Password reset email sent", user_id: user.id)
               ok
 
             {:error, reason} = error ->
               Logger.error("Password reset email failed reason=#{inspect(reason)}",
-                user_id: user.id,
-                to: user.email
+                user_id: user.id
               )
 
               error

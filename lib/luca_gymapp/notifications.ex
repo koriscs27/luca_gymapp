@@ -21,8 +21,7 @@ defmodule LucaGymapp.Notifications do
 
       {:error, reason} = error ->
         Logger.error("Admin cancellation email failed reason=#{inspect(reason)}",
-          user_id: user.id,
-          to: user.email
+          user_id: user.id
         )
 
         error
@@ -40,7 +39,7 @@ defmodule LucaGymapp.Notifications do
     Logger.warning("coach_email_debug cancellation trigger",
       coach_email: coach_email,
       type: type,
-      user_email: user.email,
+      user_id: user.id,
       start_time: inspect(booking.start_time),
       end_time: inspect(booking.end_time)
     )
@@ -92,7 +91,7 @@ defmodule LucaGymapp.Notifications do
     Logger.warning("coach_email_debug outgoing mail",
       to: to,
       subject: subject,
-      text: text
+      user_id: user.id
     )
 
     req = Req.new(base_url: base_url, auth: {:basic, "api:" <> api_key})
@@ -109,11 +108,10 @@ defmodule LucaGymapp.Notifications do
       {:ok, %{status: status}} when status in 200..299 ->
         :ok
 
-      {:ok, %{status: status, body: body}} ->
+      {:ok, %{status: status, body: _body}} ->
         Logger.error(
-          "Mailgun booking email failed reason=#{inspect({:mailgun_http_error, status, body})}",
-          status: status,
-          body: inspect(body)
+          "Mailgun booking email failed reason=:mailgun_http_error",
+          status: status
         )
 
         {:error, :mailgun_failed}

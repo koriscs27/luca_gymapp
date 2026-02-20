@@ -11,7 +11,7 @@ defmodule LucaGymappWeb.OAuthController do
   def callback(%{assigns: %{ueberauth_auth: auth}} = conn, _params) do
     case Accounts.get_or_create_user_from_oauth(auth) do
       {:ok, user} ->
-        Logger.info("oauth_login_success provider=google email=#{user.email} name=#{user.name}")
+        Logger.info("oauth_login_success provider=google user_id=#{user.id}")
 
         conn
         |> configure_session(renew: true)

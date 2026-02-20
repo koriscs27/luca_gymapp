@@ -17,7 +17,7 @@ defmodule LucaGymappWeb.SessionController do
         else
           case Accounts.authenticate_user(email, password) do
             {:ok, user} ->
-              Logger.info("login_success email=#{user.email} name=#{user.name}")
+              Logger.info("login_success user_id=#{user.id}")
 
               conn
               |> configure_session(renew: true)
@@ -26,14 +26,14 @@ defmodule LucaGymappWeb.SessionController do
               |> redirect(to: ~p"/")
 
             {:error, :unconfirmed} ->
-              Logger.warning("login_error_unconfirmed email=#{email}")
+              Logger.warning("login_error_unconfirmed")
 
               conn
               |> put_flash(:error, "A bejelentkezés nem sikerült. Próbáld újra.")
               |> redirect(to: "/#login-modal")
 
             :error ->
-              Logger.warning("login_error_invalid email=#{email}")
+              Logger.warning("login_error_invalid")
 
               conn
               |> put_flash(:error, "Hibás e-mail vagy jelszó.")
