@@ -860,7 +860,7 @@ defmodule LucaGymappWeb.PageController do
 
     case File.read(path) do
       {:ok, content} -> content
-      {:error, _reason} -> "Az adatkezelesi tajekoztato tervezet jelenleg nem erheto el."
+      {:error, _reason} -> "Az adatkezelési tájékoztató tervezet jelenleg nem érhető el."
     end
   end
 
