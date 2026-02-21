@@ -48,7 +48,7 @@ defmodule LucaGymappWeb.RegistrationController do
         render_register_error(
           conn,
           user_params,
-          "A regisztrációhoz el kell fogadnod az Adatkezelési Tájékoztatót."
+          "A regisztrációhoz meg kell ismerned az Adatkezelési Tájékoztatót."
         )
 
       {:error, changeset} ->

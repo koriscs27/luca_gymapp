@@ -130,7 +130,7 @@ defmodule LucaGymappWeb.RegistrationControllerTest do
     conn = post(conn, ~p"/register", user: params)
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "A regisztrációhoz el kell fogadnod az Adatkezelési Tájékoztatót."
+             "A regisztrációhoz meg kell ismerned az Adatkezelési Tájékoztatót."
 
     assert html_response(conn, 200) =~ ~s(id="register-form")
   end

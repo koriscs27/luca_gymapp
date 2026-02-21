@@ -118,6 +118,19 @@ defmodule LucaGymappWeb.PageHTML do
                 </.link>.
               </span>
             </label>
+            <p class="text-xs text-neutral-600">
+              Az
+              <.link
+                href={
+                  "/adatkezelesi-tajekoztato?return_to=" <>
+                    URI.encode_www_form("/berletek#purchase-#{@pass.key}")
+                }
+                class="font-semibold underline underline-offset-2"
+              >
+                Adatkezelési Tájékoztató
+              </.link>
+              itt bármikor megtekinthető.
+            </p>
             <button
               type="submit"
               data-aszf-submit

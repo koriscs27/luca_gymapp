@@ -1,73 +1,121 @@
-ADATKEZELÉSI TÁJÉKOZTATÓ (TERVEZET)
-Luca Gym - online bérletvásárlás és kapcsolódó szolgáltatások
-
-Fontos: ez egy minta-tervezet. Nyilvános használat előtt jogásszal szükséges véglegesíteni.
+﻿ADATKEZELÉSI TÁJÉKOZTATÓ
+Pankotai Luca E.V - online bérletvásárlás és kapcsolódó szolgáltatások
 
 1. Adatkezelő adatai
-- Cégnév: [IDE A CÉGNÉV]
+- Név: Pankotai Luca E.V
 - Székhely: [IDE A SZÉKHELY]
-- Cégjegyzékszám / nyilvántartási szám: [IDE AZ AZONOSÍTÓ]
+- Nyilvántartási szám: [IDE A NYILVÁNTARTÁSI SZÁM]
 - Adószám: [IDE AZ ADÓSZÁM]
-- E-mail: [IDE A KAPCSOLATI E-MAIL]
+- Kapcsolattartó e-mail: [IDE A KAPCSOLATI E-MAIL]
 - Telefonszám: [IDE A TELEFONSZÁM]
 
-2. A tájékoztató célja
-Jelen tájékoztató bemutatja, hogy a szolgáltató milyen személyes adatokat, milyen jogalapon,
-milyen célból, mennyi ideig kezel a weboldal használata, regisztráció, vásárlás, foglalás és
-kapcsolattartás során.
+2. A tájékoztató célja, hatálya
+Jelen tájékoztató bemutatja, hogy az Adatkezelő milyen személyes adatokat, milyen célból, milyen jogalapon, milyen címzettek részére, mennyi ideig kezel a weboldal használata során.
+A tájékoztató az online regisztrációra, bejelentkezésre, Google OAuth belépésre, bérletvásárlásra, foglalásokra, ügyfélszolgálati kommunikációra és kapcsolódó biztonsági folyamatokra terjed ki.
 
-3. Kezelt adatok köre
-A szolgáltató különösen az alábbi adatokat kezelheti:
-- azonosítási és kapcsolatfelvételi adatok (név, e-mail-cím, telefonszám),
-- fiókhoz kapcsolódó hitelesítési adatok (bejelentkezési adatok, jelszó kizárólag egyirányú, biztonságos hash formában),
-- profil adatok (pl. életkor, nem, születési dátum),
-- vásárlási és fizetési adatok (bérlet típusa, összeg, tranzakció állapot),
-- foglalási adatok (foglalás időpontja, típus, állapot),
-- technikai adatok (IP-cím, naplóadatok, hibajegyek).
+3. Kezelt adatok, cél, jogalap, megőrzés, címzettek
+3.1 Regisztráció és felhasználói fiók
+- Kezelt adatok: e-mail cím, jelszó hash, opcionálisan név, telefonszám, életkor, nem, születési dátum.
+- Cél: felhasználói fiók létrehozása és fenntartása.
+- Jogalap: GDPR 6. cikk (1) b) pont (szerződés előkészítése/teljesítése).
+- Megőrzés: a fiók fennállásáig, illetve a törlést követően a jogi igények érvényesíthetőségéhez szükséges ideig.
+- Címzettek/adatfeldolgozók: hoszting szolgáltató, levelezési szolgáltató.
 
-4. Adatkezelés jogalapja és célja
-A szolgáltató az adatokat különösen az alábbi jogalapokon kezeli:
-- szerződés teljesítése (regisztráció, bérletvásárlás, foglalás teljesítése),
-- jogi kötelezettség teljesítése (számviteli, adózási kötelezettségek),
-- jogos érdek (rendszerbiztonság, csaláscsökkentés, visszaélés-megelőzés),
-- hozzájárulás (amennyiben adott adatkezelésnél a hozzájárulás a megfelelő jogalap).
+3.2 Bejelentkezés és munkamenet-kezelés
+- Kezelt adatok: session azonosító, technikai naplóadatok, IP-cím.
+- Cél: hitelesítés, fiókbiztonság, visszaélések megelőzése.
+- Jogalap: GDPR 6. cikk (1) f) pont (jogos érdek - informatikai biztonság).
+- Megőrzés: session adatok a munkamenet idejéig; technikai naplók 30 napig.
+- Címzettek/adatfeldolgozók: hoszting szolgáltató.
 
-5. Fizetés és külső szolgáltatók
-A bankkártyás fizetés Barion rendszeren keresztül történik. A kártyaadatokat a szolgáltató nem
-tárolja, azok a fizetési szolgáltató rendszerben kerülnek kezelésre.
+3.3 Google OAuth belépés
+- Kezelt adatok: Google-fiókból érkező azonosító adatok (különösen e-mail, név, szolgáltatói azonosítók).
+- Adatforrás: Google Ireland Limited / Google LLC.
+- Cél: egyszerűsített bejelentkezés.
+- Jogalap: GDPR 6. cikk (1) b) pont.
+- Megőrzés: a fiók fennállásáig, illetve jogi igények érvényesíthetőségéhez szükséges ideig.
+- Címzettek/adatfeldolgozók: Google mint önálló adatkezelő a saját adatkezelése tekintetében.
 
-A weboldal bizonyos funkcióihoz a szolgáltató külső adatfeldolgozókat vehet igénybe
-(pl. hoszting, e-mail küldés, fizetési szolgáltató). Az adatfeldolgozók a szolgáltatóval kötött
-megállapodás alapján, a vonatkozó jogszabályok szerint járhatnak el.
+3.4 Bérletvásárlás és fizetés
+- Kezelt adatok: vásárolt bérlet adatai, összeg, fizetési státusz, fizetési azonosítók (pl. payment_id).
+- Cél: szerződés teljesítése, fizetés feldolgozása, tranzakciók követése.
+- Jogalap: GDPR 6. cikk (1) b) pont, valamint 6. cikk (1) c) pont (számviteli/adózási kötelezettségek).
+- Megőrzés: számviteli bizonylatokhoz kapcsolódó adatok a vonatkozó jogszabályok szerinti kötelező ideig (jellemzően legalább 8 év).
+- Címzettek/adatfeldolgozók: Barion Payment Zrt. (fizetési szolgáltató), hoszting szolgáltató.
+- Megjegyzés: bankkártyaadatot az Adatkezelő nem kezel és nem tárol.
 
-6. Adatmegőrzés időtartama
-A személyes adatok megőrzési ideje a kezelés céljától és jogalapjától függ. A szolgáltató az adatokat
-csak addig tárolja, amíg az a cél teljesítéséhez, illetve a jogszabályi kötelezettségek teljesítéséhez
-szükséges.
+3.5 Foglalások és bérlet-felhasználás
+- Kezelt adatok: foglalás típusa, időpontja, státusza, pass azonosító, felhasználói azonosító.
+- Cél: időpontfoglalás kezelése, teljesítés nyomon követése.
+- Jogalap: GDPR 6. cikk (1) b) pont.
+- Megőrzés: a szolgáltatás teljesítéséhez és jogi igények kezeléséhez szükséges ideig.
+- Címzettek/adatfeldolgozók: hoszting szolgáltató.
+
+3.6 E-mail kommunikáció (pl. megerősítés, jelszó-visszaállítás, rendszerüzenetek)
+- Kezelt adatok: e-mail cím, üzenetküldés metaadatai.
+- Cél: fiókbiztonság, szolgáltatás működtetése, tranzakciós tájékoztatás.
+- Jogalap: GDPR 6. cikk (1) b) pont és/vagy 6. cikk (1) c) pont.
+- Megőrzés: a jogi igények érvényesíthetőségéhez szükséges ideig.
+- Címzettek/adatfeldolgozók: Mailgun Technologies, Inc. (levelezési infrastruktúra), hoszting szolgáltató.
+
+3.7 Robotellenőrzés (Cloudflare Turnstile)
+- Kezelt adatok: IP-cím, böngésző- és eszközjellemzők, Turnstile token és ellenőrzési eredmény.
+- Cél: automatizált visszaélések és spam regisztrációk megelőzése.
+- Jogalap: GDPR 6. cikk (1) f) pont (jogos érdek - biztonság).
+- Megőrzés: az ellenőrzési adatok a szükséges technikai ideig.
+- Címzettek/adatfeldolgozók: Cloudflare, Inc.
+
+4. Címzettek, adatfeldolgozók
+Az Adatkezelő a szolgáltatás nyújtásához az alábbi külső partnereket veszi igénybe:
+- Hoszting: Fly.io, Inc. (infrastruktúra)
+- Fizetés: Barion Payment Zrt.
+- E-mail küldés: Mailgun Technologies, Inc.
+- OAuth belépés: Google Ireland Limited / Google LLC
+- Robotellenőrzés: Cloudflare, Inc. (Turnstile)
+
+5. Nemzetközi adattovábbítás
+A fenti szolgáltatók egy része az EGT-n kívüli adatkezelést/adattovábbítást is érintheti.
+Ilyen esetben az Adatkezelő a GDPR V. fejezetének megfelelő garanciákat alkalmazza (különösen megfelelőségi határozat vagy Európai Bizottság által elfogadott általános szerződési feltételek - SCC).
+
+6. Sütik (cookie-k) és hasonló technológiák
+A weboldal működéséhez szükséges munkamenet-sütit használ (session cookie).
+A munkamenet-süti célja a biztonságos bejelentkezés és az oldal alapműködésének biztosítása.
+
+Jelenleg az oldal nem alkalmaz külön marketing célú cookie-kezelést.
+Ha ez a jövőben változik, az Adatkezelő külön hozzájárulás-kezelést és részletes cookie tájékoztatást vezet be.
 
 7. Érintetti jogok
-Az érintett kérheti:
-- tájékoztatást a személyes adatai kezeléséről,
-- adataihoz való hozzáférést,
-- adatainak helyesbítését,
-- adatainak törlését (ha annak jogi feltételei fennállnak),
-- az adatkezelés korlátozását,
-- adathordozhatóságot,
-- valamint tiltakozhat bizonyos adatkezelések ellen.
+Az érintett jogosult:
+- hozzáférést kérni a kezelt adataihoz,
+- helyesbítést kérni,
+- törlést kérni (ha a jogi feltételek fennállnak),
+- az adatkezelés korlátozását kérni,
+- tiltakozni a jogos érdeken alapuló adatkezelés ellen,
+- adathordozhatósághoz való jogát gyakorolni,
+- a hozzájárulást bármikor visszavonni (ha az adatkezelés hozzájáruláson alapul).
 
-8. Jogérvényesítés
-Az érintett a kérdéseit, kérelmeit vagy panaszát az [SUPPORT_EMAIL] címen jelezheti.
-Az érintett jogosult továbbá a Nemzeti Adatvédelmi és Információszabadság Hatósághoz fordulni,
-illetve bírósági jogorvoslattal élni.
+8. Kérelemkezelés és jogorvoslat
+Az érintett kérelmét az [SUPPORT_EMAIL] címen nyújthatja be.
+Az Adatkezelő a kérelmeket indokolatlan késedelem nélkül, de legkésőbb 1 hónapon belül megválaszolja (szükség esetén a GDPR szerint meghosszabbítható).
+
+Jogorvoslat:
+- NAIH (Nemzeti Adatvédelmi és Információszabadság Hatóság): https://www.naih.hu
+- Bírósági jogérvényesítés a GDPR és az Infotv. szabályai szerint.
 
 9. Adatbiztonság
-A szolgáltató megfelelő technikai és szervezési intézkedéseket alkalmaz a személyes adatok védelme
-érdekében, ideértve a jogosulatlan hozzáférés, módosítás, nyilvánosságra hozatal, törlés vagy
-megsemmisítés elleni védelmet.
+Az Adatkezelő megfelelő technikai és szervezési intézkedéseket alkalmaz, különösen:
+- hozzáférés-kezelés és jogosultság-kezelés,
+- jelszavak hash-elése,
+- kommunikációs és rendszerbiztonsági intézkedések,
+- naplózás és incidenskezelés.
 
-10. A tájékoztató módosítása
-A szolgáltató jogosult jelen tájékoztatót egyoldalúan módosítani. A mindenkor hatályos változat
-a weboldalon érhető el.
+10. Alkalmazott adatkezelési döntések
+- Technikai naplók megőrzése (3.2 pont): 30 nap.
+- Méltányossági visszatérítési kérelmekhez kapcsolódó ügykezelési adatok megőrzése: 2 év.
+- Nemzetközi adattovábbítás kezelése: jelenlegi szolgáltatók alkalmazása GDPR V. fejezet szerinti garanciákkal (különösen SCC és/vagy megfelelőségi határozat).
 
-Hatálybalépés tervezett dátuma: [IDE DÁTUM]
-Verzió: DRAFT-1
+11. A tájékoztató módosítása
+Az Adatkezelő jogosult jelen tájékoztatót módosítani. A mindenkor hatályos változat a weboldalon érhető el.
+
+Hatálybalépés dátuma: [IDE DÁTUM]
+Verzió: 2.0
