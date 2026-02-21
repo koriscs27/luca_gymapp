@@ -3,11 +3,11 @@ Pankotai Luca E.V - online bérletvásárlás és kapcsolódó szolgáltatások
 
 1. Adatkezelő adatai
 - Név: Pankotai Luca E.V
-- Székhely: [IDE A SZÉKHELY]
-- Nyilvántartási szám: [IDE A NYILVÁNTARTÁSI SZÁM]
-- Adószám: [IDE AZ ADÓSZÁM]
-- Kapcsolattartó e-mail: [IDE A KAPCSOLATI E-MAIL]
-- Telefonszám: [IDE A TELEFONSZÁM]
+- Székhely: 1143 Budapest Zászlós utca 26-28
+- Nyilvántartási szám: 60212393
+- Adószám: 90865107142
+- Kapcsolattartó e-mail: pankotailucafitness@gmail.com
+- Telefonszám: +36705030443
 
 2. A tájékoztató célja, hatálya
 Jelen tájékoztató bemutatja, hogy az Adatkezelő milyen személyes adatokat, milyen célból, milyen jogalapon, milyen címzettek részére, mennyi ideig kezel a weboldal használata során.
@@ -95,7 +95,7 @@ Az érintett jogosult:
 - a hozzájárulást bármikor visszavonni (ha az adatkezelés hozzájáruláson alapul).
 
 8. Kérelemkezelés és jogorvoslat
-Az érintett kérelmét az [SUPPORT_EMAIL] címen nyújthatja be.
+Az érintett kérelmét a pl.bbtech@gmail.com címen nyújthatja be.
 Az Adatkezelő a kérelmeket indokolatlan késedelem nélkül, de legkésőbb 1 hónapon belül megválaszolja (szükség esetén a GDPR szerint meghosszabbítható).
 
 Jogorvoslat:
@@ -117,5 +117,5 @@ Az Adatkezelő megfelelő technikai és szervezési intézkedéseket alkalmaz, k
 11. A tájékoztató módosítása
 Az Adatkezelő jogosult jelen tájékoztatót módosítani. A mindenkor hatályos változat a weboldalon érhető el.
 
-Hatálybalépés dátuma: [IDE DÁTUM]
-Verzió: 2.0
+Hatálybalépés dátuma: 2026.02.21
+Verzió: 1.0

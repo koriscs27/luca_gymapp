@@ -2,14 +2,13 @@
 Pankotai Luca E.V – online bérletvásárlás
 
 1. Szolgáltató adatai
-- Cégnév: [IDE A CÉGNÉV]
-- Székhely: [IDE A SZÉKHELY]
-- Levelezési cím (ha eltér): [IDE A LEVELEZÉSI CÍM]
-- Cégjegyzékszám / nyilvántartási szám: [IDE AZ AZONOSÍTÓ]
-- Adószám: [IDE AZ ADÓSZÁM]
+- Cégnév: Pankotai Luca E.V
+- Székhely: 1143 Budapest Zászlós utca 26-28
+- Cégjegyzékszám / nyilvántartási szám: 60212393
+- Adószám: 90865107142
 - Képviselő: Pankotai Luca
-- Kapcsolattartó e-mail: [IDE A KAPCSOLATI E-MAIL]
-- Telefonszám: [IDE A TELEFONSZÁM]
+- Kapcsolattartó e-mail: pankotailucafitness@gmail.com
+- Telefonszám: +36705030443
 - Tárhelyszolgáltató:  Fly.io, Inc.
 
 2. Az ÁSZF hatálya és elfogadása
@@ -52,7 +51,7 @@ A visszatérítés, díjcsökkentés vagy szerződésmegszüntetés eseteit és 
 A Szolgáltató jogosult egyedi méltányosság alapján, saját döntése szerint, a fel nem használt alkalmak arányában részleges visszatérítést nyújtani (példa: 8 alkalmas bérletből 3 felhasznált alkalom esetén legfeljebb az 5 fel nem használt alkalom arányában).
 Az egyedi méltányossági rész-visszatérítés nem alanyi jog, minden esetben egyedi elbírálás tárgya.
 
-A visszatérítési vagy minőségi kifogást írásban lehet jelezni a [SUPPORT_EMAIL] címen, a rendelési azonosító megadásával.
+A visszatérítési vagy minőségi kifogást írásban lehet jelezni a pl.bbtech@gmail.com címen, a rendelési azonosító megadásával.
 Jogos visszatérítés esetén a Szolgáltató a vonatkozó jogszabály szerinti határidőben, az eredeti fizetési móddal azonos módon teljesít.
 
 9. Panaszkezelés
@@ -84,5 +83,5 @@ A felek a vitás kérdéseket elsődlegesen békés úton rendezik.
 - Elállási/visszatérítési policy: jogszabályban kötelező minimum fogyasztói jogok biztosítása.
 - Panaszkezelési SLA: jogszabály szerinti határidők.
 
-Hatálybalépés dátuma: [IDE DÁTUM]
+Hatálybalépés dátuma: 2026.02.21
 Verzió: 1.0
