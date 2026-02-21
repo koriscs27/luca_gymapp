@@ -5,6 +5,8 @@ defmodule LucaGymapp.Accounts do
   alias LucaGymapp.Repo
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Accounts.UserEmail
+  alias LucaGymapp.Bookings.CrossBooking
+  alias LucaGymapp.Bookings.PersonalBooking
   alias LucaGymapp.Mailer
 
   @password_hash_algorithm "pbkdf2_sha256"
@@ -418,6 +420,60 @@ defmodule LucaGymapp.Accounts do
 
   def delete_user(%User{} = user) do
     Repo.delete(user)
+  end
+
+  def anonymize_user(user_id) when is_integer(user_id) do
+    case Repo.get(User, user_id) do
+      nil -> {:error, :not_found}
+      user -> anonymize_user(user)
+    end
+  end
+
+  def anonymize_user(user_id) when is_binary(user_id) do
+    case Integer.parse(user_id) do
+      {id, ""} -> anonymize_user(id)
+      _ -> {:error, :not_found}
+    end
+  end
+
+  def anonymize_user(%User{} = user) do
+    anonymized_email = "deleted-user-#{user.id}@anon.invalid"
+    anonymized_name = "Torolt felhasznalo ##{user.id}"
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.update(
+      :user,
+      Ecto.Changeset.change(user, %{
+        email: anonymized_email,
+        name: anonymized_name,
+        phone_number: nil,
+        age: nil,
+        sex: nil,
+        birth_date: nil,
+        password_hash: nil,
+        email_confirmed_at: nil,
+        email_confirmation_token_hash: nil,
+        email_confirmation_sent_at: nil,
+        password_reset_token_hash: nil,
+        password_reset_sent_at: nil,
+        admin: false
+      })
+    )
+    |> Ecto.Multi.update_all(
+      :personal_bookings,
+      from(booking in PersonalBooking, where: booking.user_id == ^user.id),
+      set: [user_name: anonymized_name]
+    )
+    |> Ecto.Multi.update_all(
+      :cross_bookings,
+      from(booking in CrossBooking, where: booking.user_id == ^user.id),
+      set: [user_name: anonymized_name]
+    )
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{user: anonymized_user}} -> {:ok, anonymized_user}
+      {:error, _step, reason, _changes} -> {:error, reason}
+    end
   end
 
   def change_user(%User{} = user, attrs \\ %{}) do
