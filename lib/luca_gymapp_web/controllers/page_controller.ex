@@ -422,10 +422,10 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def purchase_season_pass(conn, %{"pass_name" => pass_name}) do
+  def purchase_season_pass(conn, %{"pass_name" => pass_name} = params) do
     current_user_id = get_session(conn, :user_id)
 
-    if current_user_id do
+    if current_user_id && required_purchase_consents_accepted?(params) do
       case fetch_user(current_user_id) do
         {:ok, user} ->
           case SeasonPasses.validate_purchase(user, pass_name) do
@@ -487,6 +487,26 @@ defmodule LucaGymappWeb.PageController do
           Logger.warning("purchase_error_unauthorized")
           generic_error(conn, ~p"/berletek")
       end
+    else
+      purchase_consent_error(conn)
+    end
+  end
+
+  def purchase_season_pass(conn, _params), do: purchase_consent_error(conn)
+
+  defp required_purchase_consents_accepted?(params) when is_map(params) do
+    checkbox_checked?(params["accept_aszf"])
+  end
+
+  defp required_purchase_consents_accepted?(_), do: false
+
+  defp checkbox_checked?(value) when value in ["true", "on", "1", true], do: true
+  defp checkbox_checked?(_), do: false
+
+  defp purchase_consent_error(conn) do
+    if get_session(conn, :user_id) do
+      Logger.warning("purchase_error_missing_required_consents")
+      pass_purchase_error(conn, :missing_required_consents, ~p"/berletek")
     else
       Logger.warning("purchase_error_unauthorized")
 
@@ -1057,6 +1077,15 @@ defmodule LucaGymappWeb.PageController do
   defp pass_purchase_error(conn, :once_per_user, redirect_path) do
     conn
     |> put_flash(:error, "Ezt a bérletet csak egyszer lehet megvásárolni.")
+    |> redirect(to: redirect_path)
+  end
+
+  defp pass_purchase_error(conn, :missing_required_consents, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A vásárláshoz az ÁSZF elfogadása szükséges."
+    )
     |> redirect(to: redirect_path)
   end
 

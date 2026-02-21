@@ -1,79 +1,88 @@
-ÁLTALÁNOS SZERZŐDÉSI FELTÉTELEK (TERVEZET)
-Luca Gym – online bérletvásárlás
-
-Fontos: ez egy minta-tervezet. Nyilvános használat előtt jogásszal szükséges véglegesíteni.
+ÁLTALÁNOS SZERZŐDÉSI FELTÉTELEK
+Pankotai Luca E.V – online bérletvásárlás
 
 1. Szolgáltató adatai
 - Cégnév: [IDE A CÉGNÉV]
 - Székhely: [IDE A SZÉKHELY]
+- Levelezési cím (ha eltér): [IDE A LEVELEZÉSI CÍM]
 - Cégjegyzékszám / nyilvántartási szám: [IDE AZ AZONOSÍTÓ]
 - Adószám: [IDE AZ ADÓSZÁM]
-- Képviselő: [IDE A KÉPVISELŐ NEVE]
-- E-mail: [IDE A KAPCSOLATI E-MAIL]
+- Képviselő: Pankotai Luca
+- Kapcsolattartó e-mail: [IDE A KAPCSOLATI E-MAIL]
 - Telefonszám: [IDE A TELEFONSZÁM]
+- Tárhelyszolgáltató:  Fly.io, Inc.
 
-2. Az ÁSZF hatálya
-Jelen ÁSZF a Luca Gym weboldalon keresztül történő bérletvásárlásra és kapcsolódó szolgáltatásokra vonatkozik.
-Az ÁSZF elfogadása a vásárlás megkezdésének feltétele.
+2. Az ÁSZF hatálya és elfogadása
+Jelen ÁSZF a Pankotai Luca E.V weboldalán keresztül történő online bérletvásárlásra és a kapcsolódó szolgáltatásokra vonatkozik.
+A szerződés nyelve: magyar. A szerződés elektronikus úton jön létre.
+Az ÁSZF elfogadása a megrendelés leadásának kötelező feltétele.
 
-3. A megvásárolható bérletek
-A weboldalon elérhető bérletek típusa, ára, felhasználási feltétele és érvényességi ideje a vásárlás pillanatában
-megjelenített tartalom szerint irányadó.
+3. A szolgáltatás és a bérletek lényeges jellemzői
+A weboldalon elérhető bérletek típusa, ára, felhasználási feltétele, érvényességi ideje, valamint a vásárlás pillanatában közzétett leírás szerinti egyéb tulajdonságai irányadók.
+A bérletek az edzői/szakmai szolgáltatás díját tartalmazzák.
+Az edzőtermi belépés díja külön fizetendő, amelyről információ az alábbi oldalon található: https://fogarasi.sxlfitness.hu/
 
 4. Bérletek érvényessége
-A bérletek a vásárlás dátumától számított 3 hónapig érvényesek, eltérő, egyedileg jelzett feltétel hiányában.
+Eltérő, kifejezetten megjelölt feltétel hiányában a bérletek a vásárlás dátumától számított 3 hónapig érvényesek.
 
-5. Fontos tájékoztatás edzőtermi belépőről
-A bérletek kizárólag az edzői/szakmai szolgáltatás díját tartalmazzák.
-Az edzőtermi belépés díja külön fizetendő, amelyről információ:
-https://fogarasi.sxlfitness.hu/
+5. Ár, díjak, fizetési mód
+A feltüntetett árak forintban (HUF) értendők.
+A fizetés online bankkártyával, a Barion rendszerén keresztül történik.
+A kártyaadatok kezelése a Barion rendszerében történik; a Szolgáltató kártyaadatot nem tárol.
+A végösszeg és minden fizetendő díj a megrendelés véglegesítése előtt, egyértelműen megjelenítésre kerül.
 
-6. Vásárlási folyamat
-1. A felhasználó kiválasztja a bérletet.
-2. A felhasználó megismeri és elfogadja jelen ÁSZF-et.
-3. A fizetés Barion rendszeren keresztül történik.
-4. Sikeres fizetés után a bérlet aktiválódik.
+6. Vásárlási folyamat és szerződéskötés lépései
+1. A Felhasználó kiválasztja a bérletet.
+2. A Felhasználó megismeri az ÁSZF-et és az adatkezelési tájékoztatót.
+3. A Felhasználó elfogadja az ÁSZF-et és megadja a szükséges nyilatkozatokat.
+4. A Felhasználó Barion fizetésre lép.
+5. Sikeres fizetés után a bérlet aktiválódik.
 
-7. Fizetés (Barion)
-A szolgáltató online bankkártyás fizetési lehetőséget biztosít a Barion rendszerén keresztül.
-A kártyaadatok kezelése a Barion rendszerében történik; a szolgáltató kártyaadatot nem tárol.
-
-8. Teljesítés
+7. Teljesítés
 A bérlet jóváírása sikeres fizetés esetén automatikusan megtörténik.
-Technikai hiba esetén a felhasználó a kapcsolati e-mail címen kérhet segítséget.
+Technikai hiba esetén a Felhasználó a kapcsolati e-mail címen kérhet segítséget.
 
-9. Elállás, lemondás, visszatérítés
-Digitális szolgáltatás esetén a visszatérítés és lemondás feltételeit a hatályos jogszabályok és az egyedi
-szolgáltatási feltételek szerint kell meghatározni.
-A Fogyasztó kifejezetten tudomásul veszi, hogy a szolgáltatás teljesítése a vásárlást követően azonnal
-megkezdődik, ezért a 45/2014. (II. 26.) Korm. rendelet alapján fennálló 14 napos indokolás nélküli elállási
-jogát elveszítheti.
+8. Elállási jog, visszatérítés, méltányossági rész-visszatérítés
+A fogyasztót megillető elállási/felmondási jogra a hatályos jogszabályok (különösen a 45/2014. (II.26.) Korm. rendelet) rendelkezései irányadók.
+A Szolgáltató a jogszabályban kötelező minimum fogyasztói jogokat biztosítja.
 
-A Szolgáltató hibás teljesítése esetén (különösen, ha a szolgáltatás tartósan nem elérhető, vagy a hozzáférés
-nem biztosított) a Fogyasztó elsősorban kijavítást vagy a szolgáltatás ismételt biztosítását kérheti.
-Amennyiben ez ésszerű határidőn belül nem teljesíthető, a Fogyasztó arányos díjcsökkentésre vagy a szerződés
-megszüntetésére és időarányos visszatérítésre jogosult.
+Hibás teljesítés esetén a Fogyasztót a kötelező kellékszavatossági/jogszavatossági és egyéb jogszabályon alapuló fogyasztói jogok maradéktalanul megilletik.
+A visszatérítés, díjcsökkentés vagy szerződésmegszüntetés eseteit és mértékét a mindenkori hatályos jogszabályok alapján kell elbírálni.
 
-A visszatérítési igényt a vásárlástól számított 14 napon belül, illetve hibás teljesítés esetén a hiba
-észlelését követően haladéktalanul, írásban kell jelezni a [SUPPORT_EMAIL] címen, a rendelés azonosítójának
-megadásával. A Szolgáltató a jogos visszatérítést legkésőbb 14 napon belül, az eredeti fizetési móddal azonos
-módon teljesíti.
+A Szolgáltató jogosult egyedi méltányosság alapján, saját döntése szerint, a fel nem használt alkalmak arányában részleges visszatérítést nyújtani (példa: 8 alkalmas bérletből 3 felhasznált alkalom esetén legfeljebb az 5 fel nem használt alkalom arányában).
+Az egyedi méltányossági rész-visszatérítés nem alanyi jog, minden esetben egyedi elbírálás tárgya.
 
-10. Panaszkezelés
-A felhasználó panaszát az 1. pontban megadott elérhetőségeken teheti meg.
-A szolgáltató a panaszt ésszerű határidőn belül kivizsgálja és megválaszolja.
+A visszatérítési vagy minőségi kifogást írásban lehet jelezni a [SUPPORT_EMAIL] címen, a rendelési azonosító megadásával.
+Jogos visszatérítés esetén a Szolgáltató a vonatkozó jogszabály szerinti határidőben, az eredeti fizetési móddal azonos módon teljesít.
 
-11. Adatkezelés
+9. Panaszkezelés
+A Felhasználó panaszát az 1. pontban megadott elérhetőségeken teheti meg.
+A Szolgáltató a panaszokat nyilvántartja, kivizsgálja, és írásban megválaszolja a hatályos jogszabályokban előírt határidőn belül.
+
+A fogyasztó jogosult békéltető testülethez fordulni. Az illetékes testület főszabály szerint a fogyasztó lakóhelye vagy tartózkodási helye szerinti békéltető testület.
+A békéltető testületek elérhetősége: https://bekeltetes.hu
+
+A fogyasztóvédelmi hatósági tájékoztató: https://nkfh.gov.hu
+
+10. Adatkezelés
 Az adatkezelés részletes szabályait az Adatkezelési Tájékoztató tartalmazza.
-Az ÁSZF elfogadása nem helyettesíti az adatkezelési tájékoztató megismerését.
+Az ÁSZF elfogadása nem helyettesíti az Adatkezelési Tájékoztató megismerését.
 
-12. Felelősség
-A szolgáltató nem felel olyan károkért, amelyek a szolgáltatás rendeltetésellenes használatából,
-vis maior eseményből vagy harmadik fél szolgáltatói hibájából erednek.
+11. Felelősség
+A Szolgáltató nem felel olyan károkért, amelyek a szolgáltatás rendeltetésellenes használatából, vis maior eseményből vagy a Szolgáltatón kívüli, elháríthatatlan külső okból erednek.
+Jelen pont nem korlátozza és nem zárja ki a kötelező fogyasztóvédelmi jogszabályokból eredő felelősséget.
 
-13. Záró rendelkezések
-Jelen ÁSZF-re a magyar jog az irányadó.
+12. Módosítás és hatály
+A Szolgáltató jogosult az ÁSZF-et módosítani. A módosítás a közzétételtől hatályos, és a már létrejött szerződésekre csak jogszerű keretek között alkalmazható.
+
+13. Irányadó jog, vitarendezés
+Jelen ÁSZF-re a magyar jog irányadó.
 A felek a vitás kérdéseket elsődlegesen békés úton rendezik.
 
-Hatálybalépés tervezett dátuma: [IDE DÁTUM]
-Verzió: DRAFT-1
+14. Alkalmazott üzleti és jogi döntések
+- Szolgáltatás jogi besorolása: szolgáltatásként kezelt edzésbérlet (nem tisztán digitális szolgáltatás).
+- Elállási/visszatérítési policy: jogszabályban kötelező minimum fogyasztói jogok biztosítása.
+- Panaszkezelési SLA: jogszabály szerinti határidők.
+
+Hatálybalépés dátuma: [IDE DÁTUM]
+Verzió: 1.0

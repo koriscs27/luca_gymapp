@@ -235,21 +235,26 @@ const initAszfPurchaseForms = () => {
   const forms = document.querySelectorAll(".purchase-terms-form")
 
   forms.forEach(form => {
-    const checkbox = form.querySelector("[data-aszf-checkbox]")
+    const checkboxes = form.querySelectorAll("[data-aszf-checkbox]")
     const submitButton = form.querySelector("[data-aszf-submit]")
 
-    if (!checkbox || !submitButton) {
+    if (checkboxes.length === 0 || !submitButton) {
       return
     }
 
-    submitButton.disabled = !checkbox.checked
+    const setSubmitState = () => {
+      const allAccepted = Array.from(checkboxes).every(checkbox => checkbox.checked)
+      submitButton.disabled = !allAccepted
+    }
+
+    setSubmitState()
 
     if (form.dataset.aszfBound === "true") {
       return
     }
 
-    checkbox.addEventListener("change", () => {
-      submitButton.disabled = !checkbox.checked
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener("change", setSubmitState)
     })
 
     form.dataset.aszfBound = "true"
