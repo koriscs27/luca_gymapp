@@ -18,6 +18,47 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert html =~ "home-video-personal"
   end
 
+  test "GET / renders Barion Pixel base code when pixel id is configured", %{conn: conn} do
+    previous_value = Application.get_env(:luca_gymapp, :barion_pixel_id)
+    pixel_id = "BP-TEST-PIXEL-ID"
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :barion_pixel_id, previous_value)
+    end)
+
+    Application.put_env(:luca_gymapp, :barion_pixel_id, pixel_id)
+
+    conn = get(conn, ~p"/")
+    html = html_response(conn, 200)
+
+    assert html =~ "https://pixel.barion.com/bp.js"
+    assert html =~ ~s(window["barion_pixel_id"] = "#{pixel_id}")
+    assert html =~ "bp(\"init\", \"addBarionPixelId\", window[\"barion_pixel_id\"]);"
+
+    encoded_pixel_id = URI.encode_www_form(pixel_id)
+
+    assert html =~ "https://pixel.barion.com/a.gif?ba_pixel_id=#{encoded_pixel_id}"
+    assert html =~ "ev=contentView"
+    assert html =~ "noscript=1"
+  end
+
+  test "GET / does not render Barion Pixel code when pixel id is missing", %{conn: conn} do
+    previous_value = Application.get_env(:luca_gymapp, :barion_pixel_id)
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :barion_pixel_id, previous_value)
+    end)
+
+    Application.delete_env(:luca_gymapp, :barion_pixel_id)
+
+    conn = get(conn, ~p"/")
+    html = html_response(conn, 200)
+
+    refute html =~ "https://pixel.barion.com/bp.js"
+    refute html =~ "https://pixel.barion.com/a.gif?"
+    refute html =~ "bp(\"init\", \"addBarionPixelId\""
+  end
+
   test "GET /rolam", %{conn: conn} do
     conn = get(conn, ~p"/rolam")
     html = html_response(conn, 200)
