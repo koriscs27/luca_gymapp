@@ -154,7 +154,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "personal", 2, Date.add(Date.utc_today(), 30))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("cross", start_time, end_time)
@@ -167,7 +167,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "cross", 0, Date.add(Date.utc_today(), 30))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("cross", start_time, end_time)
@@ -180,7 +180,7 @@ defmodule LucaGymapp.BookingsTest do
     _pass = create_pass(user, "cross", 2, Date.add(Date.utc_today(), -1))
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("cross", start_time, end_time)
@@ -192,7 +192,7 @@ defmodule LucaGymapp.BookingsTest do
     max_overlap = Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
 
     start_time =
-      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(60 * 60, :second)
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(2 * 60 * 60, :second)
 
     end_time = DateTime.add(start_time, 60 * 60, :second)
     :ok = ensure_slot("cross", start_time, end_time)
@@ -239,6 +239,47 @@ defmodule LucaGymapp.BookingsTest do
 
     assert {:error, :too_early_to_book} =
              Bookings.book_personal_training(user, start_time, end_time)
+  end
+
+  test "personal booking window uses the same config as cancellation window" do
+    previous = Application.get_env(:luca_gymapp, :booking_cancellation_window_seconds)
+
+    Application.put_env(:luca_gymapp, :booking_cancellation_window_seconds, %{
+      personal: 12 * 60 * 60,
+      cross: 1 * 60 * 60
+    })
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :booking_cancellation_window_seconds, previous)
+    end)
+
+    user = create_user()
+    _pass = create_pass(user, "personal", 1, Date.add(Date.utc_today(), 30))
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:error, :too_early_to_book} =
+             Bookings.book_personal_training(user, start_time, end_time)
+  end
+
+  test "cancellation windows are read from config" do
+    previous = Application.get_env(:luca_gymapp, :booking_cancellation_window_seconds)
+
+    Application.put_env(:luca_gymapp, :booking_cancellation_window_seconds, %{
+      personal: 7_200,
+      cross: 1_800
+    })
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :booking_cancellation_window_seconds, previous)
+    end)
+
+    assert Bookings.cancellation_window_seconds(:personal) == 7_200
+    assert Bookings.cancellation_window_seconds(:cross) == 1_800
   end
 
   defp create_user do

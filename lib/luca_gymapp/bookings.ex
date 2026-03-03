@@ -10,6 +10,11 @@ defmodule LucaGymapp.Bookings do
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
 
+  @default_cancellation_window_seconds %{
+    personal: 6 * 60 * 60,
+    cross: 1 * 60 * 60
+  }
+
   def book_personal_training(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
     Repo.transaction(fn ->
       enforce_booking_window!(:personal, start_time, end_time)
@@ -203,6 +208,15 @@ defmodule LucaGymapp.Bookings do
         error
     end
   end
+
+  def cancellation_window_seconds(:personal),
+    do: configured_cancellation_window_seconds(:personal)
+
+  def cancellation_window_seconds("personal"),
+    do: configured_cancellation_window_seconds(:personal)
+
+  def cancellation_window_seconds(:cross), do: configured_cancellation_window_seconds(:cross)
+  def cancellation_window_seconds("cross"), do: configured_cancellation_window_seconds(:cross)
 
   def list_calendar_slots_for_week(type, %Date{} = week_start, %Date{} = week_end) do
     slot_type = slot_type_from_booking(type)
@@ -612,12 +626,13 @@ defmodule LucaGymapp.Bookings do
   defp enforce_booking_window!(:personal, %DateTime{} = start_time, %DateTime{} = _end_time) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
     seconds_until_start = DateTime.diff(start_time, now, :second)
+    required_seconds = cancellation_window_seconds(:personal)
 
     cond do
       seconds_until_start <= 0 ->
         Repo.rollback(:booking_closed)
 
-      seconds_until_start < 6 * 60 * 60 ->
+      seconds_until_start < required_seconds ->
         Repo.rollback(:too_early_to_book)
 
       true ->
@@ -636,11 +651,11 @@ defmodule LucaGymapp.Bookings do
   end
 
   defp enforce_cancellation_window!(:personal, %DateTime{} = start_time) do
-    enforce_cancellation_window_seconds!(start_time, 6 * 60 * 60)
+    enforce_cancellation_window_seconds!(start_time, cancellation_window_seconds(:personal))
   end
 
   defp enforce_cancellation_window!(:cross, %DateTime{} = start_time) do
-    enforce_cancellation_window_seconds!(start_time, 1 * 60 * 60)
+    enforce_cancellation_window_seconds!(start_time, cancellation_window_seconds(:cross))
   end
 
   defp enforce_cancellation_window_seconds!(%DateTime{} = start_time, required_seconds) do
@@ -679,6 +694,18 @@ defmodule LucaGymapp.Bookings do
     |> case do
       {:ok, _pass} -> :ok
       {:error, changeset} -> Repo.rollback(changeset)
+    end
+  end
+
+  defp configured_cancellation_window_seconds(type) do
+    default = Map.fetch!(@default_cancellation_window_seconds, type)
+
+    :luca_gymapp
+    |> Application.get_env(:booking_cancellation_window_seconds, %{})
+    |> Map.get(type, default)
+    |> case do
+      value when is_integer(value) and value >= 0 -> value
+      _ -> default
     end
   end
 end

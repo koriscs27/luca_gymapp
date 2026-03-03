@@ -68,6 +68,10 @@ config :phoenix_live_view,
 config :luca_gymapp, payment_needed: false
 config :luca_gymapp, cross_max_overlap: 2
 config :luca_gymapp, personal_max_overlap: 1
+
+config :luca_gymapp,
+  booking_cancellation_window_seconds: %{personal: 6 * 60 * 60, cross: 1 * 60 * 60}
+
 config :luca_gymapp, turnstile_required: false
 
 # Sort query params output of verified routes for robust url comparisons

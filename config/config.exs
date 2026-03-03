@@ -16,6 +16,10 @@ config :luca_gymapp,
   payment_needed: true,
   personal_max_overlap: 1,
   cross_max_overlap: 8,
+  booking_cancellation_window_seconds: %{
+    personal: 12 * 60 * 60,
+    cross: 1 * 60 * 60
+  },
   season_pass_types: %{
     :"1_alkalmas_jegy" => %{price_huf: 6_000, occasions: 1},
     :"5_alkalmas_kezdo" => %{price_huf: 15_000, occasions: 5, once_per_user: true},

@@ -335,6 +335,10 @@ defmodule LucaGymappWeb.PageController do
         log_booking_error("cross", current_user_id, :booking_closed)
         booking_error(conn, :booking_closed, ~p"/foglalas?type=cross&view=week")
 
+      {:error, :too_early_to_book} ->
+        log_booking_error("cross", current_user_id, :too_early_to_book)
+        booking_too_early_error(conn, :cross, ~p"/foglalas?type=cross&view=week")
+
       _ ->
         log_booking_error("cross", current_user_id, :unknown)
         generic_error(conn, ~p"/foglalas?type=cross&view=week")
@@ -1031,12 +1035,7 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp booking_error(conn, :too_early_to_book, redirect_path) do
-    conn
-    |> put_flash(
-      :error,
-      "A személyi edzést legalább 6 óráva az edzés kezdete előtt kell lefoglalni."
-    )
-    |> redirect(to: redirect_path)
+    booking_too_early_error(conn, :personal, redirect_path)
   end
 
   defp booking_error(conn, :no_valid_pass, redirect_path) do
@@ -1047,11 +1046,29 @@ defmodule LucaGymappWeb.PageController do
 
   defp booking_error(conn, _reason, redirect_path), do: generic_error(conn, redirect_path)
 
+  defp booking_too_early_error(conn, :personal, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A személyi edzést legalább #{cancellation_window_label(:personal)} az edzés kezdete előtt kell lefoglalni."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp booking_too_early_error(conn, :cross, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A cross edzést legalább #{cancellation_window_label(:cross)} az edzés kezdete előtt kell lefoglalni."
+    )
+    |> redirect(to: redirect_path)
+  end
+
   defp cancellation_error(conn, :too_late_to_cancel, :personal, redirect_path) do
     conn
     |> put_flash(
       :error,
-      "A személyi edzést legalább 6 órával az edzés kezdete előtt lehet lemondani."
+      "A személyi edzést legalább #{cancellation_window_label(:personal)} az edzés kezdete előtt lehet lemondani."
     )
     |> redirect(to: redirect_path)
   end
@@ -1060,13 +1077,23 @@ defmodule LucaGymappWeb.PageController do
     conn
     |> put_flash(
       :error,
-      "A cross edzést legalább 1 órával az edzés kezdete előtt lehet lemondani."
+      "A cross edzést legalább #{cancellation_window_label(:cross)} az edzés kezdete előtt lehet lemondani."
     )
     |> redirect(to: redirect_path)
   end
 
   defp cancellation_error(conn, _reason, _type, redirect_path),
     do: generic_error(conn, redirect_path)
+
+  defp cancellation_window_label(type) do
+    seconds = Bookings.cancellation_window_seconds(type)
+
+    cond do
+      rem(seconds, 60 * 60) == 0 -> "#{div(seconds, 60 * 60)} órával"
+      rem(seconds, 60) == 0 -> "#{div(seconds, 60)} perccel"
+      true -> "#{seconds} másodperccel"
+    end
+  end
 
   defp pass_purchase_error(conn, :active_pass_exists, redirect_path) do
     conn

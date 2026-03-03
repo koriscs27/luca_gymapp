@@ -30,31 +30,27 @@ defmodule LucaGymapp.Notifications do
 
   defp deliver_coach_email(user, type, booking, subject_prefix, status_label) do
     mailgun = Application.get_env(:luca_gymapp, :mailgun, [])
-    coach_email = Application.get_env(:luca_gymapp, :coach_email)
+
+    coach_email =
+      Application.get_env(:luca_gymapp, :coach_email) ||
+        Application.get_env(:luca_gymapp, :coach_contact_email)
+
     api_key = Keyword.get(mailgun, :api_key)
     domain = Keyword.get(mailgun, :domain)
     base_url = Keyword.get(mailgun, :base_url)
     from = Keyword.get(mailgun, :from)
 
-    Logger.warning("coach_email_debug cancellation trigger",
-      coach_email: coach_email,
-      type: type,
-      user_id: user.id,
-      start_time: inspect(booking.start_time),
-      end_time: inspect(booking.end_time)
-    )
-
     cond do
       is_nil(coach_email) or coach_email == "" ->
-        Logger.warning("coach_email_debug skipped: missing coach_email")
+        Logger.warning("coach_email_skipped_missing_recipient")
         :skipped
 
       is_nil(api_key) or api_key == "" ->
-        Logger.warning("coach_email_debug skipped: missing mailgun api_key")
+        Logger.warning("coach_email_skipped_missing_mailgun_api_key")
         :skipped
 
       is_nil(domain) or domain == "" ->
-        Logger.warning("coach_email_debug skipped: missing mailgun domain")
+        Logger.warning("coach_email_skipped_missing_mailgun_domain")
         :skipped
 
       true ->
@@ -68,7 +64,10 @@ defmodule LucaGymapp.Notifications do
           type,
           booking,
           subject_prefix,
-          status_label
+          status_label,
+          user.id,
+          booking.start_time,
+          booking.end_time
         )
     end
   end
@@ -83,15 +82,21 @@ defmodule LucaGymapp.Notifications do
          type,
          booking,
          subject_prefix,
-         status_label
+         status_label,
+         user_id,
+         start_time,
+         end_time
        ) do
     subject = "#{subject_prefix}: #{humanize_type(type)}"
     text = booking_text(user, type, booking, status_label)
 
-    Logger.warning("coach_email_debug outgoing mail",
+    Logger.info("coach_email_sending",
       to: to,
       subject: subject,
-      user_id: user.id
+      user_id: user_id,
+      type: type,
+      start_time: inspect(start_time),
+      end_time: inspect(end_time)
     )
 
     req = Req.new(base_url: base_url, auth: {:basic, "api:" <> api_key})
