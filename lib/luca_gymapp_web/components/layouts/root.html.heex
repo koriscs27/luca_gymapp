@@ -1,11 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
   <% barion_pixel_id = Application.get_env(:luca_gymapp, :barion_pixel_id) %>
+  <% site_name = "Pankota Luca Personal Training" %>
+  <% default_title = "Pankota Luca Personal Training" %>
+  <% default_description = "Szemelyi edzes es cross trening foglalas Pankota Lucaval." %>
+  <% page_title = assigns[:page_title] || default_title %>
+  <% page_description = assigns[:page_description] || default_description %>
+  <% site_url = LucaGymappWeb.Endpoint.url() %>
+  <% logo_url = site_url <> ~p"/images/logo_3.svg" %>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="LucaGymapp" suffix=" · Phoenix Framework">
+    <meta name="description" content={page_description} />
+    <meta property="og:site_name" content={site_name} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={page_title} />
+    <meta property="og:description" content={page_description} />
+    <meta property="og:url" content={site_url} />
+    <meta property="og:image" content={logo_url} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={page_title} />
+    <meta name="twitter:description" content={page_description} />
+    <meta name="twitter:image" content={logo_url} />
+    <link rel="icon" type="image/svg+xml" href={~p"/images/logo_3.svg"} phx-track-static />
+    <link rel="apple-touch-icon" href={~p"/images/logo_3.svg"} phx-track-static />
+    <link rel="canonical" href={site_url} />
+    <.live_title default={default_title}>
       {assigns[:page_title]}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
