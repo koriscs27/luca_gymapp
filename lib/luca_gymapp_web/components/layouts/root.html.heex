@@ -23,8 +23,22 @@
     <meta name="twitter:title" content={page_title} />
     <meta name="twitter:description" content={page_description} />
     <meta name="twitter:image" content={logo_url} />
-    <link rel="icon" type="image/svg+xml" href={~p"/images/logo_3.svg"} phx-track-static />
-    <link rel="apple-touch-icon" href={~p"/images/logo_3.svg"} phx-track-static />
+    <link rel="icon" href={~p"/favicon.ico"} sizes="any" phx-track-static />
+    <link rel="icon" type="image/svg+xml" href={~p"/favicon.svg"} phx-track-static />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href={~p"/favicon-96x96.png"}
+      phx-track-static
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href={~p"/apple-touch-icon.png"}
+      phx-track-static
+    />
+    <link rel="manifest" href={~p"/site.webmanifest"} phx-track-static />
     <link rel="canonical" href={site_url} />
     <.live_title default={default_title}>
       {assigns[:page_title]}
