@@ -132,7 +132,7 @@ defmodule LucaGymapp.SeasonPasses do
            :ok <- enforce_once_per_user(user.id, type_def),
            :ok <- enforce_no_active_pass(user.id, type_def) do
         now = DateTime.utc_now() |> DateTime.truncate(:second)
-        expiry_date = now |> DateTime.to_date() |> Date.shift(month: 3)
+        expiry_date = now |> DateTime.to_date() |> add_months(3)
         payment_id = Keyword.get(opts, :payment_id)
         payment_method = Keyword.get(opts, :payment_method, "cash")
 
@@ -242,6 +242,15 @@ defmodule LucaGymapp.SeasonPasses do
       :szemelyi_edzes -> "personal"
       _ -> "other"
     end
+  end
+
+  defp add_months(%Date{} = date, months) when is_integer(months) and months >= 0 do
+    month_index = date.month - 1 + months
+    year = date.year + div(month_index, 12)
+    month = rem(month_index, 12) + 1
+    day = min(date.day, Calendar.ISO.days_in_month(year, month))
+
+    Date.new!(year, month, day)
   end
 
   defp replace_token("cross"), do: "Cross"
