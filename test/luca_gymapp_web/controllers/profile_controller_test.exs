@@ -41,7 +41,13 @@ defmodule LucaGymappWeb.ProfileControllerTest do
           sex: "male",
           birth_date: "1994-03-20",
           email: "attacker@example.com",
-          password_hash: "new-hash"
+          password_hash: "new-hash",
+          billing_country: "HU",
+          billing_zip: "1111",
+          billing_city: "Budapest",
+          billing_address: "Fo utca 1.",
+          billing_company_name: "Teszt Kft",
+          billing_tax_number: "12345678-1-42"
         }
       )
 
@@ -53,6 +59,12 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert updated_user.age == 30
     assert updated_user.sex == "male"
     assert updated_user.birth_date == ~D[1994-03-20]
+    assert updated_user.billing_country == "HU"
+    assert updated_user.billing_zip == "1111"
+    assert updated_user.billing_city == "Budapest"
+    assert updated_user.billing_address == "Fo utca 1."
+    assert updated_user.billing_company_name == "Teszt Kft"
+    assert updated_user.billing_tax_number == "12345678-1-42"
     assert updated_user.email == "profil@example.com"
     assert updated_user.password_hash == password_hash
 
@@ -64,6 +76,12 @@ defmodule LucaGymappWeb.ProfileControllerTest do
           age: nil,
           sex: nil,
           birth_date: nil,
+          billing_country: nil,
+          billing_zip: nil,
+          billing_city: nil,
+          billing_address: nil,
+          billing_company_name: nil,
+          billing_tax_number: nil,
           email: "other@example.com",
           password_hash: "another-hash"
         }
@@ -77,6 +95,12 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert is_nil(cleared_user.age)
     assert is_nil(cleared_user.sex)
     assert is_nil(cleared_user.birth_date)
+    assert is_nil(cleared_user.billing_country)
+    assert is_nil(cleared_user.billing_zip)
+    assert is_nil(cleared_user.billing_city)
+    assert is_nil(cleared_user.billing_address)
+    assert is_nil(cleared_user.billing_company_name)
+    assert is_nil(cleared_user.billing_tax_number)
     assert cleared_user.email == "profil@example.com"
     assert cleared_user.password_hash == password_hash
   end
@@ -116,9 +140,49 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     conn = patch(conn, ~p"/profile/payments/cash-1/refresh")
 
     assert redirected_to(conn) == ~p"/profile"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error)
+  end
+
+  test "invoice resend is blocked when invoice status is ok", %{conn: conn, user: user} do
+    payment =
+      create_payment(user.id, %{
+        payment_id: "paid-ok-1",
+        payment_method: "cash",
+        invoice_status: "ok"
+      })
+
+    conn = patch(conn, ~p"/profile/payments/#{payment.payment_id}/resend-invoice")
+
+    assert redirected_to(conn) == ~p"/profile"
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "Ehhez a fizetési módhoz nem elérhető frissítés."
+             "Ehhez a fizeteshez mar sikeres szamla tartozik."
+  end
+
+  test "profile shows resend invoice button for failed invoice statuses only", %{
+    conn: conn,
+    user: user
+  } do
+    _ok_payment =
+      create_payment(user.id, %{
+        payment_id: "paid-ok-2",
+        payment_method: "cash",
+        invoice_status: "ok"
+      })
+
+    error_payment =
+      create_payment(user.id, %{
+        payment_id: "paid-error-2",
+        payment_method: "cash",
+        invoice_status: "error"
+      })
+
+    conn = get(conn, ~p"/profile")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="resend-invoice-#{error_payment.id}")
+    assert html =~ ~s(/profile/payments/#{error_payment.payment_id}/resend-invoice)
+    assert String.contains?(html, "Ujrakuldes")
   end
 
   test "profile shows links to ASZF and adatkezelesi tajekoztato", %{conn: conn} do
@@ -148,7 +212,8 @@ defmodule LucaGymappWeb.ProfileControllerTest do
           status: "paid",
           barion_status: "Succeeded",
           paid_at: now,
-          provider_response: %{"source" => "test"}
+          provider_response: %{"source" => "test"},
+          invoice_status: "not_sent"
         },
         attrs
       )

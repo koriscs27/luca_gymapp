@@ -3,7 +3,7 @@
   show_nav={false}
   show_logo={false}
   content_max_width_class="max-w-7xl"
-  back_link={%{href: ~p"/", label: "Vissza a főoldalra", id: "back-home-button"}}
+  back_link={%{href: ~p"/", label: "Vissza a fooldalra", id: "back-home-button"}}
 >
   <section class="mx-auto w-full px-3 py-6 sm:px-6 sm:py-12">
     <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white p-4 shadow-xl shadow-neutral-200/40 sm:rounded-3xl sm:p-8">
@@ -11,7 +11,7 @@
         <h1 class="text-2xl font-semibold text-neutral-900">Profil</h1>
 
         <p class="text-sm text-neutral-500">
-          Itt frissítheted a profil adataidat és a jelszavadat.
+          Itt frissitheted a profil adataidat es a jelszavadat.
         </p>
       </div>
 
@@ -28,49 +28,59 @@
             href={"/aszf?return_to=" <> URI.encode_www_form("/profile")}
             class="inline-flex rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-100"
           >
-            ÁSZF
+            ASZF
           </.link>
           <.link
             id="profile-adatkezelesi-link"
             href={"/adatkezelesi-tajekoztato?return_to=" <> URI.encode_www_form("/profile")}
             class="inline-flex rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-100"
           >
-            Adatvédelmi Tájékoztató
+            Adatvedelmi Tajekoztato
           </.link>
         </div>
       </div>
 
       <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:mt-8 sm:rounded-2xl sm:p-6">
         <div>
-          <h2 class="text-lg font-semibold text-neutral-900">Fizetések</h2>
+          <h2 class="text-lg font-semibold text-neutral-900">Fizetesek</h2>
         </div>
 
         <div class="mt-4 overflow-x-auto">
           <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
-            <table id="payments-table" class="min-w-full text-left text-sm">
+            <table
+              id="payments-table"
+              class="min-w-full text-left text-sm"
+            >
               <thead>
                 <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
-                  <th class="px-3 py-2 font-semibold">Dátum</th>
+                  <th class="px-3 py-2 font-semibold">Datum</th>
 
-                  <th class="px-3 py-2 font-semibold">Bérlet</th>
+                  <th class="px-3 py-2 font-semibold">Berlet</th>
 
-                  <th class="px-3 py-2 font-semibold">Összeg</th>
+                  <th class="px-3 py-2 font-semibold">Osszeg</th>
 
-                  <th class="px-3 py-2 font-semibold">Státusz</th>
+                  <th class="px-3 py-2 font-semibold">Fizetes statusz</th>
 
-                  <th class="px-3 py-2 font-semibold">Művelet</th>
+                  <th class="px-3 py-2 font-semibold">Fizetes muvelet</th>
 
-                  <th class="px-3 py-2 font-semibold">Mód</th>
+                  <th class="px-3 py-2 font-semibold">Szamla statusz</th>
 
-                  <th class="px-3 py-2 font-semibold">Fizetés azonosító</th>
+                  <th class="px-3 py-2 font-semibold">Szamla muvelet</th>
+
+                  <th class="px-3 py-2 font-semibold">Mod</th>
+
+                  <th class="px-3 py-2 font-semibold">Fizetes azonosito</th>
                 </tr>
               </thead>
 
               <tbody>
                 <%= if @payments == [] do %>
                   <tr>
-                    <td colspan="7" class="px-3 py-4 text-neutral-500">
-                      Még nincs fizetési előzmény.
+                    <td
+                      colspan="9"
+                      class="px-3 py-4 text-neutral-500"
+                    >
+                      Meg nincs fizetesi elozmeny.
                     </td>
                   </tr>
                 <% end %>
@@ -110,7 +120,7 @@
                             type="submit"
                             class="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-100"
                           >
-                            Frissítés
+                            Frissites
                           </button>
                         </.form>
                       <% else %>
@@ -119,7 +129,37 @@
                           class="cursor-not-allowed rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-400"
                           disabled
                         >
-                          Frissítés
+                          Frissites
+                        </button>
+                      <% end %>
+                    </td>
+
+                    <td class="px-3 py-2 text-neutral-700">
+                      {format_invoice_status(payment.invoice_status)}
+                    </td>
+
+                    <td class="px-3 py-2">
+                      <%= if invoice_resendable?(payment) do %>
+                        <.form
+                          for={%{}}
+                          id={"resend-invoice-#{payment.id}"}
+                          action={~p"/profile/payments/#{payment.payment_id}/resend-invoice"}
+                          method="patch"
+                        >
+                          <button
+                            type="submit"
+                            class="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-100"
+                          >
+                            Ujrakuldes
+                          </button>
+                        </.form>
+                      <% else %>
+                        <button
+                          type="button"
+                          class="cursor-not-allowed rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-400"
+                          disabled
+                        >
+                          Ujrakuldes
                         </button>
                       <% end %>
                     </td>
@@ -141,35 +181,41 @@
 
       <div class="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:rounded-2xl sm:p-6">
         <div>
-          <h2 class="text-lg font-semibold text-neutral-900">Bérletek</h2>
+          <h2 class="text-lg font-semibold text-neutral-900">Berletek</h2>
         </div>
 
         <div class="mt-4 overflow-x-auto">
           <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 bg-white">
-            <table id="season-passes-table" class="min-w-full text-left text-sm">
+            <table
+              id="season-passes-table"
+              class="min-w-full text-left text-sm"
+            >
               <thead>
                 <tr class="sticky top-0 border-b border-neutral-200 bg-white text-neutral-500">
-                  <th class="px-3 py-2 font-semibold">Vásárlás</th>
+                  <th class="px-3 py-2 font-semibold">Vasarlas</th>
 
-                  <th class="px-3 py-2 font-semibold">Bérlet</th>
+                  <th class="px-3 py-2 font-semibold">Berlet</th>
 
-                  <th class="px-3 py-2 font-semibold">Ár</th>
+                  <th class="px-3 py-2 font-semibold">Ar</th>
 
                   <th class="px-3 py-2 font-semibold">Alkalmak</th>
 
-                  <th class="px-3 py-2 font-semibold">Lejárat</th>
+                  <th class="px-3 py-2 font-semibold">Lejarat</th>
 
-                  <th class="px-3 py-2 font-semibold">Fizetés módja</th>
+                  <th class="px-3 py-2 font-semibold">Fizetes modja</th>
 
-                  <th class="px-3 py-2 font-semibold">Bérlet azonosító</th>
+                  <th class="px-3 py-2 font-semibold">Berlet azonosito</th>
                 </tr>
               </thead>
 
               <tbody>
                 <%= if @season_passes == [] do %>
                   <tr>
-                    <td colspan="7" class="px-3 py-4 text-neutral-500">
-                      Még nincs bérlet előzmény.
+                    <td
+                      colspan="7"
+                      class="px-3 py-4 text-neutral-500"
+                    >
+                      Meg nincs berlet elozmeny.
                     </td>
                   </tr>
                 <% end %>
@@ -220,7 +266,7 @@
         <div class="min-w-0 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:rounded-2xl sm:p-6">
           <h2 class="text-lg font-semibold text-neutral-900">Profil adatok</h2>
 
-          <p class="mt-1 text-sm text-neutral-500">Csak a hiányzó adatokat add meg.</p>
+          <p class="mt-1 text-sm text-neutral-500">Csak a hianyzo adatokat add meg.</p>
 
           <div class="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
             <div class="text-xs uppercase tracking-wide text-neutral-500">E-mail</div>
@@ -235,17 +281,59 @@
             method="patch"
             class="mt-6 grid gap-4"
           >
-            <.input field={@profile_form[:name]} type="text" label="Név" />
-            <.input field={@profile_form[:phone_number]} type="text" label="Telefonszám" />
-            <.input field={@profile_form[:age]} type="number" label="Életkor" />
-            <.input field={@profile_form[:sex]} type="text" label="Nem" />
-            <.input field={@profile_form[:birth_date]} type="date" label="Születési dátum" />
+            <.input field={@profile_form[:name]} type="text" label="Nev" />
+            <.input
+              field={@profile_form[:phone_number]}
+              type="text"
+              label="Telefonszam"
+            />
+            <.input field={@profile_form[:age]} type="number" label="Eletkor" />
+            <.input
+              field={@profile_form[:sex]}
+              type="text"
+              label="Nem"
+            />
+            <.input
+              field={@profile_form[:birth_date]}
+              type="date"
+              label="Szuletesi datum"
+            />
+            <.input
+              field={@profile_form[:billing_country]}
+              type="text"
+              label="Szamlazasi orszag"
+            />
+            <.input
+              field={@profile_form[:billing_zip]}
+              type="text"
+              label="Szamlazasi iranyitoszam"
+            />
+            <.input
+              field={@profile_form[:billing_city]}
+              type="text"
+              label="Szamlazasi varos"
+            />
+            <.input
+              field={@profile_form[:billing_address]}
+              type="text"
+              label="Szamlazasi cim"
+            />
+            <.input
+              field={@profile_form[:billing_company_name]}
+              type="text"
+              label="Cegnev (opcionalis)"
+            />
+            <.input
+              field={@profile_form[:billing_tax_number]}
+              type="text"
+              label="Adoszam (cegnev eseten kotelezo)"
+            />
             <button
               id="profile-submit"
               type="submit"
               class="mt-2 inline-flex items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
             >
-              Mentés
+              Mentes
             </button>
           </.form>
         </div>
@@ -253,17 +341,17 @@
         <div class="min-w-0 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:rounded-2xl sm:p-6">
           <h2 class="text-lg font-semibold text-neutral-900">
             <%= if @user.password_hash do %>
-              Jelszó módosítása
+              Jelszo modositasa
             <% else %>
-              Jelszó létrehozása
+              Jelszo letrehozasa
             <% end %>
           </h2>
 
           <p class="mt-1 text-sm text-neutral-500">
             <%= if @user.password_hash do %>
-              Add meg a jelenlegi jelszavad, majd az újat kétszer.
+              Add meg a jelenlegi jelszavad, majd az ujat ketszer.
             <% else %>
-              Google fiókkal léptél be, itt tudsz jelszót létrehozni.
+              Google fiokkal leptel be, itt tudsz jelszot letrehozni.
             <% end %>
           </p>
 
@@ -278,22 +366,22 @@
               <.input
                 field={@password_form[:current_password]}
                 type="password"
-                label="Jelenlegi jelszó"
+                label="Jelenlegi jelszo"
               />
             <% end %>
 
             <.input
               field={@password_form[:new_password]}
               type="password"
-              label={if @user.password_hash, do: "Új jelszó", else: "Jelszó"}
+              label={if @user.password_hash, do: "Uj jelszo", else: "Jelszo"}
             />
             <.input
               field={@password_form[:new_password_confirmation]}
               type="password"
               label={
                 if @user.password_hash,
-                  do: "Új jelszó megerősítése",
-                  else: "Jelszó megerősítése"
+                  do: "Uj jelszo megerositese",
+                  else: "Jelszo megerositese"
               }
             />
             <button
@@ -302,9 +390,9 @@
               class="mt-2 inline-flex items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
             >
               <%= if @user.password_hash do %>
-                Mentés
+                Mentes
               <% else %>
-                Jelszó létrehozása
+                Jelszo letrehozasa
               <% end %>
             </button>
           </.form>

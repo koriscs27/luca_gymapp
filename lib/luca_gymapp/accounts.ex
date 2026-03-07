@@ -450,6 +450,12 @@ defmodule LucaGymapp.Accounts do
         age: nil,
         sex: nil,
         birth_date: nil,
+        billing_country: nil,
+        billing_zip: nil,
+        billing_city: nil,
+        billing_address: nil,
+        billing_company_name: nil,
+        billing_tax_number: nil,
         password_hash: nil,
         email_confirmed_at: nil,
         email_confirmation_token_hash: nil,
@@ -478,6 +484,21 @@ defmodule LucaGymapp.Accounts do
 
   def change_user(%User{} = user, attrs \\ %{}) do
     User.changeset(user, attrs)
+  end
+
+  def billing_profile_complete_for_pass_purchase?(%User{} = user) do
+    required_present? =
+      present?(user.name) and
+        present?(user.email) and
+        present?(user.billing_country) and
+        present?(user.billing_zip) and
+        present?(user.billing_city) and
+        present?(user.billing_address)
+
+    company_name = normalize_string(user.billing_company_name)
+    tax_number = normalize_string(user.billing_tax_number)
+
+    required_present? and (company_name == nil or tax_number != nil)
   end
 
   defp valid_password?(%User{password_hash: nil}, _password), do: false
@@ -625,4 +646,15 @@ defmodule LucaGymapp.Accounts do
   end
 
   defp name_from_parts(name, _first_name, _last_name), do: name
+
+  defp present?(value), do: normalize_string(value) != nil
+
+  defp normalize_string(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_string(_), do: nil
 end

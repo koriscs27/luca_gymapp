@@ -11,6 +11,13 @@ trimmed_env = fn key ->
   end
 end
 
+bool_env = fn key, default ->
+  case trimmed_env.(key) do
+    nil -> default
+    value -> String.downcase(value) in ["1", "true", "yes", "on"]
+  end
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
@@ -44,6 +51,8 @@ config :luca_gymapp, :turnstile,
 
 config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")
 config :luca_gymapp, :barion_pixel_id, trimmed_env.("BARION_PIXEL_ID")
+config :luca_gymapp, :billing_enabled, bool_env.("BILLING_ENABLED", false)
+config :luca_gymapp, :billing_async, bool_env.("BILLING_ASYNC", true)
 
 barion_pos_key = trimmed_env.("BARION_POS_KEY")
 
@@ -52,6 +61,26 @@ config :luca_gymapp, :barion,
   api_base_url: trimmed_env.("BARION_API_BASE_URL"),
   pos_key: barion_pos_key,
   payee_email: trimmed_env.("BARION_PAYEE_EMAIL")
+
+szamlazz_base_url = trimmed_env.("SZAMLAZZ_BASE_URL") || "https://www.szamlazz.hu/szamla/"
+szamlazz_vat_key = trimmed_env.("SZAMLAZZ_VAT_KEY") || "AAM"
+szamlazz_payment_method = trimmed_env.("SZAMLAZZ_PAYMENT_METHOD") || "Bankkartya"
+
+szamlazz_timeout_ms =
+  case Integer.parse(trimmed_env.("SZAMLAZZ_TIMEOUT_MS") || "15000") do
+    {value, ""} when value > 0 -> value
+    _ -> 15_000
+  end
+
+config :luca_gymapp, :szamlazz,
+  base_url: szamlazz_base_url,
+  agent_key: trimmed_env.("SZAMLAZZ_AGENT_KEY"),
+  test_mode: bool_env.("SZAMLAZZ_TEST_MODE", false),
+  vat_key: szamlazz_vat_key,
+  payment_method: szamlazz_payment_method,
+  send_email: bool_env.("SZAMLAZZ_SEND_EMAIL", true),
+  eszamla: bool_env.("SZAMLAZZ_ESZAMLA", true),
+  timeout_ms: szamlazz_timeout_ms
 
 if config_env() in [:dev, :prod] do
   mailgun_base_url = trimmed_env.("MAILGUN_BASE_URL") || "https://api.mailgun.net/v3"

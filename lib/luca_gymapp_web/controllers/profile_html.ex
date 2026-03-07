@@ -40,10 +40,22 @@ defmodule LucaGymappWeb.ProfileHTML do
   def format_payment_status("failed"), do: "Sikertelen"
   def format_payment_status(_), do: "Ismeretlen"
 
+  def format_invoice_status("not_sent"), do: "Nincs elkuldve"
+  def format_invoice_status("no_response"), do: "Nincs valasz"
+  def format_invoice_status("error"), do: "Hiba"
+  def format_invoice_status("ok"), do: "Sikeres"
+  def format_invoice_status(_), do: "Ismeretlen"
+
   def payment_refreshable?(payment) do
     payment.payment_method == "barion" and
       is_binary(payment.payment_id) and
       payment.status in ["pending", "started", "authorized"]
+  end
+
+  def invoice_resendable?(payment) do
+    payment.status == "paid" and
+      is_binary(payment.payment_id) and
+      payment.invoice_status in ["error", "no_response"]
   end
 
   def format_huf(amount) when is_integer(amount) do

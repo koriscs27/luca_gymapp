@@ -217,6 +217,34 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert Phoenix.Flash.get(conn.assigns.flash, :error)
   end
 
+  test "purchase requires billing profile data before starting payment", %{conn: conn} do
+    user =
+      %User{
+        email: "missing-billing@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        name: nil,
+        billing_country: nil,
+        billing_zip: nil,
+        billing_city: nil,
+        billing_address: nil
+      }
+      |> Repo.insert!()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/berletek/purchase", %{
+        "pass_name" => "10_alkalmas_berlet",
+        "accept_aszf" => "true"
+      })
+
+    assert redirected_to(conn) == ~p"/berletek"
+
+    assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+             "A vasarlashoz toltsd ki a szamlazasi nevet es cimet a profil oldalon."
+  end
+
   test "personal booking too close shows preparation-time message", %{conn: conn} do
     user =
       %User{

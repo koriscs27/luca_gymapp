@@ -54,6 +54,7 @@ defmodule LucaGymappWeb.Router do
     patch "/profile", ProfileController, :update_profile
     patch "/profile/password", ProfileController, :update_password
     patch "/profile/payments/:payment_id/refresh", ProfileController, :refresh_payment
+    patch "/profile/payments/:payment_id/resend-invoice", ProfileController, :resend_invoice
   end
 
   scope "/barion", LucaGymappWeb do

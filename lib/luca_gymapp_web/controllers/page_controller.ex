@@ -432,59 +432,68 @@ defmodule LucaGymappWeb.PageController do
     if current_user_id && required_purchase_consents_accepted?(params) do
       case fetch_user(current_user_id) do
         {:ok, user} ->
-          case SeasonPasses.validate_purchase(user, pass_name) do
-            {:ok, _type_def} ->
-              redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
-              callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
+          cond do
+            not Accounts.billing_profile_complete_for_pass_purchase?(user) ->
+              Logger.warning("purchase_error user_id=#{user.id} reason=missing_billing_profile")
+              pass_purchase_error(conn, :missing_billing_profile, ~p"/berletek")
 
-              case Payments.start_season_pass_payment(
-                     user,
-                     pass_name,
-                     redirect_url,
-                     callback_url
-                   ) do
-                {:ok, :skipped} ->
-                  complete_pass_purchase(conn, user, pass_name)
+            true ->
+              case SeasonPasses.validate_purchase(user, pass_name) do
+                {:ok, _type_def} ->
+                  redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
+                  callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
 
-                {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
-                  redirect(conn, external: gateway_url)
+                  case Payments.start_season_pass_payment(
+                         user,
+                         pass_name,
+                         redirect_url,
+                         callback_url
+                       ) do
+                    {:ok, :skipped} ->
+                      complete_pass_purchase(conn, user, pass_name)
 
-                {:error, :missing_barion_payee_email} ->
-                  Logger.error("payment_error reason=missing_payee_email pass_name=#{pass_name}")
+                    {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
+                      redirect(conn, external: gateway_url)
+
+                    {:error, :missing_barion_payee_email} ->
+                      Logger.error(
+                        "payment_error reason=missing_payee_email pass_name=#{pass_name}"
+                      )
+
+                      generic_error(conn, ~p"/berletek")
+
+                    {:error, reason} ->
+                      Logger.error(
+                        "payment_error user_id=#{user.id} pass_name=#{pass_name} reason=#{inspect(reason)}"
+                      )
+
+                      pass_purchase_error(conn, reason, ~p"/berletek")
+                  end
+
+                {:error, :active_pass_exists} ->
+                  Logger.warning(
+                    "purchase_error user_id=#{user.id} reason=active_pass_exists pass_name=#{pass_name}"
+                  )
+
+                  pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
+
+                {:error, :once_per_user} ->
+                  Logger.warning(
+                    "purchase_error user_id=#{user.id} reason=once_per_user pass_name=#{pass_name}"
+                  )
+
+                  pass_purchase_error(conn, :once_per_user, ~p"/berletek")
+
+                {:error, :invalid_type} ->
+                  Logger.warning(
+                    "purchase_error user_id=#{user.id} reason=invalid_type pass_name=#{pass_name}"
+                  )
 
                   generic_error(conn, ~p"/berletek")
 
-                {:error, reason} ->
-                  Logger.error(
-                    "payment_error user_id=#{user.id} pass_name=#{pass_name} reason=#{inspect(reason)}"
-                  )
-
-                  pass_purchase_error(conn, reason, ~p"/berletek")
+                {:error, _reason} ->
+                  generic_error(conn, ~p"/berletek")
               end
-
-            {:error, :active_pass_exists} ->
-              Logger.warning(
-                "purchase_error user_id=#{user.id} reason=active_pass_exists pass_name=#{pass_name}"
-              )
-
-              pass_purchase_error(conn, :active_pass_exists, ~p"/berletek")
-
-            {:error, :once_per_user} ->
-              Logger.warning(
-                "purchase_error user_id=#{user.id} reason=once_per_user pass_name=#{pass_name}"
-              )
-
-              pass_purchase_error(conn, :once_per_user, ~p"/berletek")
-
-            {:error, :invalid_type} ->
-              Logger.warning(
-                "purchase_error user_id=#{user.id} reason=invalid_type pass_name=#{pass_name}"
-              )
-
-              generic_error(conn, ~p"/berletek")
-
-            {:error, _reason} ->
-              generic_error(conn, ~p"/berletek")
           end
 
         {:error, :unauthorized} ->
@@ -1163,6 +1172,15 @@ defmodule LucaGymappWeb.PageController do
     |> put_flash(
       :error,
       "A vásárláshoz az ÁSZF elfogadása szükséges."
+    )
+    |> redirect(to: redirect_path)
+  end
+
+  defp pass_purchase_error(conn, :missing_billing_profile, redirect_path) do
+    conn
+    |> put_flash(
+      :error,
+      "A vasarlashoz toltsd ki a szamlazasi nevet es cimet a profil oldalon."
     )
     |> redirect(to: redirect_path)
   end

@@ -73,6 +73,10 @@ config :luca_gymapp,
   booking_cancellation_window_seconds: %{personal: 6 * 60 * 60, cross: 1 * 60 * 60}
 
 config :luca_gymapp, turnstile_required: false
+config :luca_gymapp, billing_enabled: false
+config :luca_gymapp, billing_async: false
+config :luca_gymapp, billing_client: LucaGymapp.Payments.SzamlazzClient
+config :luca_gymapp, :szamlazz, agent_key: "test-agent-key", test_mode: true
 
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,

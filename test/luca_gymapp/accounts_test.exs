@@ -19,6 +19,12 @@ defmodule LucaGymapp.AccountsTest do
         age: 33,
         sex: "ferfi",
         birth_date: ~D[1991-01-01],
+        billing_country: "HU",
+        billing_zip: "1111",
+        billing_city: "Budapest",
+        billing_address: "Fo utca 1.",
+        billing_company_name: "Teszt Kft",
+        billing_tax_number: "12345678-1-42",
         email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
       })
 
@@ -82,6 +88,12 @@ defmodule LucaGymapp.AccountsTest do
     assert anonymized_user.age == nil
     assert anonymized_user.sex == nil
     assert anonymized_user.birth_date == nil
+    assert anonymized_user.billing_country == nil
+    assert anonymized_user.billing_zip == nil
+    assert anonymized_user.billing_city == nil
+    assert anonymized_user.billing_address == nil
+    assert anonymized_user.billing_company_name == nil
+    assert anonymized_user.billing_tax_number == nil
     assert anonymized_user.password_hash == nil
     assert anonymized_user.email_confirmed_at == nil
     assert anonymized_user.email_confirmation_token_hash == nil
@@ -102,5 +114,43 @@ defmodule LucaGymapp.AccountsTest do
   test "anonymize_user/1 returns not_found for unknown user id" do
     assert {:error, :not_found} = Accounts.anonymize_user(999_999_999)
     assert {:error, :not_found} = Accounts.anonymize_user("not-a-number")
+  end
+
+  test "company name requires tax number on user changeset" do
+    changeset =
+      Accounts.change_user(%User{}, %{
+        email: "company@example.com",
+        billing_company_name: "Teszt Kft",
+        billing_tax_number: nil
+      })
+
+    refute changeset.valid?
+    assert "Adoszam kotelezo, ha cegnevet adsz meg." in errors_on(changeset).billing_tax_number
+  end
+
+  test "billing_profile_complete_for_pass_purchase?/1 validates required billing fields" do
+    user = %User{email: "u@example.com", name: "Teszt", billing_country: "HU"}
+    refute Accounts.billing_profile_complete_for_pass_purchase?(user)
+
+    valid_user = %User{
+      email: "u@example.com",
+      name: "Teszt",
+      billing_country: "HU",
+      billing_zip: "1111",
+      billing_city: "Budapest",
+      billing_address: "Fo utca 1.",
+      billing_company_name: nil,
+      billing_tax_number: nil
+    }
+
+    assert Accounts.billing_profile_complete_for_pass_purchase?(valid_user)
+
+    company_without_tax = %{
+      valid_user
+      | billing_company_name: "Teszt Kft",
+        billing_tax_number: nil
+    }
+
+    refute Accounts.billing_profile_complete_for_pass_purchase?(company_without_tax)
   end
 end

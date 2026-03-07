@@ -5,9 +5,11 @@ defmodule LucaGymapp.Payments do
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Payments.Barion
   alias LucaGymapp.Payments.Payment
+  alias LucaGymapp.Payments.SzamlazzClient
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses
   import Ecto.Query, warn: false
+  require Logger
 
   def payment_needed? do
     Application.get_env(:luca_gymapp, :payment_needed, true)
@@ -63,6 +65,26 @@ defmodule LucaGymapp.Payments do
       %Payment{payment_method: "barion"} -> sync_payment_status(payment_id)
       %Payment{} -> {:error, :refresh_not_supported}
       nil -> {:error, :payment_not_found}
+    end
+  end
+
+  def resend_invoice_for_user(user_id, payment_id)
+      when is_integer(user_id) and is_binary(payment_id) do
+    case Repo.get_by(Payment, payment_id: payment_id, user_id: user_id) do
+      nil ->
+        {:error, :payment_not_found}
+
+      %Payment{status: status} when status != "paid" ->
+        {:error, :invoice_not_ready}
+
+      %Payment{invoice_status: "ok"} ->
+        {:error, :invoice_already_sent}
+
+      %Payment{invoice_status: status} when status not in ["error", "no_response"] ->
+        {:error, :invoice_resend_not_allowed}
+
+      %Payment{} = payment ->
+        maybe_dispatch_invoice_send(payment, :manual_retry)
     end
   end
 
@@ -157,6 +179,19 @@ defmodule LucaGymapp.Payments do
             paid_at: DateTime.utc_now() |> DateTime.truncate(:second)
           })
           |> Repo.update()
+          |> case do
+            {:ok, finalized_payment} ->
+              case maybe_dispatch_invoice_send(finalized_payment, :post_grant) do
+                {:ok, %Payment{} = invoice_updated_payment} ->
+                  {:ok, invoice_updated_payment}
+
+                _ ->
+                  {:ok, finalized_payment}
+              end
+
+            {:error, _changeset} ->
+              {:ok, payment}
+          end
 
         {:error, _reason} ->
           {:ok, payment}
@@ -167,6 +202,128 @@ defmodule LucaGymapp.Payments do
   end
 
   defp maybe_finalize_payment(payment), do: {:ok, payment}
+
+  defp maybe_dispatch_invoice_send(%Payment{} = payment, trigger) do
+    if billing_async?() do
+      case Task.Supervisor.start_child(LucaGymapp.InvoiceTaskSupervisor, fn ->
+             _ = send_invoice_best_effort(payment, trigger)
+             :ok
+           end) do
+        {:ok, _pid} -> {:ok, :queued}
+        {:error, reason} -> {:error, {:invoice_task_start_failed, reason}}
+      end
+    else
+      send_invoice_best_effort(payment, trigger)
+    end
+  end
+
+  defp send_invoice_best_effort(%Payment{invoice_status: "ok"} = payment, _trigger),
+    do: {:ok, payment}
+
+  defp send_invoice_best_effort(%Payment{} = payment, _trigger) do
+    if billing_enabled?() do
+      with {:ok, user} <- fetch_user_for_billing(payment.user_id),
+           :ok <- validate_billing_prerequisites(user),
+           :ok <- validate_szamlazz_config(),
+           {:ok, response} <- perform_invoice_send(payment, user) do
+        updated =
+          payment
+          |> Payment.changeset(%{
+            invoice_status: "ok",
+            invoice_number: Map.get(response, :invoice_number),
+            invoice_sent_at: DateTime.utc_now() |> DateTime.truncate(:second),
+            invoice_last_attempt_at: DateTime.utc_now() |> DateTime.truncate(:second),
+            invoice_error: nil,
+            invoice_response: stringify_map(response)
+          })
+          |> Repo.update!()
+
+        {:ok, updated}
+      else
+        {:error, :missing_billing_profile} ->
+          {:ok, mark_invoice_error(payment, :error, "missing_billing_profile")}
+
+        {:error, :missing_szamlazz_agent_key} ->
+          {:ok, mark_invoice_error(payment, :error, "missing_szamlazz_agent_key")}
+
+        {:error, {:no_response, reason}} ->
+          {:ok, mark_invoice_error(payment, :no_response, inspect(reason))}
+
+        {:error, reason} ->
+          {:ok, mark_invoice_error(payment, :error, inspect(reason))}
+      end
+    else
+      {:ok, payment}
+    end
+  end
+
+  defp perform_invoice_send(%Payment{} = payment, %User{} = user) do
+    client = billing_client()
+
+    if function_exported?(client, :send_invoice, 3) do
+      item_name =
+        case function_exported?(client, :invoice_item_name, 1) do
+          true -> client.invoice_item_name(payment)
+          false -> SzamlazzClient.invoice_item_name(payment)
+        end
+
+      client.send_invoice(payment, user, item_name: item_name)
+    else
+      {:error, :invalid_billing_client}
+    end
+  end
+
+  defp fetch_user_for_billing(user_id) do
+    case Accounts.get_user(user_id) do
+      %User{} = user -> {:ok, user}
+      nil -> {:error, :user_not_found}
+    end
+  end
+
+  defp validate_billing_prerequisites(%User{} = user) do
+    if Accounts.billing_profile_complete_for_pass_purchase?(user) do
+      :ok
+    else
+      {:error, :missing_billing_profile}
+    end
+  end
+
+  defp validate_szamlazz_config do
+    if is_binary(szamlazz_agent_key()) and String.trim(szamlazz_agent_key()) != "" do
+      :ok
+    else
+      {:error, :missing_szamlazz_agent_key}
+    end
+  end
+
+  defp mark_invoice_error(%Payment{} = payment, status, reason) do
+    invoice_status =
+      case status do
+        :no_response -> "no_response"
+        _ -> "error"
+      end
+
+    payment
+    |> Payment.changeset(%{
+      invoice_status: invoice_status,
+      invoice_last_attempt_at: DateTime.utc_now() |> DateTime.truncate(:second),
+      invoice_error: truncate_error(reason),
+      invoice_response: nil
+    })
+    |> Repo.update!()
+  end
+
+  defp truncate_error(reason) do
+    reason
+    |> to_string()
+    |> String.slice(0, 1000)
+  end
+
+  defp stringify_map(map) when is_map(map) do
+    Enum.into(map, %{}, fn {k, v} -> {to_string(k), v} end)
+  end
+
+  defp stringify_map(_), do: %{}
 
   defp payment_status_from_barion("Succeeded"), do: "paid"
   defp payment_status_from_barion("PartiallySucceeded"), do: "paid"
@@ -192,5 +349,22 @@ defmodule LucaGymapp.Payments do
   defp barion_payee_email do
     Application.get_env(:luca_gymapp, :barion, [])
     |> Keyword.get(:payee_email)
+  end
+
+  defp billing_client do
+    Application.get_env(:luca_gymapp, :billing_client, SzamlazzClient)
+  end
+
+  defp billing_enabled? do
+    Application.get_env(:luca_gymapp, :billing_enabled, false)
+  end
+
+  defp billing_async? do
+    Application.get_env(:luca_gymapp, :billing_async, true)
+  end
+
+  defp szamlazz_agent_key do
+    Application.get_env(:luca_gymapp, :szamlazz, [])
+    |> Keyword.get(:agent_key)
   end
 end

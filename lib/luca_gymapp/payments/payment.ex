@@ -17,6 +17,12 @@ defmodule LucaGymapp.Payments.Payment do
     field :barion_status, :string
     field :paid_at, :utc_datetime
     field :provider_response, :map
+    field :invoice_status, :string, default: "not_sent"
+    field :invoice_number, :string
+    field :invoice_sent_at, :utc_datetime
+    field :invoice_last_attempt_at, :utc_datetime
+    field :invoice_error, :string
+    field :invoice_response, :map
 
     belongs_to :user, User
     belongs_to :season_pass, SeasonPass
@@ -39,7 +45,13 @@ defmodule LucaGymapp.Payments.Payment do
       :status,
       :barion_status,
       :paid_at,
-      :provider_response
+      :provider_response,
+      :invoice_status,
+      :invoice_number,
+      :invoice_sent_at,
+      :invoice_last_attempt_at,
+      :invoice_error,
+      :invoice_response
     ])
     |> validate_required([
       :user_id,

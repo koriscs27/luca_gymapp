@@ -23,7 +23,21 @@ defmodule LucaGymappWeb.ProfileController do
 
   def update_profile(conn, %{"user" => user_params}) do
     user = current_user(conn)
-    attrs = Map.take(user_params, ["name", "phone_number", "age", "sex", "birth_date"])
+
+    attrs =
+      Map.take(user_params, [
+        "name",
+        "phone_number",
+        "age",
+        "sex",
+        "birth_date",
+        "billing_country",
+        "billing_zip",
+        "billing_city",
+        "billing_address",
+        "billing_company_name",
+        "billing_tax_number"
+      ])
 
     case Accounts.update_user(user, attrs) do
       {:ok, user} ->
@@ -141,6 +155,36 @@ defmodule LucaGymappWeb.ProfileController do
 
         {:error, _reason} ->
           put_flash(conn, :error, "Nem sikerült frissíteni a fizetést.")
+      end
+
+    redirect(conn, to: ~p"/profile")
+  end
+
+  def resend_invoice(conn, %{"payment_id" => payment_id}) do
+    user = current_user(conn)
+
+    conn =
+      case Payments.resend_invoice_for_user(user.id, payment_id) do
+        {:ok, :queued} ->
+          put_flash(conn, :info, "A szamla ujrakuldes elindult.")
+
+        {:ok, _payment} ->
+          put_flash(conn, :info, "A szamla ujrakuldes megtortent.")
+
+        {:error, :invoice_already_sent} ->
+          put_flash(conn, :error, "Ehhez a fizeteshez mar sikeres szamla tartozik.")
+
+        {:error, :invoice_resend_not_allowed} ->
+          put_flash(conn, :error, "A szamla ujrakuldese most nem engedelyezett.")
+
+        {:error, :invoice_not_ready} ->
+          put_flash(conn, :error, "A fizetes meg nem kesz, szamla nem kuldheto.")
+
+        {:error, :payment_not_found} ->
+          put_flash(conn, :error, "A fizetes nem talalhato.")
+
+        {:error, _reason} ->
+          put_flash(conn, :error, "A szamla ujrakuldese sikertelen.")
       end
 
     redirect(conn, to: ~p"/profile")
