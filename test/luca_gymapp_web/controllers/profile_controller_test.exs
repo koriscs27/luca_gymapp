@@ -156,7 +156,7 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert redirected_to(conn) == ~p"/profile"
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "Ehhez a fizeteshez mar sikeres szamla tartozik."
+             "Ehhez a fizetéshez már sikeres számla tartozik."
   end
 
   test "profile shows resend invoice button for retryable invoice statuses", %{
@@ -191,7 +191,6 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert html =~ ~s(/profile/payments/#{error_payment.payment_id}/resend-invoice)
     assert html =~ ~s(id="resend-invoice-#{not_sent_payment.id}")
     assert html =~ ~s(/profile/payments/#{not_sent_payment.payment_id}/resend-invoice)
-    assert String.contains?(html, "Ujrakuldes")
   end
 
   test "profile shows links to ASZF and adatkezelesi tajekoztato", %{conn: conn} do

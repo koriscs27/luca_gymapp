@@ -149,7 +149,7 @@ defmodule LucaGymappWeb.ProfileController do
             put_flash(
               conn,
               :error,
-              "A fizetes allapota frissitve lett, de a szamla nem kuldheto: hianyzik a szamlazasi adat."
+              "A fizetés állapota frissítve lett, de a számla nem küldhető: hiányzik a számlázási adat."
             )
           else
             put_flash(conn, :info, "A fizetés állapota frissítve lett.")
@@ -174,33 +174,33 @@ defmodule LucaGymappWeb.ProfileController do
     conn =
       case Payments.resend_invoice_for_user(user.id, payment_id) do
         {:ok, :queued} ->
-          put_flash(conn, :info, "A szamla ujrakuldes elindult.")
+          put_flash(conn, :info, "A számla újraküldés elindult.")
 
         {:ok, payment} ->
           if missing_billing_profile_invoice_error?(payment) do
             put_flash(
               conn,
               :error,
-              "A szamla ujrakuldese sikertelen: hianyzik a szamlazasi adat."
+              "A számla újraküldése sikertelen: hiányzik a számlázási adat."
             )
           else
-            put_flash(conn, :info, "A szamla ujrakuldes megtortent.")
+            put_flash(conn, :info, "A számla újraküldés megtörtént.")
           end
 
         {:error, :invoice_already_sent} ->
-          put_flash(conn, :error, "Ehhez a fizeteshez mar sikeres szamla tartozik.")
+          put_flash(conn, :error, "Ehhez a fizetéshez már sikeres számla tartozik.")
 
         {:error, :invoice_resend_not_allowed} ->
-          put_flash(conn, :error, "A szamla ujrakuldese most nem engedelyezett.")
+          put_flash(conn, :error, "A számla újraküldése most nem engedélyezett.")
 
         {:error, :invoice_not_ready} ->
-          put_flash(conn, :error, "A fizetes meg nem kesz, szamla nem kuldheto.")
+          put_flash(conn, :error, "A fizetés még nem kész, számla nem küldhető.")
 
         {:error, :payment_not_found} ->
-          put_flash(conn, :error, "A fizetes nem talalhato.")
+          put_flash(conn, :error, "A fizetés nem található.")
 
         {:error, _reason} ->
-          put_flash(conn, :error, "A szamla ujrakuldese sikertelen.")
+          put_flash(conn, :error, "A számla újraküldése sikertelen.")
       end
 
     redirect(conn, to: ~p"/profile")

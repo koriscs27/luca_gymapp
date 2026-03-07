@@ -40,8 +40,8 @@ defmodule LucaGymappWeb.ProfileHTML do
   def format_payment_status("failed"), do: "Sikertelen"
   def format_payment_status(_), do: "Ismeretlen"
 
-  def format_invoice_status("not_sent"), do: "Nincs elkuldve"
-  def format_invoice_status("no_response"), do: "Nincs valasz"
+  def format_invoice_status("not_sent"), do: "Nincs elküldve"
+  def format_invoice_status("no_response"), do: "Nincs válasz"
   def format_invoice_status("error"), do: "Hiba"
   def format_invoice_status("ok"), do: "Sikeres"
   def format_invoice_status(_), do: "Ismeretlen"
