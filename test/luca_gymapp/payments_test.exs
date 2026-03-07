@@ -107,6 +107,25 @@ defmodule LucaGymapp.PaymentsTest do
     end)
   end
 
+  test "invoice resend allowed for not_sent and becomes ok with successful retry" do
+    with_billing_enabled(fn ->
+      Process.put(:billing_client_result, {:ok, %{invoice_number: "INV-RETRY-2"}})
+      user = create_billing_ready_user()
+
+      payment =
+        create_payment(user.id, %{
+          payment_id: "paid-not-sent-" <> Ecto.UUID.generate(),
+          invoice_status: "not_sent"
+        })
+
+      assert {:ok, %Payment{} = retried} =
+               Payments.resend_invoice_for_user(user.id, payment.payment_id)
+
+      assert retried.invoice_status == "ok"
+      assert retried.invoice_number == "INV-RETRY-2"
+    end)
+  end
+
   defp create_user do
     email = "test-user-#{System.unique_integer([:positive])}@example.com"
     {:ok, user} = Accounts.create_user(%{email: email, name: "Payment Test User"})

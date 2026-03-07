@@ -55,7 +55,7 @@ defmodule LucaGymappWeb.ProfileHTML do
   def invoice_resendable?(payment) do
     payment.status == "paid" and
       is_binary(payment.payment_id) and
-      payment.invoice_status in ["error", "no_response"]
+      payment.invoice_status in ["error", "no_response", "not_sent", nil]
   end
 
   def format_huf(amount) when is_integer(amount) do

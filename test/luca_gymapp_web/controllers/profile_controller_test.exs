@@ -159,7 +159,7 @@ defmodule LucaGymappWeb.ProfileControllerTest do
              "Ehhez a fizeteshez mar sikeres szamla tartozik."
   end
 
-  test "profile shows resend invoice button for failed invoice statuses only", %{
+  test "profile shows resend invoice button for retryable invoice statuses", %{
     conn: conn,
     user: user
   } do
@@ -177,11 +177,20 @@ defmodule LucaGymappWeb.ProfileControllerTest do
         invoice_status: "error"
       })
 
+    not_sent_payment =
+      create_payment(user.id, %{
+        payment_id: "paid-not-sent-2",
+        payment_method: "cash",
+        invoice_status: "not_sent"
+      })
+
     conn = get(conn, ~p"/profile")
     html = html_response(conn, 200)
 
     assert html =~ ~s(id="resend-invoice-#{error_payment.id}")
     assert html =~ ~s(/profile/payments/#{error_payment.payment_id}/resend-invoice)
+    assert html =~ ~s(id="resend-invoice-#{not_sent_payment.id}")
+    assert html =~ ~s(/profile/payments/#{not_sent_payment.payment_id}/resend-invoice)
     assert String.contains?(html, "Ujrakuldes")
   end
 

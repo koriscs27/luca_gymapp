@@ -144,8 +144,16 @@ defmodule LucaGymappWeb.ProfileController do
 
     conn =
       case Payments.sync_payment_status_for_user(user.id, payment_id) do
-        {:ok, _payment} ->
-          put_flash(conn, :info, "A fizetés állapota frissítve lett.")
+        {:ok, payment} ->
+          if missing_billing_profile_invoice_error?(payment) do
+            put_flash(
+              conn,
+              :error,
+              "A fizetes allapota frissitve lett, de a szamla nem kuldheto: hianyzik a szamlazasi adat."
+            )
+          else
+            put_flash(conn, :info, "A fizetés állapota frissítve lett.")
+          end
 
         {:error, :refresh_not_supported} ->
           put_flash(conn, :error, "Ehhez a fizetési módhoz nem elérhető frissítés.")
@@ -168,8 +176,16 @@ defmodule LucaGymappWeb.ProfileController do
         {:ok, :queued} ->
           put_flash(conn, :info, "A szamla ujrakuldes elindult.")
 
-        {:ok, _payment} ->
-          put_flash(conn, :info, "A szamla ujrakuldes megtortent.")
+        {:ok, payment} ->
+          if missing_billing_profile_invoice_error?(payment) do
+            put_flash(
+              conn,
+              :error,
+              "A szamla ujrakuldese sikertelen: hianyzik a szamlazasi adat."
+            )
+          else
+            put_flash(conn, :info, "A szamla ujrakuldes megtortent.")
+          end
 
         {:error, :invoice_already_sent} ->
           put_flash(conn, :error, "Ehhez a fizeteshez mar sikeres szamla tartozik.")
@@ -230,5 +246,11 @@ defmodule LucaGymappWeb.ProfileController do
       Payments.list_recent_user_payments(user_id, 20),
       SeasonPasses.list_recent_user_passes(user_id, 20)
     }
+  end
+
+  defp missing_billing_profile_invoice_error?(payment) do
+    payment.invoice_status == "error" and
+      is_binary(payment.invoice_error) and
+      String.contains?(payment.invoice_error, "missing_billing_profile")
   end
 end

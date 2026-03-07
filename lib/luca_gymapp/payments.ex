@@ -80,7 +80,8 @@ defmodule LucaGymapp.Payments do
       %Payment{invoice_status: "ok"} ->
         {:error, :invoice_already_sent}
 
-      %Payment{invoice_status: status} when status not in ["error", "no_response"] ->
+      %Payment{invoice_status: status}
+      when status not in ["error", "no_response", "not_sent", nil] ->
         {:error, :invoice_resend_not_allowed}
 
       %Payment{} = payment ->
