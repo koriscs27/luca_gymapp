@@ -43,8 +43,8 @@ config :luca_gymapp,
     cross: %{
       default_view: :week,
       availability: %{
-        monday: [%{from: ~T[17:00:00], to: ~T[18:00:00]}],
-        wednesday: [%{from: ~T[17:00:00], to: ~T[18:00:00]}],
+        monday: [%{from: ~T[18:00:00], to: ~T[19:00:00]}],
+        wednesday: [%{from: ~T[18:00:00], to: ~T[19:00:00]}],
         saturday: [%{from: ~T[10:00:00], to: ~T[11:00:00]}]
       },
       max_overlap: 8

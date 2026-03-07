@@ -227,6 +227,11 @@
               type="hidden"
               value={Date.to_iso8601(@week_start)}
             />
+              <.input
+              field={@admin_publish_form[:week]}
+              type="hidden"
+              value={@week_offset}
+            />
               <button
               type="submit"
               class="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
@@ -253,19 +258,49 @@
               type="hidden"
               value={@booking_type}
             /> <.input field={@admin_slot_form[:date]} type="date" label="Dátum" required />
-              <div class="grid grid-cols-2 gap-2">
-                <.input
-                field={@admin_slot_form[:start_time]}
-                type="time"
-                label="Kezdés"
-                required
-              />
-                <.input
-                field={@admin_slot_form[:end_time]}
-                type="time"
-                label="Befejezés"
-                required
-              />
+              <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2">
+                  <.input
+                  field={@admin_slot_form[:start_hour]}
+                  type="select"
+                  label="Kezdés - Óra"
+                  options={
+                    for h <- 0..23 do
+                      value = String.pad_leading(Integer.to_string(h), 2, "0")
+                      {value, value}
+                    end
+                  }
+                  required
+                />
+                  <.input
+                  field={@admin_slot_form[:start_minute]}
+                  type="select"
+                  label="Kezdés - Perc"
+                  options={[{"00", "00"}, {"15", "15"}, {"30", "30"}, {"45", "45"}]}
+                  required
+                />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <.input
+                  field={@admin_slot_form[:end_hour]}
+                  type="select"
+                  label="Befejezés - Óra"
+                  options={
+                    for h <- 0..23 do
+                      value = String.pad_leading(Integer.to_string(h), 2, "0")
+                      {value, value}
+                    end
+                  }
+                  required
+                />
+                  <.input
+                  field={@admin_slot_form[:end_minute]}
+                  type="select"
+                  label="Befejezés - Perc"
+                  options={[{"00", "00"}, {"15", "15"}, {"30", "30"}, {"45", "45"}]}
+                  required
+                />
+                </div>
               </div>
 
               <button
@@ -319,14 +354,14 @@
                     value={@booking_type}
                   />
                           <.input
+                    field={@admin_delete_form[:slot_key]}
                     type="hidden"
-                    name="slot_key"
                     value={slot.key}
                   />
                           <%= if is_draft do %>
                             <.input
+                    field={@admin_delete_form[:draft_key]}
                     type="hidden"
-                    name="draft_key"
                     value={slot.key}
                   />
                           <% else %>
@@ -336,6 +371,11 @@
                     value={slot.id}
                   />
                           <% end %>
+                          <.input
+                    field={@admin_delete_form[:week]}
+                    type="hidden"
+                    value={@week_offset}
+                  />
                           <button
                     type="submit"
                     class="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-semibold text-rose-700 transition hover:border-rose-300"

@@ -3,6 +3,8 @@ defmodule LucaGymappWeb.PageControllerTest do
   import Swoosh.TestAssertions
 
   alias LucaGymapp.Accounts.User
+  alias LucaGymapp.Bookings
+  alias LucaGymapp.Bookings.AdminDraftStore
   alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Bookings.CrossBooking
   alias LucaGymapp.Bookings.PersonalBooking
@@ -347,6 +349,77 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert html =~ ~s(href="/foglalas?type=personal&amp;week=-1")
   end
 
+  test "admin can delete draft slot before upload and stays on selected week", %{conn: conn} do
+    admin =
+      %User{
+        email: "draft-delete-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday) |> Date.add(14)
+    start_time = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    end_time = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+
+    draft_slot = %CalendarSlot{slot_type: "personal", start_time: start_time, end_time: end_time}
+    :ok = AdminDraftStore.add_slot(admin.id, :personal, draft_slot)
+    draft_key = AdminDraftStore.slot_key(draft_slot)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/slot/delete", %{
+        "admin_delete" => %{
+          "type" => "personal",
+          "slot_key" => draft_key,
+          "draft_key" => draft_key,
+          "week" => "2"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=personal&view=week&week=2"
+    draft = Bookings.AdminDraftStore.list(admin.id, :personal)
+    assert draft.adds == %{}
+  end
+
+  test "admin upload keeps selected week and persists draft slots", %{conn: conn} do
+    admin =
+      %User{
+        email: "upload-week-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday) |> Date.add(14)
+    start_time = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
+    end_time = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+
+    draft_slot = %CalendarSlot{slot_type: "personal", start_time: start_time, end_time: end_time}
+    :ok = AdminDraftStore.add_slot(admin.id, :personal, draft_slot)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/upload", %{
+        "admin_upload" => %{
+          "type" => "personal",
+          "week" => "2"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/admin/foglalas?week=2"
+
+    assert Repo.get_by(CalendarSlot,
+             slot_type: "personal",
+             start_time: start_time,
+             end_time: end_time
+           )
+  end
+
   test "booking a past cross slot shows a specific message", %{conn: conn} do
     user =
       %User{
@@ -569,6 +642,84 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert reloaded_pass.occasions == 1
 
     assert_email_sent(to: {booked_user.name, booked_user.email})
+  end
+
+  test "admin foglalasok lists booked slots before open slots within a day", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-day-order@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    booked_user_a =
+      %User{
+        email: "booked-a-day-order@example.com",
+        password_hash: "hash",
+        name: "Booked A",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    booked_user_b =
+      %User{
+        email: "booked-b-day-order@example.com",
+        password_hash: "hash",
+        name: "Booked B",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+
+    start_booked_early = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
+    end_booked_early = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    start_open = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    end_open = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+    start_booked_late = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+    end_booked_late = DateTime.new!(monday, ~T[12:00:00], "Etc/UTC")
+
+    insert_calendar_slot("personal", start_booked_early, end_booked_early)
+    insert_calendar_slot("personal", start_open, end_open)
+    insert_calendar_slot("personal", start_booked_late, end_booked_late)
+
+    pass_a =
+      insert_pass(booked_user_a.id, %{
+        pass_name: "order_personal_a",
+        pass_type: "personal",
+        occasions: 1
+      })
+
+    pass_b =
+      insert_pass(booked_user_b.id, %{
+        pass_name: "order_personal_b",
+        pass_type: "personal",
+        occasions: 1
+      })
+
+    insert_personal_booking(
+      booked_user_a.id,
+      pass_a.pass_id,
+      start_booked_early,
+      end_booked_early
+    )
+
+    insert_personal_booking(booked_user_b.id, pass_b.pass_id, start_booked_late, end_booked_late)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(~p"/admin/foglalas?week=0")
+
+    html = html_response(conn, 200)
+
+    assert {early_idx, _} = :binary.match(html, "09:00 - 10:00")
+    assert {late_idx, _} = :binary.match(html, "11:00 - 12:00")
+    assert {open_idx, _} = :binary.match(html, "10:00 - 11:00")
+    assert early_idx < late_idx
+    assert late_idx < open_idx
   end
 
   test "admin can cancel cross booking and user receives email", %{conn: conn} do

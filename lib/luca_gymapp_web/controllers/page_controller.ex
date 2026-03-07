@@ -608,7 +608,10 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def admin_publish_week(conn, %{"admin_publish" => %{"type" => type, "week_start" => week_start}}) do
+  def admin_publish_week(conn, %{"admin_publish" => admin_publish_params}) do
+    type = Map.get(admin_publish_params, "type")
+    week_start = Map.get(admin_publish_params, "week_start")
+    week = Map.get(admin_publish_params, "week")
     current_user_id = get_session(conn, :user_id)
 
     with true <- current_user_id != nil,
@@ -618,10 +621,11 @@ defmodule LucaGymappWeb.PageController do
          {type, _} <- parse_booking_type(type) do
       slots = Bookings.build_default_week_slots(type, date)
       :ok = Bookings.AdminDraftStore.add_slots(current_user_id, type, slots)
+      week = normalize_week_param(week, week_offset_from_date(date))
 
       conn
       |> put_flash(:info, "Az alap időpontok piszkozatként elmentve.")
-      |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week_offset_from_date(date)}")
+      |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week}")
     else
       false ->
         Logger.warning("admin_publish_error reason=unauthorized admin_user_id=#{current_user_id}")
@@ -633,14 +637,9 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def admin_create_slot(conn, %{
-        "admin_slot" => %{
-          "type" => type,
-          "date" => date,
-          "start_time" => start_time,
-          "end_time" => end_time
-        }
-      }) do
+  def admin_create_slot(conn, %{"admin_slot" => admin_slot_params}) do
+    type = Map.get(admin_slot_params, "type")
+    date = Map.get(admin_slot_params, "date")
     current_user_id = get_session(conn, :user_id)
 
     with true <- current_user_id != nil,
@@ -648,8 +647,17 @@ defmodule LucaGymappWeb.PageController do
          true <- admin_user.admin,
          {type, _} <- parse_booking_type(type),
          {:ok, date} <- Date.from_iso8601(date),
-         {:ok, start_time} <- parse_time_param(start_time),
-         {:ok, end_time} <- parse_time_param(end_time),
+         {:ok, start_time_raw} <-
+           parse_admin_slot_time_param(
+             admin_slot_params,
+             "start_time",
+             "start_hour",
+             "start_minute"
+           ),
+         {:ok, end_time_raw} <-
+           parse_admin_slot_time_param(admin_slot_params, "end_time", "end_hour", "end_minute"),
+         {:ok, start_time} <- parse_time_param(start_time_raw),
+         {:ok, end_time} <- parse_time_param(end_time_raw),
          {:ok, slot} <- build_draft_slot(type, date, start_time, end_time) do
       :ok = Bookings.AdminDraftStore.add_slot(current_user_id, type, slot)
 
@@ -690,6 +698,7 @@ defmodule LucaGymappWeb.PageController do
       ) do
     current_user_id = get_session(conn, :user_id)
     slot_key = Map.get(params, "slot_key")
+    week = Map.get(params, "week", "0")
 
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
@@ -700,7 +709,7 @@ defmodule LucaGymappWeb.PageController do
 
       conn
       |> put_flash(:info, "Időpont piszkozat törlésre jelölve.")
-      |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
+      |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week}")
     else
       false ->
         Logger.warning(
@@ -711,12 +720,16 @@ defmodule LucaGymappWeb.PageController do
 
       _ ->
         Logger.error("admin_delete_slot_error reason=unknown admin_user_id=#{current_user_id}")
-        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+        generic_error(conn, ~p"/foglalas?type=#{type}&view=week&week=#{week}")
     end
   end
 
-  def admin_delete_slot(conn, %{"admin_delete" => %{"draft_key" => draft_key, "type" => type}}) do
+  def admin_delete_slot(
+        conn,
+        %{"admin_delete" => %{"draft_key" => draft_key, "type" => type} = params}
+      ) do
     current_user_id = get_session(conn, :user_id)
+    week = Map.get(params, "week", "0")
 
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
@@ -726,7 +739,7 @@ defmodule LucaGymappWeb.PageController do
 
       conn
       |> put_flash(:info, "Piszkozat időpont törölve.")
-      |> redirect(to: ~p"/foglalas?type=#{type}&view=week")
+      |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week}")
     else
       false ->
         Logger.warning(
@@ -737,7 +750,7 @@ defmodule LucaGymappWeb.PageController do
 
       _ ->
         Logger.error("admin_delete_slot_error reason=unknown admin_user_id=#{current_user_id}")
-        generic_error(conn, ~p"/foglalas?type=#{type}&view=week")
+        generic_error(conn, ~p"/foglalas?type=#{type}&view=week&week=#{week}")
     end
   end
 
@@ -905,6 +918,16 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
+  defp normalize_week_param(value, fallback) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> Integer.to_string(int)
+      _ -> Integer.to_string(fallback)
+    end
+  end
+
+  defp normalize_week_param(value, _fallback) when is_integer(value), do: Integer.to_string(value)
+  defp normalize_week_param(_value, fallback), do: Integer.to_string(fallback)
+
   defp normalize_week_offset(week_offset, true), do: week_offset
   defp normalize_week_offset(week_offset, false), do: max(week_offset, 0)
   defp normalize_week_offset(week_offset, _), do: max(week_offset, 0)
@@ -928,6 +951,24 @@ defmodule LucaGymappWeb.PageController do
     Time.from_iso8601(value)
   end
 
+  defp parse_admin_slot_time_param(params, time_key, hour_key, minute_key) when is_map(params) do
+    case Map.get(params, time_key) do
+      time when is_binary(time) and time != "" ->
+        {:ok, time}
+
+      _ ->
+        with hour when is_binary(hour) and hour != "" <- Map.get(params, hour_key),
+             minute when is_binary(minute) and minute in ["00", "15", "30", "45"] <-
+               Map.get(params, minute_key, "00"),
+             {hour_int, ""} <- Integer.parse(hour),
+             true <- hour_int >= 0 and hour_int <= 23 do
+          {:ok, String.pad_leading(Integer.to_string(hour_int), 2, "0") <> ":" <> minute}
+        else
+          _ -> {:error, :invalid_time_param}
+        end
+    end
+  end
+
   defp build_admin_calendar(type, %Date{} = week_start, %Date{} = week_end) do
     slots = Bookings.list_calendar_slots_for_week(type, week_start, week_end)
     days = Booking.ordered_days_from_slots(slots, week_start)
@@ -946,6 +987,12 @@ defmodule LucaGymappWeb.PageController do
               slot: slot,
               bookings: Enum.map(slot_bookings, &booking_entry/1),
               remaining: remaining
+            }
+          end)
+          |> Enum.sort_by(fn slot_info ->
+            {
+              slot_info.bookings == [],
+              slot_time_sort_key(slot_info.slot.start_datetime)
             }
           end)
 
@@ -968,6 +1015,10 @@ defmodule LucaGymappWeb.PageController do
   end
 
   defp calendar_capacity(_), do: 1
+
+  defp slot_time_sort_key(%DateTime{} = value), do: DateTime.to_unix(value, :microsecond)
+  defp slot_time_sort_key(%NaiveDateTime{} = value), do: NaiveDateTime.to_iso8601(value)
+  defp slot_time_sort_key(value), do: to_string(value)
 
   defp booking_display_name(booking) do
     cond do
