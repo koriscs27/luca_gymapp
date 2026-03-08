@@ -7,6 +7,8 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
   alias LucaGymapp.SeasonPasses
 
   @default_base_url "https://www.szamlazz.hu/szamla/"
+  @default_timeout_ms 15_000
+  @default_vat_key "AAM"
 
   @impl true
   def send_invoice(%Payment{} = payment, %User{} = user, opts \\ []) do
@@ -36,8 +38,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     today = Date.utc_today() |> Date.to_iso8601()
     amount = payment.amount_huf
     country = normalize_country(user.billing_country)
-    send_email = if config.send_email, do: "true", else: "false"
-    eszamla = if config.eszamla, do: "true", else: "false"
+    payment_method = invoice_payment_method(payment.payment_method)
     test_mode = if config.test_mode, do: "true", else: "false"
 
     company_xml =
@@ -57,7 +58,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     <xmlszamlaagent>
       <beallitasok>
         <szamlaagentkulcs>#{xml_escape(config.agent_key)}</szamlaagentkulcs>
-        <eszamla>#{eszamla}</eszamla>
+        <eszamla>true</eszamla>
         <szamlaLetoltes>false</szamlaLetoltes>
         <valaszVerzio>2</valaszVerzio>
       </beallitasok>
@@ -65,7 +66,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         <keltDatum>#{today}</keltDatum>
         <teljesitesDatum>#{today}</teljesitesDatum>
         <fizetesiHataridoDatum>#{today}</fizetesiHataridoDatum>
-        <fizmod>#{xml_escape(config.payment_method)}</fizmod>
+        <fizmod>#{xml_escape(payment_method)}</fizmod>
         <penznem>HUF</penznem>
         <szamlaNyelve>hu</szamlaNyelve>
         <rendelesSzam>#{xml_escape(payment.payment_id || payment.payment_request_id)}</rendelesSzam>
@@ -80,7 +81,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         <telepules>#{xml_escape(normalize(user.billing_city) || "")}</telepules>
         <cim>#{xml_escape(normalize(user.billing_address) || "")}</cim>
         <email>#{xml_escape(user.email)}</email>
-        <sendEmail>#{send_email}</sendEmail>
+        <sendEmail>true</sendEmail>
       </vevo>
       <tetelek>
         <tetel>
@@ -88,7 +89,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
           <mennyiseg>1</mennyiseg>
           <mennyisegiEgyseg>db</mennyisegiEgyseg>
           <nettoEgysegar>#{amount}</nettoEgysegar>
-          <afakulcs>#{xml_escape(config.vat_key)}</afakulcs>
+          <afakulcs>#{@default_vat_key}</afakulcs>
           <nettoErtek>#{amount}</nettoErtek>
           <afaErtek>0</afaErtek>
           <bruttoErtek>#{amount}</bruttoErtek>
@@ -158,13 +159,15 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
       base_url: Keyword.get(cfg, :base_url, @default_base_url),
       agent_key: Keyword.get(cfg, :agent_key),
       test_mode: Keyword.get(cfg, :test_mode, false),
-      vat_key: Keyword.get(cfg, :vat_key, "AAM"),
-      send_email: Keyword.get(cfg, :send_email, true),
-      eszamla: Keyword.get(cfg, :eszamla, true),
-      payment_method: Keyword.get(cfg, :payment_method, "Bankkartya"),
-      timeout_ms: Keyword.get(cfg, :timeout_ms, 15_000)
+      timeout_ms: Keyword.get(cfg, :timeout_ms, @default_timeout_ms)
     }
   end
+
+  defp invoice_payment_method("cash"), do: "Keszpenz"
+  defp invoice_payment_method("barion"), do: "Bankkartya"
+  defp invoice_payment_method("bankcard"), do: "Bankkartya"
+  defp invoice_payment_method("bank_card"), do: "Bankkartya"
+  defp invoice_payment_method(_), do: "Bankkartya"
 
   def invoice_item_name(%Payment{} = payment) do
     display_name = SeasonPasses.display_name(payment.pass_name)

@@ -11,8 +11,16 @@ defmodule LucaGymapp.PaymentsTest do
     @behaviour LucaGymapp.Payments.BillingClient
 
     @impl true
-    def send_invoice(_payment, _user, _opts) do
-      Process.get(:billing_client_result, {:ok, %{invoice_number: "TESZT-1"}})
+    def send_invoice(payment, _user, _opts) do
+      if pid = Application.get_env(:luca_gymapp, :billing_test_notify_pid) do
+        send(pid, {:fake_invoice_sent, payment.payment_id})
+      end
+
+      Application.get_env(
+        :luca_gymapp,
+        :billing_client_result,
+        {:ok, %{invoice_number: "TESZT-1"}}
+      )
     end
 
     def invoice_item_name(_payment), do: "Szemelyi edzes berlet - 1 alkalom"
@@ -46,12 +54,20 @@ defmodule LucaGymapp.PaymentsTest do
 
   test "cash grant sends invoice best effort and marks invoice ok on success" do
     with_billing_enabled(fn ->
-      Process.put(:billing_client_result, {:ok, %{invoice_number: "INV-2026-1"}})
+      Application.put_env(
+        :luca_gymapp,
+        :billing_client_result,
+        {:ok, %{invoice_number: "INV-2026-1"}}
+      )
+
       user = create_billing_ready_user()
 
       assert {:ok, %Payment{} = payment} =
                Payments.grant_cash_season_pass(user, "10_alkalmas_berlet")
 
+      payment_id = payment.payment_id
+      assert_receive {:fake_invoice_sent, ^payment_id}
+      payment = wait_for_invoice_update(payment.payment_id)
       assert payment.season_pass_id
       assert payment.invoice_status == "ok"
       assert payment.invoice_number == "INV-2026-1"
@@ -61,12 +77,20 @@ defmodule LucaGymapp.PaymentsTest do
 
   test "cash grant keeps pass but marks no_response when billing has no answer" do
     with_billing_enabled(fn ->
-      Process.put(:billing_client_result, {:error, {:no_response, :timeout}})
+      Application.put_env(
+        :luca_gymapp,
+        :billing_client_result,
+        {:error, {:no_response, :timeout}}
+      )
+
       user = create_billing_ready_user()
 
       assert {:ok, %Payment{} = payment} =
                Payments.grant_cash_season_pass(user, "10_alkalmas_berlet")
 
+      payment_id = payment.payment_id
+      assert_receive {:fake_invoice_sent, ^payment_id}
+      payment = wait_for_invoice_update(payment.payment_id)
       assert payment.season_pass_id
       assert payment.invoice_status == "no_response"
       assert is_binary(payment.invoice_error)
@@ -89,7 +113,12 @@ defmodule LucaGymapp.PaymentsTest do
 
   test "invoice resend allowed for error and becomes ok with successful retry" do
     with_billing_enabled(fn ->
-      Process.put(:billing_client_result, {:ok, %{invoice_number: "INV-RETRY-1"}})
+      Application.put_env(
+        :luca_gymapp,
+        :billing_client_result,
+        {:ok, %{invoice_number: "INV-RETRY-1"}}
+      )
+
       user = create_billing_ready_user()
 
       payment =
@@ -99,9 +128,12 @@ defmodule LucaGymapp.PaymentsTest do
           invoice_error: "previous error"
         })
 
-      assert {:ok, %Payment{} = retried} =
+      assert {:ok, :queued} =
                Payments.resend_invoice_for_user(user.id, payment.payment_id)
 
+      payment_id = payment.payment_id
+      assert_receive {:fake_invoice_sent, ^payment_id}
+      retried = wait_for_invoice_update(payment.payment_id)
       assert retried.invoice_status == "ok"
       assert retried.invoice_number == "INV-RETRY-1"
     end)
@@ -109,7 +141,12 @@ defmodule LucaGymapp.PaymentsTest do
 
   test "invoice resend allowed for not_sent and becomes ok with successful retry" do
     with_billing_enabled(fn ->
-      Process.put(:billing_client_result, {:ok, %{invoice_number: "INV-RETRY-2"}})
+      Application.put_env(
+        :luca_gymapp,
+        :billing_client_result,
+        {:ok, %{invoice_number: "INV-RETRY-2"}}
+      )
+
       user = create_billing_ready_user()
 
       payment =
@@ -118,9 +155,12 @@ defmodule LucaGymapp.PaymentsTest do
           invoice_status: "not_sent"
         })
 
-      assert {:ok, %Payment{} = retried} =
+      assert {:ok, :queued} =
                Payments.resend_invoice_for_user(user.id, payment.payment_id)
 
+      payment_id = payment.payment_id
+      assert_receive {:fake_invoice_sent, ^payment_id}
+      retried = wait_for_invoice_update(payment.payment_id)
       assert retried.invoice_status == "ok"
       assert retried.invoice_number == "INV-RETRY-2"
     end)
@@ -176,22 +216,43 @@ defmodule LucaGymapp.PaymentsTest do
 
   defp with_billing_enabled(fun) do
     previous_enabled = Application.get_env(:luca_gymapp, :billing_enabled)
-    previous_async = Application.get_env(:luca_gymapp, :billing_async)
     previous_client = Application.get_env(:luca_gymapp, :billing_client)
     previous_szamlazz = Application.get_env(:luca_gymapp, :szamlazz)
+    previous_result = Application.get_env(:luca_gymapp, :billing_client_result)
+    previous_notify_pid = Application.get_env(:luca_gymapp, :billing_test_notify_pid)
 
     on_exit(fn ->
       Application.put_env(:luca_gymapp, :billing_enabled, previous_enabled)
-      Application.put_env(:luca_gymapp, :billing_async, previous_async)
       Application.put_env(:luca_gymapp, :billing_client, previous_client)
       Application.put_env(:luca_gymapp, :szamlazz, previous_szamlazz)
-      Process.delete(:billing_client_result)
+      Application.put_env(:luca_gymapp, :billing_client_result, previous_result)
+      Application.put_env(:luca_gymapp, :billing_test_notify_pid, previous_notify_pid)
     end)
 
     Application.put_env(:luca_gymapp, :billing_enabled, true)
-    Application.put_env(:luca_gymapp, :billing_async, false)
     Application.put_env(:luca_gymapp, :billing_client, FakeBillingClient)
     Application.put_env(:luca_gymapp, :szamlazz, agent_key: "agent-test-key")
+    Application.put_env(:luca_gymapp, :billing_client_result, {:ok, %{invoice_number: "TESZT-1"}})
+    Application.put_env(:luca_gymapp, :billing_test_notify_pid, self())
     fun.()
+  end
+
+  defp wait_for_invoice_update(payment_id, attempts \\ 30)
+
+  defp wait_for_invoice_update(_payment_id, 0) do
+    flunk("timed out waiting for async invoice update")
+  end
+
+  defp wait_for_invoice_update(payment_id, attempts) do
+    payment = Repo.get_by!(Payment, payment_id: payment_id)
+
+    if payment.invoice_status in ["ok", "error", "no_response"] do
+      payment
+    else
+      receive do
+      after
+        20 -> wait_for_invoice_update(payment_id, attempts - 1)
+      end
+    end
   end
 end

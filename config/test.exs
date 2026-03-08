@@ -28,6 +28,9 @@ if env_path do
   end)
 end
 
+System.put_env("BILLING_ENABLED", "false")
+System.put_env("SZAMLAZZ_TEST_MODE", "false")
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
@@ -73,10 +76,8 @@ config :luca_gymapp,
   booking_cancellation_window_seconds: %{personal: 6 * 60 * 60, cross: 1 * 60 * 60}
 
 config :luca_gymapp, turnstile_required: false
-config :luca_gymapp, billing_enabled: false
-config :luca_gymapp, billing_async: false
 config :luca_gymapp, billing_client: LucaGymapp.Payments.SzamlazzClient
-config :luca_gymapp, :szamlazz, agent_key: "test-agent-key", test_mode: true
+config :luca_gymapp, :szamlazz, agent_key: "test-agent-key"
 
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,

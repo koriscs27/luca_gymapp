@@ -182,13 +182,8 @@ defmodule LucaGymapp.Payments do
           |> Repo.update()
           |> case do
             {:ok, finalized_payment} ->
-              case maybe_dispatch_invoice_send(finalized_payment, :post_grant) do
-                {:ok, %Payment{} = invoice_updated_payment} ->
-                  {:ok, invoice_updated_payment}
-
-                _ ->
-                  {:ok, finalized_payment}
-              end
+              _ = maybe_dispatch_invoice_send(finalized_payment, :post_grant)
+              {:ok, finalized_payment}
 
             {:error, _changeset} ->
               {:ok, payment}
@@ -205,16 +200,15 @@ defmodule LucaGymapp.Payments do
   defp maybe_finalize_payment(payment), do: {:ok, payment}
 
   defp maybe_dispatch_invoice_send(%Payment{} = payment, trigger) do
-    if billing_async?() do
-      case Task.Supervisor.start_child(LucaGymapp.InvoiceTaskSupervisor, fn ->
-             _ = send_invoice_best_effort(payment, trigger)
-             :ok
-           end) do
-        {:ok, _pid} -> {:ok, :queued}
-        {:error, reason} -> {:error, {:invoice_task_start_failed, reason}}
-      end
-    else
-      send_invoice_best_effort(payment, trigger)
+    case Task.Supervisor.start_child(LucaGymapp.InvoiceTaskSupervisor, fn ->
+           _ = send_invoice_best_effort(payment, trigger)
+           :ok
+         end) do
+      {:ok, _pid} ->
+        {:ok, :queued}
+
+      {:error, reason} ->
+        {:error, {:invoice_task_start_failed, reason}}
     end
   end
 
@@ -358,10 +352,6 @@ defmodule LucaGymapp.Payments do
 
   defp billing_enabled? do
     Application.get_env(:luca_gymapp, :billing_enabled, false)
-  end
-
-  defp billing_async? do
-    Application.get_env(:luca_gymapp, :billing_async, true)
   end
 
   defp szamlazz_agent_key do
