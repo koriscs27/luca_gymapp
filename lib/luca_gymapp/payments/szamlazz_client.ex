@@ -60,7 +60,6 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     today = Date.utc_today() |> Date.to_iso8601()
     amount = payment.amount_huf
     payment_method = invoice_payment_method(payment.payment_method)
-    test_mode = if config.test_mode, do: "true", else: "false"
     invoice_external_id = payment.payment_id || payment.payment_request_id
 
     company_xml =
@@ -116,7 +115,6 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
           <bruttoErtek>#{amount}</bruttoErtek>
         </tetel>
       </tetelek>
-      <tesztszamla>#{test_mode}</tesztszamla>
     </xmlszamla>
     """
   end
@@ -131,6 +129,8 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         header_value(headers, "szlahu_error") ||
           header_value(headers, "szlahu_error_message") ||
           body_error(body)
+
+      error_message = maybe_decode_urlencoded(error_message)
 
       cond do
         is_binary(error_message) and String.trim(error_message) != "" ->
@@ -258,4 +258,14 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     |> String.replace("\"", "&quot;")
     |> String.replace("'", "&apos;")
   end
+
+  defp maybe_decode_urlencoded(value) when is_binary(value) do
+    try do
+      URI.decode_www_form(value)
+    rescue
+      _ -> value
+    end
+  end
+
+  defp maybe_decode_urlencoded(value), do: value
 end

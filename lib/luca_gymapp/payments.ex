@@ -204,6 +204,22 @@ defmodule LucaGymapp.Payments do
            result = send_invoice_best_effort(payment, trigger)
 
            case result do
+             {:ok, %Payment{invoice_status: "ok"} = updated_payment} ->
+               Logger.info(
+                 "invoice_async_worker_finished_ok payment_id=#{updated_payment.payment_id} payment_request_id=#{updated_payment.payment_request_id} trigger=#{trigger} invoice_status=#{updated_payment.invoice_status} invoice_number=#{inspect(updated_payment.invoice_number)}"
+               )
+
+             {:ok, %Payment{invoice_status: status} = updated_payment}
+             when status in [nil, "not_sent"] ->
+               Logger.info(
+                 "invoice_async_worker_finished_ok payment_id=#{updated_payment.payment_id} payment_request_id=#{updated_payment.payment_request_id} trigger=#{trigger} invoice_status=#{inspect(updated_payment.invoice_status)} invoice_number=#{inspect(updated_payment.invoice_number)}"
+               )
+
+             {:ok, %Payment{} = updated_payment} ->
+               Logger.error(
+                 "invoice_async_worker_finished_error payment_id=#{updated_payment.payment_id} payment_request_id=#{updated_payment.payment_request_id} trigger=#{trigger} invoice_status=#{updated_payment.invoice_status} invoice_error=#{inspect(updated_payment.invoice_error)}"
+               )
+
              {:ok, _} ->
                Logger.info(
                  "invoice_async_worker_finished_ok payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} trigger=#{trigger} result=#{inspect(result)}"
@@ -276,17 +292,21 @@ defmodule LucaGymapp.Payments do
   end
 
   defp perform_invoice_send(%Payment{} = payment, %User{} = user) do
-    client = billing_client()
+    client = resolved_billing_client()
 
-    if function_exported?(client, :send_invoice, 3) do
+    if billing_client_supports_send_invoice?(client) do
       item_name =
-        case function_exported?(client, :invoice_item_name, 1) do
+        case billing_client_supports_invoice_item_name?(client) do
           true -> client.invoice_item_name(payment)
           false -> SzamlazzClient.invoice_item_name(payment)
         end
 
       client.send_invoice(payment, user, item_name: item_name)
     else
+      Logger.error(
+        "invoice_send_invalid_billing_client payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} configured_client=#{inspect(billing_client())} resolved_client=#{inspect(client)}"
+      )
+
       {:error, :invalid_billing_client}
     end
   end
@@ -382,6 +402,20 @@ defmodule LucaGymapp.Payments do
     Application.get_env(:luca_gymapp, :billing_client, SzamlazzClient)
   end
 
+  defp resolved_billing_client do
+    configured_client = billing_client()
+
+    if billing_client_supports_send_invoice?(configured_client) do
+      configured_client
+    else
+      Logger.error(
+        "billing_client_misconfigured configured_client=#{inspect(configured_client)} fallback_client=#{inspect(SzamlazzClient)}"
+      )
+
+      SzamlazzClient
+    end
+  end
+
   defp billing_enabled? do
     Application.get_env(:luca_gymapp, :billing_enabled, false)
   end
@@ -389,5 +423,13 @@ defmodule LucaGymapp.Payments do
   defp szamlazz_agent_key do
     Application.get_env(:luca_gymapp, :szamlazz, [])
     |> Keyword.get(:agent_key)
+  end
+
+  defp billing_client_supports_send_invoice?(client) do
+    Code.ensure_loaded?(client) and function_exported?(client, :send_invoice, 3)
+  end
+
+  defp billing_client_supports_invoice_item_name?(client) do
+    Code.ensure_loaded?(client) and function_exported?(client, :invoice_item_name, 1)
   end
 end
