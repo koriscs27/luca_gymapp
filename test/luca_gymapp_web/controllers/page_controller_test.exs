@@ -242,7 +242,7 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert redirected_to(conn) == ~p"/berletek"
 
     assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
-             "A vasarlashoz toltsd ki a szamlazasi nevet es cimet a profil oldalon."
+             "A vásárláshoz töltsd ki a nevedet és a számlázási adatokat a profil oldalon."
   end
 
   test "personal booking too close shows preparation-time message", %{conn: conn} do

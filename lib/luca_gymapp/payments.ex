@@ -201,13 +201,30 @@ defmodule LucaGymapp.Payments do
 
   defp maybe_dispatch_invoice_send(%Payment{} = payment, trigger) do
     case Task.Supervisor.start_child(LucaGymapp.InvoiceTaskSupervisor, fn ->
-           _ = send_invoice_best_effort(payment, trigger)
+           result = send_invoice_best_effort(payment, trigger)
+
+           case result do
+             {:ok, _} ->
+               Logger.info(
+                 "invoice_async_worker_finished_ok payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} trigger=#{trigger} result=#{inspect(result)}"
+               )
+
+             _ ->
+               Logger.error(
+                 "invoice_async_worker_finished_error payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} trigger=#{trigger} result=#{inspect(result)}"
+               )
+           end
+
            :ok
          end) do
       {:ok, _pid} ->
         {:ok, :queued}
 
       {:error, reason} ->
+        Logger.error(
+          "invoice_dispatch_async_start_failed payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} trigger=#{trigger} reason=#{inspect(reason)}"
+        )
+
         {:error, {:invoice_task_start_failed, reason}}
     end
   end
@@ -215,7 +232,7 @@ defmodule LucaGymapp.Payments do
   defp send_invoice_best_effort(%Payment{invoice_status: "ok"} = payment, _trigger),
     do: {:ok, payment}
 
-  defp send_invoice_best_effort(%Payment{} = payment, _trigger) do
+  defp send_invoice_best_effort(%Payment{} = payment, trigger) do
     if billing_enabled?() do
       with {:ok, user} <- fetch_user_for_billing(payment.user_id),
            :ok <- validate_billing_prerequisites(user),
@@ -233,6 +250,10 @@ defmodule LucaGymapp.Payments do
           })
           |> Repo.update!()
 
+        Logger.info(
+          "invoice_send_marked_ok payment_id=#{updated.payment_id} payment_request_id=#{updated.payment_request_id} invoice_number=#{updated.invoice_number} invoice_status=#{updated.invoice_status}"
+        )
+
         {:ok, updated}
       else
         {:error, :missing_billing_profile} ->
@@ -248,6 +269,8 @@ defmodule LucaGymapp.Payments do
           {:ok, mark_invoice_error(payment, :error, inspect(reason))}
       end
     else
+      _ = trigger
+
       {:ok, payment}
     end
   end
@@ -298,14 +321,23 @@ defmodule LucaGymapp.Payments do
         _ -> "error"
       end
 
-    payment
-    |> Payment.changeset(%{
-      invoice_status: invoice_status,
-      invoice_last_attempt_at: DateTime.utc_now() |> DateTime.truncate(:second),
-      invoice_error: truncate_error(reason),
-      invoice_response: nil
-    })
-    |> Repo.update!()
+    truncated_reason = truncate_error(reason)
+
+    updated =
+      payment
+      |> Payment.changeset(%{
+        invoice_status: invoice_status,
+        invoice_last_attempt_at: DateTime.utc_now() |> DateTime.truncate(:second),
+        invoice_error: truncated_reason,
+        invoice_response: nil
+      })
+      |> Repo.update!()
+
+    Logger.error(
+      "invoice_send_marked_error payment_id=#{updated.payment_id} payment_request_id=#{updated.payment_request_id} invoice_status=#{updated.invoice_status} reason=#{truncated_reason}"
+    )
+
+    updated
   end
 
   defp truncate_error(reason) do

@@ -266,7 +266,13 @@
               <p class="mt-1 text-xs text-neutral-500">A számlához szükséges adatok.</p>
 
               <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                <.input field={@profile_form[:billing_country]} type="text" label="Ország" />
+                <.input
+                  field={@profile_form[:billing_country]}
+                  type="select"
+                  label="Ország"
+                  prompt="Válassz országot"
+                  options={billing_country_options()}
+                />
                 <.input field={@profile_form[:billing_zip]} type="text" label="Irányítószám" />
                 <.input field={@profile_form[:billing_city]} type="text" label="Város" />
                 <.input field={@profile_form[:billing_address]} type="text" label="Cím" />

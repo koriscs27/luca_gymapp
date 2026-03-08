@@ -153,4 +153,29 @@ defmodule LucaGymapp.AccountsTest do
 
     refute Accounts.billing_profile_complete_for_pass_purchase?(company_without_tax)
   end
+
+  test "country name input is normalized to ISO country code" do
+    changeset =
+      Accounts.change_user(%User{}, %{
+        email: "country-norm@example.com",
+        billing_country: "Hungary"
+      })
+
+    assert Ecto.Changeset.get_field(changeset, :billing_country) == "HU"
+  end
+
+  test "hungarian profile text normalizes legacy mojibake characters" do
+    changeset =
+      Accounts.change_user(%User{}, %{
+        email: "legacy-hu@example.com",
+        billing_country: "HU",
+        name: "Burjßn Csaba",
+        billing_city: "Zßszlos",
+        billing_address: "Zßszlos utca 13"
+      })
+
+    assert Ecto.Changeset.get_field(changeset, :name) == "Burján Csaba"
+    assert Ecto.Changeset.get_field(changeset, :billing_city) == "Zászlos"
+    assert Ecto.Changeset.get_field(changeset, :billing_address) == "Zászlos utca 13"
+  end
 end

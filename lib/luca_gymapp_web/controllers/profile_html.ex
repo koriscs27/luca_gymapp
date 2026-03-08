@@ -74,4 +74,43 @@ defmodule LucaGymappWeb.ProfileHTML do
 
   def season_pass_label(type) when is_atom(type), do: SeasonPasses.display_name(type)
   def season_pass_label(_), do: "-"
+
+  def billing_country_options do
+    [
+      {"Magyarország", "HU"},
+      {"Ausztria", "AT"},
+      {"Belgium", "BE"},
+      {"Bulgária", "BG"},
+      {"Ciprus", "CY"},
+      {"Csehország", "CZ"},
+      {"Dánia", "DK"},
+      {"Észtország", "EE"},
+      {"Finnország", "FI"},
+      {"Franciaország", "FR"},
+      {"Görögország", "GR"},
+      {"Hollandia", "NL"},
+      {"Horvátország", "HR"},
+      {"Írország", "IE"},
+      {"Lengyelország", "PL"},
+      {"Lettország", "LV"},
+      {"Litvánia", "LT"},
+      {"Luxemburg", "LU"},
+      {"Málta", "MT"},
+      {"Németország", "DE"},
+      {"Olaszország", "IT"},
+      {"Portugália", "PT"},
+      {"Románia", "RO"},
+      {"Spanyolország", "ES"},
+      {"Svédország", "SE"},
+      {"Szlovákia", "SK"},
+      {"Szlovénia", "SI"},
+      {"Amerikai Egyesült Államok", "US"},
+      {"Egyesült Királyság", "GB"},
+      {"Svájc", "CH"},
+      {"Szerbia", "RS"},
+      {"Ukrajna", "UA"},
+      {"Kanada", "CA"},
+      {"Ausztrália", "AU"}
+    ]
+  end
 end

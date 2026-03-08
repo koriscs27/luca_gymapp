@@ -5,6 +5,7 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Payments.Payment
   alias LucaGymapp.SeasonPasses
+  require Logger
 
   @default_base_url "https://www.szamlazz.hu/szamla/"
   @default_timeout_ms 15_000
@@ -13,33 +14,54 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
   @impl true
   def send_invoice(%Payment{} = payment, %User{} = user, opts \\ []) do
     config = config()
-    xml = build_xml(payment, user, opts, config)
+    xml_result = safe_invoice_xml(payment, user, opts)
 
-    case Req.post(config.base_url,
-           form_multipart: [
-             {"action-xmlagentxmlfile", {xml, filename: "invoice.xml", content_type: "text/xml"}}
-           ],
-           receive_timeout: config.timeout_ms,
-           retry: false
-         ) do
-      {:ok, %{status: 200} = response} ->
-        parse_success_or_error(response)
+    case xml_result do
+      {:ok, xml} ->
+        case Req.post(config.base_url,
+               form_multipart: [
+                 {"action-xmlagentxmlfile",
+                  {xml, filename: "invoice.xml", content_type: "text/xml"}}
+               ],
+               receive_timeout: config.timeout_ms,
+               retry: false
+             ) do
+          {:ok, %{status: 200} = response} ->
+            parse_success_or_error(response)
 
-      {:ok, %{status: status, body: body}} ->
-        {:error, {:http_error, status, to_string(body)}}
+          {:ok, %{status: status, body: body}} ->
+            Logger.error(
+              "szamlazz_http_error payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} status=#{status} body=#{inspect(body)}"
+            )
 
-      {:error, reason} ->
-        {:error, {:no_response, reason}}
+            {:error, {:http_error, status, to_string(body)}}
+
+          {:error, reason} ->
+            Logger.error(
+              "szamlazz_http_no_response payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} reason=#{inspect(reason)}"
+            )
+
+            {:error, {:no_response, reason}}
+        end
+
+      {:error, _} = error ->
+        error
     end
   end
 
-  defp build_xml(payment, user, opts, config) do
+  @doc false
+  def invoice_xml(%Payment{} = payment, %User{} = user, opts \\ []) do
+    config = config()
     item_name = Keyword.fetch!(opts, :item_name)
+    build_xml(payment, user, item_name, config)
+  end
+
+  defp build_xml(payment, user, item_name, config) do
     today = Date.utc_today() |> Date.to_iso8601()
     amount = payment.amount_huf
-    country = normalize_country(user.billing_country)
     payment_method = invoice_payment_method(payment.payment_method)
     test_mode = if config.test_mode, do: "true", else: "false"
+    invoice_external_id = payment.payment_id || payment.payment_request_id
 
     company_xml =
       case normalize(user.billing_company_name) do
@@ -55,12 +77,13 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
 
     """
     <?xml version="1.0" encoding="UTF-8"?>
-    <xmlszamlaagent>
+    <xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.szamlazz.hu/xmlszamla https://www.szamlazz.hu/szamla/docs/xsds/agent/xmlszamla.xsd">
       <beallitasok>
         <szamlaagentkulcs>#{xml_escape(config.agent_key)}</szamlaagentkulcs>
         <eszamla>true</eszamla>
         <szamlaLetoltes>false</szamlaLetoltes>
         <valaszVerzio>2</valaszVerzio>
+        <szamlaKulsoAzon>#{xml_escape(invoice_external_id)}</szamlaKulsoAzon>
       </beallitasok>
       <fejlec>
         <keltDatum>#{today}</keltDatum>
@@ -69,14 +92,12 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         <fizmod>#{xml_escape(payment_method)}</fizmod>
         <penznem>HUF</penznem>
         <szamlaNyelve>hu</szamlaNyelve>
-        <rendelesSzam>#{xml_escape(payment.payment_id || payment.payment_request_id)}</rendelesSzam>
-        <szamlaKulsoAzon>#{xml_escape(payment.payment_id || payment.payment_request_id)}</szamlaKulsoAzon>
+        <rendelesSzam>#{xml_escape(invoice_external_id)}</rendelesSzam>
       </fejlec>
       <elado />
       <vevo>
-        <nev>#{xml_escape(normalize(user.name) || user.email)}</nev>
+        <nev>#{xml_escape(normalize(user.name))}</nev>
         #{company_xml}
-        <orszag>#{xml_escape(country)}</orszag>
         <irsz>#{xml_escape(normalize(user.billing_zip) || "")}</irsz>
         <telepules>#{xml_escape(normalize(user.billing_city) || "")}</telepules>
         <cim>#{xml_escape(normalize(user.billing_address) || "")}</cim>
@@ -96,35 +117,64 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         </tetel>
       </tetelek>
       <tesztszamla>#{test_mode}</tesztszamla>
-    </xmlszamlaagent>
+    </xmlszamla>
     """
   end
 
   defp parse_success_or_error(%{headers: headers, body: body}) do
-    invoice_number =
-      header_value(headers, "szlahu_szamlaszam") ||
-        header_value(headers, "szlahu_invoice_number")
+    try do
+      invoice_number =
+        header_value(headers, "szlahu_szamlaszam") ||
+          header_value(headers, "szlahu_invoice_number")
 
-    error_message =
-      header_value(headers, "szlahu_error") ||
-        header_value(headers, "szlahu_error_message") ||
-        body_error(body)
+      error_message =
+        header_value(headers, "szlahu_error") ||
+          header_value(headers, "szlahu_error_message") ||
+          body_error(body)
 
-    cond do
-      is_binary(error_message) and String.trim(error_message) != "" ->
-        {:error, {:api_error, error_message}}
+      cond do
+        is_binary(error_message) and String.trim(error_message) != "" ->
+          Logger.error(
+            "szamlazz_api_error error_message=#{inspect(error_message)} headers=#{inspect(headers)} body=#{inspect(body)}"
+          )
 
-      true ->
-        {:ok,
-         %{
-           invoice_number: invoice_number,
-           headers: headers_to_plain_map(headers),
-           body: normalize_body(body)
-         }}
+          {:error, {:api_error, error_message}}
+
+        true ->
+          {:ok,
+           %{
+             invoice_number: invoice_number,
+             headers: headers_to_plain_map(headers),
+             body: normalize_body(body)
+           }}
+      end
+    rescue
+      exception ->
+        Logger.error(
+          "szamlazz_parse_error exception=#{inspect(exception)} headers=#{inspect(headers)} body=#{inspect(body)} stacktrace=#{Exception.format_stacktrace(__STACKTRACE__)}"
+        )
+
+        {:error, {:parse_error, inspect(exception)}}
     end
   end
 
-  defp parse_success_or_error(response), do: {:ok, %{body: inspect(response)}}
+  defp parse_success_or_error(response) do
+    Logger.error("szamlazz_parse_unexpected_response response=#{inspect(response)}")
+    {:error, {:parse_error, "unexpected_response"}}
+  end
+
+  defp safe_invoice_xml(%Payment{} = payment, %User{} = user, opts) do
+    try do
+      {:ok, invoice_xml(payment, user, opts)}
+    rescue
+      exception ->
+        Logger.error(
+          "szamlazz_xml_generation_error payment_id=#{payment.payment_id} payment_request_id=#{payment.payment_request_id} user_id=#{user.id} exception=#{inspect(exception)} opts=#{inspect(opts)} stacktrace=#{Exception.format_stacktrace(__STACKTRACE__)}"
+        )
+
+        {:error, {:xml_generation_error, inspect(exception)}}
+    end
+  end
 
   defp body_error(body) when is_binary(body) do
     if String.contains?(String.downcase(body), "hiba"), do: body, else: nil
@@ -163,11 +213,11 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     }
   end
 
-  defp invoice_payment_method("cash"), do: "Keszpenz"
-  defp invoice_payment_method("barion"), do: "Bankkartya"
-  defp invoice_payment_method("bankcard"), do: "Bankkartya"
-  defp invoice_payment_method("bank_card"), do: "Bankkartya"
-  defp invoice_payment_method(_), do: "Bankkartya"
+  defp invoice_payment_method("cash"), do: "Készpénz"
+  defp invoice_payment_method("barion"), do: "Bankkártya"
+  defp invoice_payment_method("bankcard"), do: "Bankkártya"
+  defp invoice_payment_method("bank_card"), do: "Bankkártya"
+  defp invoice_payment_method(_), do: "Bankkártya"
 
   def invoice_item_name(%Payment{} = payment) do
     display_name = SeasonPasses.display_name(payment.pass_name)
@@ -187,13 +237,6 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
     do: "#{occasions} alkalom"
 
   defp occasion_suffix(_), do: "egyszeri vasarlas"
-
-  defp normalize_country(value) do
-    case normalize(value) do
-      nil -> "HU"
-      country -> country
-    end
-  end
 
   defp normalize(value) when is_binary(value) do
     case String.trim(value) do

@@ -4,6 +4,7 @@ defmodule LucaGymappWeb.ProfileControllerTest do
   alias LucaGymapp.Accounts
   alias LucaGymapp.Accounts.User
   alias LucaGymapp.Payments.Payment
+  alias LucaGymapp.Payments.SzamlazzClient
   alias LucaGymapp.Repo
 
   setup %{conn: conn} do
@@ -201,6 +202,89 @@ defmodule LucaGymappWeb.ProfileControllerTest do
     assert html =~ ~s(href="/aszf?return_to=%2Fprofile")
     assert html =~ ~s(id="profile-adatkezelesi-link")
     assert html =~ ~s(href="/adatkezelesi-tajekoztato?return_to=%2Fprofile")
+  end
+
+  test "profile shows country select for billing country", %{conn: conn} do
+    conn = get(conn, ~p"/profile")
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="user_billing_country")
+    assert html =~ ~s(<option value="HU">Magyarország</option>)
+  end
+
+  test "hungary billing zip must be exactly 4 digits", %{conn: conn, user: user} do
+    conn =
+      patch(conn, ~p"/profile",
+        user: %{
+          name: "Teszt Elek",
+          billing_country: "HU",
+          billing_zip: "11A1",
+          billing_city: "Budapest",
+          billing_address: "Fo utca 1."
+        }
+      )
+
+    html = html_response(conn, 200)
+    assert html =~ "Magyarorszag eseten az iranyitoszam 4 szamjegy."
+
+    updated_user = Repo.get!(User, user.id)
+    assert is_nil(updated_user.billing_country)
+    assert is_nil(updated_user.billing_zip)
+  end
+
+  test "profile country selection is stored as code and serialized to invoice XML country name",
+       %{
+         conn: conn,
+         user: user
+       } do
+    conn =
+      patch(conn, ~p"/profile",
+        user: %{
+          name: "Teszt Elek",
+          billing_country: "HU",
+          billing_zip: "1111",
+          billing_city: "Budapest",
+          billing_address: "Fo utca 1."
+        }
+      )
+
+    assert html_response(conn, 200)
+
+    updated_user = Repo.get!(User, user.id)
+    assert updated_user.billing_country == "HU"
+
+    payment = %Payment{
+      payment_id: "cash-invoice-test",
+      payment_request_id: Ecto.UUID.generate(),
+      payment_method: "cash",
+      amount_huf: 10_000
+    }
+
+    xml = SzamlazzClient.invoice_xml(payment, updated_user, item_name: "Teszt termek")
+
+    assert xml =~ "<irsz>1111</irsz>"
+    assert xml =~ "<telepules>Budapest</telepules>"
+    assert xml =~ "<cim>Fo utca 1.</cim>"
+    assert xml =~ "<nev>Teszt Elek</nev>"
+    refute xml =~ "<nev>profil@example.com</nev>"
+  end
+
+  test "billing city preserves hungarian accents", %{conn: conn, user: user} do
+    conn =
+      patch(conn, ~p"/profile",
+        user: %{
+          name: "Teszt Elek",
+          billing_country: "HU",
+          billing_zip: "7621",
+          billing_city: "Pécs",
+          billing_address: "Fo utca 1."
+        }
+      )
+
+    assert html_response(conn, 200)
+
+    updated_user = Repo.get!(User, user.id)
+    assert updated_user.billing_city == "Pécs"
   end
 
   defp create_payment(user_id, attrs) do

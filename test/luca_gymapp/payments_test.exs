@@ -67,7 +67,7 @@ defmodule LucaGymapp.PaymentsTest do
 
       payment_id = payment.payment_id
       assert_receive {:fake_invoice_sent, ^payment_id}
-      payment = wait_for_invoice_update(payment.payment_id)
+      payment = wait_for_invoice_update(payment.payment_id, ["ok"])
       assert payment.season_pass_id
       assert payment.invoice_status == "ok"
       assert payment.invoice_number == "INV-2026-1"
@@ -90,7 +90,7 @@ defmodule LucaGymapp.PaymentsTest do
 
       payment_id = payment.payment_id
       assert_receive {:fake_invoice_sent, ^payment_id}
-      payment = wait_for_invoice_update(payment.payment_id)
+      payment = wait_for_invoice_update(payment.payment_id, ["no_response"])
       assert payment.season_pass_id
       assert payment.invoice_status == "no_response"
       assert is_binary(payment.invoice_error)
@@ -133,7 +133,7 @@ defmodule LucaGymapp.PaymentsTest do
 
       payment_id = payment.payment_id
       assert_receive {:fake_invoice_sent, ^payment_id}
-      retried = wait_for_invoice_update(payment.payment_id)
+      retried = wait_for_invoice_update(payment.payment_id, ["ok"])
       assert retried.invoice_status == "ok"
       assert retried.invoice_number == "INV-RETRY-1"
     end)
@@ -160,7 +160,7 @@ defmodule LucaGymapp.PaymentsTest do
 
       payment_id = payment.payment_id
       assert_receive {:fake_invoice_sent, ^payment_id}
-      retried = wait_for_invoice_update(payment.payment_id)
+      retried = wait_for_invoice_update(payment.payment_id, ["ok"])
       assert retried.invoice_status == "ok"
       assert retried.invoice_number == "INV-RETRY-2"
     end)
@@ -237,21 +237,21 @@ defmodule LucaGymapp.PaymentsTest do
     fun.()
   end
 
-  defp wait_for_invoice_update(payment_id, attempts \\ 30)
+  defp wait_for_invoice_update(payment_id, expected_statuses, attempts \\ 30)
 
-  defp wait_for_invoice_update(_payment_id, 0) do
+  defp wait_for_invoice_update(_payment_id, _expected_statuses, 0) do
     flunk("timed out waiting for async invoice update")
   end
 
-  defp wait_for_invoice_update(payment_id, attempts) do
+  defp wait_for_invoice_update(payment_id, expected_statuses, attempts) do
     payment = Repo.get_by!(Payment, payment_id: payment_id)
 
-    if payment.invoice_status in ["ok", "error", "no_response"] do
+    if payment.invoice_status in expected_statuses do
       payment
     else
       receive do
       after
-        20 -> wait_for_invoice_update(payment_id, attempts - 1)
+        20 -> wait_for_invoice_update(payment_id, expected_statuses, attempts - 1)
       end
     end
   end

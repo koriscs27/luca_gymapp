@@ -1180,7 +1180,7 @@ defmodule LucaGymappWeb.PageController do
     conn
     |> put_flash(
       :error,
-      "A vasarlashoz toltsd ki a szamlazasi nevet es cimet a profil oldalon."
+      "A vásárláshoz töltsd ki a nevedet és a számlázási adatokat a profil oldalon."
     )
     |> redirect(to: redirect_path)
   end

@@ -24,3 +24,7 @@
 flyfuck.txt
 erl_crash.dump
 TODO.txt
+/.codex_tmp/
+/mix_lock_user0/
+/mix_pubsub_user0/
+/.tmp_chrome_profile/
