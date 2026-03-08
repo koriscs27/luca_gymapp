@@ -91,7 +91,6 @@ defmodule LucaGymapp.Payments.SzamlazzClient do
         <fizmod>#{xml_escape(payment_method)}</fizmod>
         <penznem>HUF</penznem>
         <szamlaNyelve>hu</szamlaNyelve>
-        <rendelesSzam>#{xml_escape(invoice_external_id)}</rendelesSzam>
       </fejlec>
       <elado />
       <vevo>

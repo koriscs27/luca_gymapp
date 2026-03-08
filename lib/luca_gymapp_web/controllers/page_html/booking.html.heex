@@ -22,7 +22,7 @@
         </div>
 
         <.link
-          href={~p"/foglalas"}
+          href={~p"/foglalas?type=#{@booking_type}&view=week&week=#{@week_offset}"}
           class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
           aria-label="Bezárás"
         >
@@ -36,7 +36,7 @@
 
       <div class="mt-6">
         <.link
-          href={~p"/foglalas"}
+          href={~p"/foglalas?type=#{@booking_type}&view=week&week=#{@week_offset}"}
           class="inline-flex w-full justify-center rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
         >
           Rendben
@@ -124,7 +124,7 @@
 
     <div class="flex flex-wrap gap-3">
       <.link
-          href={~p"/foglalas?type=personal&view=#{@booking_view}"}
+          href={~p"/foglalas?type=personal&view=#{@booking_view}&week=#{@week_offset}"}
           class={[
             "rounded-full px-4 py-2 text-sm font-semibold transition",
             @booking_type == :personal && "bg-white text-neutral-900 ring-2 ring-white/80",
@@ -135,7 +135,7 @@
         Személyi edzés
       </.link>
       <.link
-          href={~p"/foglalas?type=cross&view=#{@booking_view}"}
+          href={~p"/foglalas?type=cross&view=#{@booking_view}&week=#{@week_offset}"}
           class={[
             "rounded-full px-4 py-2 text-sm font-semibold transition",
             @booking_type == :cross && "bg-white text-neutral-900 ring-2 ring-white/80",
@@ -154,7 +154,7 @@
 
       <div class="flex flex-wrap gap-2">
         <.link
-            href={~p"/foglalas?type=#{@booking_type}&view=week"}
+            href={~p"/foglalas?type=#{@booking_type}&view=week&week=#{@week_offset}"}
             class={[
               "rounded-full px-4 py-2 text-sm font-semibold transition",
               @booking_view == :week && "bg-neutral-900 text-white ring-2 ring-white/70",
@@ -410,6 +410,11 @@
                     name="end_time"
                     value={DateTime.to_iso8601(slot.end_datetime)}
                   />
+                            <.input
+                    type="hidden"
+                    name="week"
+                    value={@week_offset}
+                  />
                             <button
                     type="submit"
                     class="w-full rounded-full border border-emerald-400/60 bg-white px-2 py-1 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-400"
@@ -495,6 +500,11 @@
                       type="hidden"
                       name="end_time"
                       value={DateTime.to_iso8601(slot.end_datetime)}
+                    />
+                                <.input
+                      type="hidden"
+                      name="week"
+                      value={@week_offset}
                     />
                                 <button
                       type="submit"

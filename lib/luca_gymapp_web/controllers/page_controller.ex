@@ -237,8 +237,13 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  def create_personal_booking(conn, %{"start_time" => start_time, "end_time" => end_time}) do
+  def create_personal_booking(
+        conn,
+        %{"start_time" => start_time, "end_time" => end_time} = params
+      ) do
     current_user_id = get_session(conn, :user_id)
+    week = normalize_optional_week_param(Map.get(params, "week"))
+    redirect_path = booking_week_path(:personal, week)
 
     with true <- current_user_id != nil,
          {:ok, user} <- fetch_user(current_user_id),
@@ -251,48 +256,50 @@ defmodule LucaGymappWeb.PageController do
 
       conn
       |> put_flash(:info, "Sikeres személyi edzés foglalás.")
-      |> redirect(to: ~p"/foglalas?type=personal&view=week")
+      |> redirect(to: redirect_path)
     else
       false ->
         Logger.warning("booking_error_unauthorized type=personal")
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :unauthorized} ->
         Logger.warning("booking_error_unauthorized type=personal")
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :no_valid_pass} ->
         log_booking_error("personal", current_user_id, :no_valid_pass)
-        booking_error(conn, :no_valid_pass, ~p"/foglalas?type=personal&view=week")
+        booking_error(conn, :no_valid_pass, redirect_path)
 
       {:error, :capacity_reached} ->
         log_booking_error("personal", current_user_id, :capacity_reached)
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, %Ecto.Changeset{}} ->
         log_booking_error("personal", current_user_id, :changeset)
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :slot_not_available} ->
         log_booking_error("personal", current_user_id, :slot_not_available)
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :booking_closed} ->
         log_booking_error("personal", current_user_id, :booking_closed)
-        booking_error(conn, :booking_closed, ~p"/foglalas?type=personal&view=week")
+        booking_error(conn, :booking_closed, redirect_path)
 
       {:error, :too_early_to_book} ->
         log_booking_error("personal", current_user_id, :too_early_to_book)
-        booking_error(conn, :too_early_to_book, ~p"/foglalas?type=personal&view=week")
+        booking_error(conn, :too_early_to_book, redirect_path)
 
       _ ->
         log_booking_error("personal", current_user_id, :unknown)
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
     end
   end
 
-  def create_cross_booking(conn, %{"start_time" => start_time, "end_time" => end_time}) do
+  def create_cross_booking(conn, %{"start_time" => start_time, "end_time" => end_time} = params) do
     current_user_id = get_session(conn, :user_id)
+    week = normalize_optional_week_param(Map.get(params, "week"))
+    redirect_path = booking_week_path(:cross, week)
 
     with true <- current_user_id != nil,
          {:ok, user} <- fetch_user(current_user_id),
@@ -305,48 +312,53 @@ defmodule LucaGymappWeb.PageController do
 
       conn
       |> put_flash(:info, "Sikeres cross edzés foglalás.")
-      |> redirect(to: ~p"/foglalas?type=cross&view=week")
+      |> redirect(to: redirect_path)
     else
       false ->
         Logger.warning("booking_error_unauthorized type=cross")
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :unauthorized} ->
         Logger.warning("booking_error_unauthorized type=cross")
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :no_valid_pass} ->
         log_booking_error("cross", current_user_id, :no_valid_pass)
-        booking_error(conn, :no_valid_pass, ~p"/foglalas?type=cross&view=week")
+        booking_error(conn, :no_valid_pass, redirect_path)
 
       {:error, :capacity_reached} ->
         log_booking_error("cross", current_user_id, :capacity_reached)
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, %Ecto.Changeset{}} ->
         log_booking_error("cross", current_user_id, :changeset)
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :slot_not_available} ->
         log_booking_error("cross", current_user_id, :slot_not_available)
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :booking_closed} ->
         log_booking_error("cross", current_user_id, :booking_closed)
-        booking_error(conn, :booking_closed, ~p"/foglalas?type=cross&view=week")
+        booking_error(conn, :booking_closed, redirect_path)
 
       {:error, :too_early_to_book} ->
         log_booking_error("cross", current_user_id, :too_early_to_book)
-        booking_too_early_error(conn, :cross, ~p"/foglalas?type=cross&view=week")
+        booking_too_early_error(conn, :cross, redirect_path)
 
       _ ->
         log_booking_error("cross", current_user_id, :unknown)
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
     end
   end
 
-  def cancel_personal_booking(conn, %{"start_time" => start_time, "end_time" => end_time}) do
+  def cancel_personal_booking(
+        conn,
+        %{"start_time" => start_time, "end_time" => end_time} = params
+      ) do
     current_user_id = get_session(conn, :user_id)
+    week = normalize_optional_week_param(Map.get(params, "week"))
+    redirect_path = booking_week_path(:personal, week)
 
     with true <- current_user_id != nil,
          {:ok, user} <- fetch_user(current_user_id),
@@ -355,14 +367,14 @@ defmodule LucaGymappWeb.PageController do
          {:ok, _booking} <- Bookings.cancel_personal_booking(user, start_dt, end_dt) do
       conn
       |> put_flash(:info, "A személyi edzés foglalás törölve lett.")
-      |> redirect(to: ~p"/foglalas?type=personal&view=week")
+      |> redirect(to: redirect_path)
     else
       {:error, :not_found} ->
         Logger.warning(
           "booking_cancel_error type=personal reason=not_found user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :too_late_to_cancel} ->
         Logger.warning(
@@ -373,7 +385,7 @@ defmodule LucaGymappWeb.PageController do
           conn,
           :too_late_to_cancel,
           :personal,
-          ~p"/foglalas?type=personal&view=week"
+          redirect_path
         )
 
       _ ->
@@ -381,12 +393,14 @@ defmodule LucaGymappWeb.PageController do
           "booking_cancel_error type=personal reason=unknown user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/foglalas?type=personal&view=week")
+        generic_error(conn, redirect_path)
     end
   end
 
-  def cancel_cross_booking(conn, %{"start_time" => start_time, "end_time" => end_time}) do
+  def cancel_cross_booking(conn, %{"start_time" => start_time, "end_time" => end_time} = params) do
     current_user_id = get_session(conn, :user_id)
+    week = normalize_optional_week_param(Map.get(params, "week"))
+    redirect_path = booking_week_path(:cross, week)
 
     with true <- current_user_id != nil,
          {:ok, user} <- fetch_user(current_user_id),
@@ -395,25 +409,25 @@ defmodule LucaGymappWeb.PageController do
          {:ok, _booking} <- Bookings.cancel_cross_booking(user, start_dt, end_dt) do
       conn
       |> put_flash(:info, "A cross edzés foglalás törölve lett.")
-      |> redirect(to: ~p"/foglalas?type=cross&view=week")
+      |> redirect(to: redirect_path)
     else
       {:error, :not_found} ->
         Logger.warning(
           "booking_cancel_error type=cross reason=not_found user_id=#{current_user_id}"
         )
 
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
 
       {:error, :too_late_to_cancel} ->
         Logger.warning(
           "booking_cancel_error type=cross reason=too_late user_id=#{current_user_id}"
         )
 
-        cancellation_error(conn, :too_late_to_cancel, :cross, ~p"/foglalas?type=cross&view=week")
+        cancellation_error(conn, :too_late_to_cancel, :cross, redirect_path)
 
       _ ->
         Logger.error("booking_cancel_error type=cross reason=unknown user_id=#{current_user_id}")
-        generic_error(conn, ~p"/foglalas?type=cross&view=week")
+        generic_error(conn, redirect_path)
     end
   end
 
@@ -936,6 +950,19 @@ defmodule LucaGymappWeb.PageController do
 
   defp normalize_week_param(value, _fallback) when is_integer(value), do: Integer.to_string(value)
   defp normalize_week_param(_value, fallback), do: Integer.to_string(fallback)
+
+  defp normalize_optional_week_param(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> Integer.to_string(int)
+      _ -> nil
+    end
+  end
+
+  defp normalize_optional_week_param(value) when is_integer(value), do: Integer.to_string(value)
+  defp normalize_optional_week_param(_), do: nil
+
+  defp booking_week_path(type, nil), do: ~p"/foglalas?type=#{type}&view=week"
+  defp booking_week_path(type, week), do: ~p"/foglalas?type=#{type}&view=week&week=#{week}"
 
   defp normalize_week_offset(week_offset, true), do: week_offset
   defp normalize_week_offset(week_offset, false), do: max(week_offset, 0)

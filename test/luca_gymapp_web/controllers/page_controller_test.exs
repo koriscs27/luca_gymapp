@@ -303,6 +303,62 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert Phoenix.Flash.get(conn.assigns.flash, :error)
   end
 
+  test "personal booking keeps selected week after successful booking", %{conn: conn} do
+    user =
+      %User{
+        email: "personal-week-keep@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{pass_name: "personal_week_keep", pass_type: "personal", occasions: 1})
+
+    slot_date = Date.add(Date.utc_today(), 14)
+    start_time = DateTime.new!(slot_date, ~T[10:00:00], "Etc/UTC")
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    insert_calendar_slot("personal", start_time, end_time)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/foglalas/personal", %{
+        "start_time" => DateTime.to_iso8601(start_time),
+        "end_time" => DateTime.to_iso8601(end_time),
+        "week" => "2"
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=personal&view=week&week=2"
+  end
+
+  test "cross booking keeps selected week after successful booking", %{conn: conn} do
+    user =
+      %User{
+        email: "cross-week-keep@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{pass_name: "cross_week_keep", pass_type: "cross", occasions: 1})
+
+    slot_date = Date.add(Date.utc_today(), 14)
+    start_time = DateTime.new!(slot_date, ~T[18:00:00], "Etc/UTC")
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    insert_calendar_slot("cross", start_time, end_time)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/foglalas/cross", %{
+        "start_time" => DateTime.to_iso8601(start_time),
+        "end_time" => DateTime.to_iso8601(end_time),
+        "week" => "2"
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=cross&view=week&week=2"
+  end
+
   test "booking page lists all active passes in selected category", %{conn: conn} do
     user =
       %User{
