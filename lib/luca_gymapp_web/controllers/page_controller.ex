@@ -822,6 +822,41 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
+  def admin_upload_next_month(
+        conn,
+        %{"admin_upload" => %{"type" => type, "week" => week}}
+      ) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin,
+         {type, _} <- parse_booking_type(type) do
+      result = Bookings.publish_default_next_month()
+
+      conn
+      |> put_flash(
+        :info,
+        "A kovetkezo 4 het alap idopontjai feltoltve. Uj idosavok: #{result.inserted_slots}, kihagyott napok: #{result.skipped_days}."
+      )
+      |> redirect(to: ~p"/foglalas?type=#{type}&view=week&week=#{week}")
+    else
+      false ->
+        Logger.warning(
+          "admin_upload_next_month_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/foglalas")
+
+      _ ->
+        Logger.error(
+          "admin_upload_next_month_error reason=unknown admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/foglalas")
+    end
+  end
+
   def admin_cancel_booking(
         conn,
         %{"admin_booking_delete" => %{"type" => type, "booking_id" => booking_id, "week" => week}}

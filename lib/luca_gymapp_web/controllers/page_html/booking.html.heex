@@ -96,7 +96,7 @@
       </div>
     <% end %>
 
-    <%= if @current_user do %>
+    <%= if @current_user && !@current_user_is_admin do %>
       <div class="w-full">
         <p class="text-xs uppercase tracking-[0.3em] text-white/60">Aktív bérletek</p>
         <%= if @current_passes != [] do %>
@@ -119,6 +119,37 @@
         <% else %>
           <p class="mt-3 text-sm text-white/70">Nincs még bérleted ebben a kategóriában.</p>
         <% end %>
+      </div>
+    <% end %>
+
+    <%= if @current_user_is_admin do %>
+      <div class="w-full">
+        <p class="text-xs uppercase tracking-[0.3em] text-white/60">Admin gyors művelet</p>
+        <div class="mt-3 flex">
+          <.form
+            for={@admin_upload_form}
+            id="admin-upload-next-month-form"
+            action={~p"/foglalas/admin/upload-next-month"}
+            method="post"
+          >
+            <.input
+              field={@admin_upload_form[:type]}
+              type="hidden"
+              value={@booking_type}
+            />
+            <.input
+              field={@admin_upload_form[:week]}
+              type="hidden"
+              value={@week_offset}
+            />
+            <button
+              type="submit"
+              class="cursor-pointer rounded-full border border-white/40 bg-white/20 px-4 py-2 text-sm font-semibold text-white transition duration-150 hover:border-white/70 hover:bg-white/30 active:scale-95"
+            >
+              Következő hónap feltöltése
+            </button>
+          </.form>
+        </div>
       </div>
     <% end %>
 
@@ -554,36 +585,38 @@
             </p>
           </div>
 
-          <.form
-          for={@admin_upload_form}
-          id="admin-upload-form"
-          action={~p"/foglalas/admin/upload"}
-          method="post"
-        >
-            <.input
-            field={@admin_upload_form[:type]}
-            type="hidden"
-            value={@booking_type}
-          />
-            <.input
-            field={@admin_upload_form[:week]}
-            type="hidden"
-            value={@week_offset}
-          />
-            <button
-            type="submit"
-            class={[
-              "rounded-full px-4 py-2 text-sm font-semibold transition",
-              @admin_draft_changes > 0 &&
-                "bg-neutral-900 text-white hover:bg-neutral-800",
-              @admin_draft_changes == 0 &&
-                "cursor-not-allowed border border-neutral-200 bg-white text-neutral-400"
-            ]}
-            disabled={@admin_draft_changes == 0}
+          <div class="flex flex-wrap gap-2">
+            <.form
+            for={@admin_upload_form}
+            id="admin-upload-form"
+            action={~p"/foglalas/admin/upload"}
+            method="post"
           >
-              Upload
-            </button>
-          </.form>
+              <.input
+              field={@admin_upload_form[:type]}
+              type="hidden"
+              value={@booking_type}
+            />
+              <.input
+              field={@admin_upload_form[:week]}
+              type="hidden"
+              value={@week_offset}
+            />
+              <button
+              type="submit"
+              class={[
+                "rounded-full px-4 py-2 text-sm font-semibold transition",
+                @admin_draft_changes > 0 &&
+                  "bg-neutral-900 text-white hover:bg-neutral-800",
+                @admin_draft_changes == 0 &&
+                  "cursor-not-allowed border border-neutral-200 bg-white text-neutral-400"
+              ]}
+              disabled={@admin_draft_changes == 0}
+            >
+                Upload
+              </button>
+            </.form>
+          </div>
         </div>
       <% end %>
     <% end %>

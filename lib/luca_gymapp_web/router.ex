@@ -35,6 +35,7 @@ defmodule LucaGymappWeb.Router do
     post "/foglalas/admin/slot/delete", PageController, :admin_delete_slot
     post "/foglalas/admin/booking/delete", PageController, :admin_cancel_booking
     post "/foglalas/admin/upload", PageController, :admin_upload_changes
+    post "/foglalas/admin/upload-next-month", PageController, :admin_upload_next_month
     post "/berletek/purchase", PageController, :purchase_season_pass
     post "/berletek/admin/purchase", PageController, :admin_purchase_season_pass
     get "/auth/:provider", OAuthController, :request

@@ -283,6 +283,24 @@ defmodule LucaGymapp.Bookings do
     )
   end
 
+  def publish_default_next_month do
+    next_week_start =
+      Date.utc_today()
+      |> Date.add(7)
+      |> Date.beginning_of_week(:monday)
+
+    week_starts = Enum.map(0..3, fn offset -> Date.add(next_week_start, offset * 7) end)
+
+    Enum.reduce([:personal, :cross], %{inserted_slots: 0, skipped_days: 0}, fn type, acc ->
+      {inserted_slots, skipped_days} = publish_default_next_month_for_type(type, week_starts)
+
+      %{
+        inserted_slots: acc.inserted_slots + inserted_slots,
+        skipped_days: acc.skipped_days + skipped_days
+      }
+    end)
+  end
+
   def build_default_week_slots(type, %Date{} = week_start) do
     schedule = Booking.schedule_for(type)
     {monday, _week_end} = Booking.week_range(week_start)
@@ -398,6 +416,51 @@ defmodule LucaGymapp.Bookings do
   defp slot_type_from_booking(:personal), do: "personal"
   defp slot_type_from_booking(:cross), do: "cross"
   defp slot_type_from_booking(value) when is_binary(value), do: value
+
+  defp publish_default_next_month_for_type(type, week_starts) do
+    slot_type = slot_type_from_booking(type)
+    first_week_start = List.first(week_starts)
+    last_week_end = week_starts |> List.last() |> Date.add(6)
+    occupied_dates = occupied_slot_dates(slot_type, first_week_start, last_week_end)
+
+    Enum.reduce(week_starts, {0, 0}, fn week_start, {inserted_acc, skipped_days_acc} ->
+      {slots, skipped_days} = build_next_month_insertable_slots(type, week_start, occupied_dates)
+      {inserted_count, _} = insert_calendar_slots(slots)
+
+      {inserted_acc + inserted_count, skipped_days_acc + skipped_days}
+    end)
+  end
+
+  defp build_next_month_insertable_slots(type, week_start, occupied_dates) do
+    type
+    |> build_default_week_slots(week_start)
+    |> Enum.group_by(&DateTime.to_date(&1.start_time))
+    |> Enum.reduce({[], 0}, fn {date, day_slots}, {slots_acc, skipped_days_acc} ->
+      if MapSet.member?(occupied_dates, date) do
+        {slots_acc, skipped_days_acc + 1}
+      else
+        {slots_acc ++ day_slots, skipped_days_acc}
+      end
+    end)
+  end
+
+  defp occupied_slot_dates(slot_type, start_date, end_date) do
+    CalendarSlot
+    |> where([slot], slot.slot_type == ^slot_type)
+    |> where(
+      [slot],
+      fragment(
+        "date(?) >= ? and date(?) <= ?",
+        slot.start_time,
+        ^start_date,
+        slot.start_time,
+        ^end_date
+      )
+    )
+    |> select([slot], fragment("date(?)", slot.start_time))
+    |> Repo.all()
+    |> MapSet.new()
+  end
 
   defp enforce_slot_exists!(slot_type, %DateTime{} = start_time, %DateTime{} = end_time) do
     exists? =

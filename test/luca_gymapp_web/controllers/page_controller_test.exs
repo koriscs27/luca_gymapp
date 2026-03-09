@@ -504,6 +504,150 @@ defmodule LucaGymappWeb.PageControllerTest do
            )
   end
 
+  test "admin weekly upload does not delete already booked classes", %{conn: conn} do
+    admin =
+      %User{
+        email: "weekly-upload-booked-protect-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    booked_user =
+      %User{
+        email: "weekly-upload-booked-protect-user@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    start_time = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    end_time = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+
+    slot = insert_calendar_slot("personal", start_time, end_time)
+
+    pass =
+      insert_pass(booked_user.id, %{
+        pass_name: "weekly_upload_booked_protect",
+        pass_type: "personal",
+        occasions: 1
+      })
+
+    booking = insert_personal_booking(booked_user.id, pass.pass_id, start_time, end_time)
+    :ok = AdminDraftStore.mark_delete(admin.id, :personal, slot.id)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/upload", %{
+        "admin_upload" => %{
+          "type" => "personal",
+          "week" => "0"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=personal&view=week"
+    assert Phoenix.Flash.get(conn.assigns.flash, :error)
+
+    assert Repo.get(CalendarSlot, slot.id)
+    assert Repo.get!(PersonalBooking, booking.id).status == "booked"
+  end
+
+  test "admin upload next month fills both types and skips already occupied days", %{conn: conn} do
+    admin =
+      %User{
+        email: "upload-next-month-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    next_week_start =
+      Date.utc_today()
+      |> Date.add(7)
+      |> Date.beginning_of_week(:monday)
+
+    week_starts = Enum.map(0..3, fn offset -> Date.add(next_week_start, offset * 7) end)
+    period_end = Date.add(next_week_start, 27)
+
+    personal_template_slots =
+      Enum.flat_map(week_starts, fn week_start ->
+        Bookings.build_default_week_slots(:personal, week_start)
+      end)
+
+    cross_template_slots =
+      Enum.flat_map(week_starts, fn week_start ->
+        Bookings.build_default_week_slots(:cross, week_start)
+      end)
+
+    [occupied_personal_slot | _] = personal_template_slots
+    [occupied_cross_slot | _] = cross_template_slots
+
+    occupied_personal_date = DateTime.to_date(occupied_personal_slot.start_time)
+    occupied_cross_date = DateTime.to_date(occupied_cross_slot.start_time)
+
+    insert_calendar_slot(
+      "personal",
+      occupied_personal_slot.start_time,
+      occupied_personal_slot.end_time
+    )
+
+    insert_calendar_slot("cross", occupied_cross_slot.start_time, occupied_cross_slot.end_time)
+
+    expected_personal_new_count =
+      personal_template_slots
+      |> Enum.reject(&(DateTime.to_date(&1.start_time) == occupied_personal_date))
+      |> length()
+
+    expected_cross_new_count =
+      cross_template_slots
+      |> Enum.reject(&(DateTime.to_date(&1.start_time) == occupied_cross_date))
+      |> length()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/upload-next-month", %{
+        "admin_upload" => %{
+          "type" => "personal",
+          "week" => "0"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=personal&view=week&week=0"
+
+    in_period_slots =
+      Repo.all(CalendarSlot)
+      |> Enum.filter(fn slot ->
+        slot_date = DateTime.to_date(slot.start_time)
+
+        Date.compare(slot_date, next_week_start) != :lt and
+          Date.compare(slot_date, period_end) != :gt
+      end)
+
+    personal_count = Enum.count(in_period_slots, &(&1.slot_type == "personal"))
+    cross_count = Enum.count(in_period_slots, &(&1.slot_type == "cross"))
+
+    assert personal_count == expected_personal_new_count + 1
+    assert cross_count == expected_cross_new_count + 1
+
+    personal_occupied_day_count =
+      in_period_slots
+      |> Enum.filter(&(&1.slot_type == "personal"))
+      |> Enum.count(&(DateTime.to_date(&1.start_time) == occupied_personal_date))
+
+    cross_occupied_day_count =
+      in_period_slots
+      |> Enum.filter(&(&1.slot_type == "cross"))
+      |> Enum.count(&(DateTime.to_date(&1.start_time) == occupied_cross_date))
+
+    assert personal_occupied_day_count == 1
+    assert cross_occupied_day_count == 1
+  end
+
   test "booking a past cross slot shows a specific message", %{conn: conn} do
     user =
       %User{
