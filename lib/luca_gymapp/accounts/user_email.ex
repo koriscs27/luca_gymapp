@@ -47,14 +47,12 @@ defmodule LucaGymapp.Accounts.UserEmail do
     new()
     |> to({user.name || user.email, user.email})
     |> from(from_address)
-    |> subject("Foglalas torolve: #{humanize_booking_type(type)}")
+    |> subject("Foglalás törölve: #{humanize_booking_type(type)}")
     |> text_body("""
     Szia!
 
-    A kovetkezo foglalasodat a coach torolte:
+    A következő foglalásodat az edző törölte:
     #{format_booking_window(booking)}
-
-    Ha kerdesed van, valaszolj erre az e-mailre.
     """)
   end
 
@@ -74,8 +72,8 @@ defmodule LucaGymapp.Accounts.UserEmail do
 
   defp format_datetime(_), do: "-"
 
-  defp humanize_booking_type(:personal), do: "Szemelyi edzes"
-  defp humanize_booking_type(:cross), do: "Cross trening"
+  defp humanize_booking_type(:personal), do: "Személyi edzés"
+  defp humanize_booking_type(:cross), do: "Cross edzés"
   defp humanize_booking_type(value) when is_binary(value), do: String.capitalize(value)
-  defp humanize_booking_type(_), do: "Edzes"
+  defp humanize_booking_type(_), do: "Edzés"
 end
