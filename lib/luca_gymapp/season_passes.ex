@@ -113,7 +113,7 @@ defmodule LucaGymapp.SeasonPasses do
     |> where([pass], pass.user_id == ^user_id)
     |> where([pass], pass.pass_type == ^pass_type)
     |> where([pass], pass.expiry_date >= ^today)
-    |> where([pass], pass.pass_type == "other" or pass.occasions > 0)
+    |> where([pass], pass.occasions > 0)
     |> order_by([pass], desc: pass.purchase_timestamp)
     |> Repo.all()
   end

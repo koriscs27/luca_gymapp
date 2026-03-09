@@ -976,13 +976,24 @@ defmodule LucaGymappWeb.PageControllerTest do
     html = html_response(conn, 200)
     doc = LazyHTML.from_document(html)
     selector = LazyHTML.query_by_id(doc, "admin-booking-user-id")
+    type_selector = LazyHTML.query_by_id(doc, "admin-booking-type")
+    pass_selector = LazyHTML.query_by_id(doc, "admin-booking-pass-id")
     option_labels = selector |> LazyHTML.query("option") |> Enum.map(&LazyHTML.text/1)
 
     assert LazyHTML.tag(selector) == ["select"]
+    assert LazyHTML.tag(type_selector) == ["select"]
+    assert LazyHTML.tag(pass_selector) == ["select"]
     assert Enum.any?(option_labels, &String.contains?(&1, target_user.email))
+    selection_form = LazyHTML.query_by_id(doc, "admin-booking-selection-form")
+
+    assert LazyHTML.attribute(selection_form, "data-pass-options-url") == [
+             "/admin/foglalas/pass-options"
+           ]
   end
 
-  test "admin bookings pass selectors show only active appropriate passes", %{conn: conn} do
+  test "admin bookings pass selector shows only active appropriate passes for selected type", %{
+    conn: conn
+  } do
     admin =
       %User{
         email: "admin-pass-filter@example.com",
@@ -1032,24 +1043,19 @@ defmodule LucaGymappWeb.PageControllerTest do
         expiry_date: Date.add(Date.utc_today(), 15)
       })
 
-    conn =
+    personal_conn =
       conn
       |> init_test_session(%{user_id: admin.id})
       |> get(
-        ~p"/admin/foglalas?week=0&user_id=#{user.id}&personal_pass_id=#{active_personal.pass_id}&cross_pass_id=#{active_cross.pass_id}"
+        ~p"/admin/foglalas?week=0&user_id=#{user.id}&type=personal&pass_id=#{active_personal.pass_id}"
       )
 
-    html = html_response(conn, 200)
-    doc = LazyHTML.from_document(html)
+    personal_html = html_response(personal_conn, 200)
+    personal_doc = LazyHTML.from_document(personal_html)
 
     personal_option_labels =
-      doc
-      |> LazyHTML.query("#admin-booking-personal-pass-id option")
-      |> Enum.map(&LazyHTML.text/1)
-
-    cross_option_labels =
-      doc
-      |> LazyHTML.query("#admin-booking-cross-pass-id option")
+      personal_doc
+      |> LazyHTML.query("#admin-booking-pass-id option")
       |> Enum.map(&LazyHTML.text/1)
 
     assert Enum.any?(
@@ -1063,6 +1069,21 @@ defmodule LucaGymappWeb.PageControllerTest do
            )
 
     refute Enum.any?(personal_option_labels, &String.contains?(&1, "Cross active for selector"))
+
+    cross_conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{user.id}&type=cross&pass_id=#{active_cross.pass_id}"
+      )
+
+    cross_html = html_response(cross_conn, 200)
+    cross_doc = LazyHTML.from_document(cross_html)
+
+    cross_option_labels =
+      cross_doc
+      |> LazyHTML.query("#admin-booking-pass-id option")
+      |> Enum.map(&LazyHTML.text/1)
 
     assert Enum.any?(cross_option_labels, &String.contains?(&1, "Cross active for selector"))
     refute Enum.any?(cross_option_labels, &String.contains?(&1, "Cross zero for selector"))
@@ -1110,17 +1131,76 @@ defmodule LucaGymappWeb.PageControllerTest do
     personal_slot = insert_calendar_slot("personal", personal_start, personal_end)
     cross_slot = insert_calendar_slot("cross", cross_start, cross_end)
 
-    conn =
+    personal_conn =
       conn
       |> init_test_session(%{user_id: admin.id})
       |> get(
-        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&personal_pass_id=#{personal_pass.pass_id}&cross_pass_id=#{cross_pass.pass_id}"
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&type=personal&pass_id=#{personal_pass.pass_id}"
       )
 
-    html = html_response(conn, 200)
+    personal_html = html_response(personal_conn, 200)
 
+    assert personal_html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+    refute personal_html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+
+    cross_conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&type=cross&pass_id=#{cross_pass.pass_id}"
+      )
+
+    cross_html = html_response(cross_conn, 200)
+    assert cross_html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+    refute cross_html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+  end
+
+  test "admin booking button appears when selection is submitted as nested form params", %{
+    conn: conn
+  } do
+    admin =
+      %User{
+        email: "admin-nested-selection@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "nested-selection-target@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    personal_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "nested_selection_personal_pass",
+        pass_type: "personal",
+        occasions: 2
+      })
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    personal_start = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+    personal_end = DateTime.new!(monday, ~T[12:00:00], "Etc/UTC")
+    personal_slot = insert_calendar_slot("personal", personal_start, personal_end)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(~p"/admin/foglalas", %{
+        "admin_booking_selection" => %{
+          "week" => "0",
+          "user_id" => Integer.to_string(target_user.id),
+          "type" => "personal",
+          "pass_id" => personal_pass.pass_id
+        }
+      })
+
+    html = html_response(conn, 200)
     assert html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
-    assert html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
   end
 
   test "admin booking button does not appear on fully booked personal and cross slots", %{
@@ -1209,17 +1289,26 @@ defmodule LucaGymappWeb.PageControllerTest do
       insert_cross_booking(booked_user.id, booked_pass.pass_id, cross_start, cross_end)
     end)
 
-    conn =
+    personal_conn =
       conn
       |> init_test_session(%{user_id: admin.id})
       |> get(
-        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&personal_pass_id=#{personal_pass.pass_id}&cross_pass_id=#{cross_pass.pass_id}"
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&type=personal&pass_id=#{personal_pass.pass_id}"
       )
 
-    html = html_response(conn, 200)
+    personal_html = html_response(personal_conn, 200)
 
-    refute html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
-    refute html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+    refute personal_html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+
+    cross_conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&type=cross&pass_id=#{cross_pass.pass_id}"
+      )
+
+    cross_html = html_response(cross_conn, 200)
+    refute cross_html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
   end
 
   test "admin can book past near and far personal slots and pass loses occasions", %{conn: conn} do
@@ -1275,13 +1364,12 @@ defmodule LucaGymappWeb.PageControllerTest do
               "start_time" => DateTime.to_iso8601(start_time),
               "end_time" => DateTime.to_iso8601(end_time),
               "week" => "0",
-              "personal_pass_id" => pass.pass_id,
-              "cross_pass_id" => ""
+              "selected_type" => "personal"
             }
           })
 
         assert redirected_to(conn) ==
-                 "/admin/foglalas?cross_pass_id=&personal_pass_id=#{pass.pass_id}&user_id=#{target_user.id}&week=0"
+                 "/admin/foglalas?pass_id=#{pass.pass_id}&type=personal&user_id=#{target_user.id}&week=0"
       end
     )
 

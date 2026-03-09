@@ -54,7 +54,8 @@
           id="admin-booking-selection-form"
           action={~p"/admin/foglalas"}
           method="get"
-          class="mt-3 grid gap-3 md:grid-cols-[1.2fr_1fr_1fr_auto]"
+          data-pass-options-url={~p"/admin/foglalas/pass-options"}
+          class="mt-3 grid gap-3 md:grid-cols-3"
         >
           <.input
             field={@admin_booking_selection_form[:week]}
@@ -69,25 +70,19 @@
             options={[{"Valassz felhasznalot", ""} | @admin_users]}
           />
           <.input
-            field={@admin_booking_selection_form[:personal_pass_id]}
-            id="admin-booking-personal-pass-id"
+            field={@admin_booking_selection_form[:type]}
+            id="admin-booking-type"
             type="select"
-            label="Szemelyi aktiv berlet"
-            options={[{"Valassz berletet", ""} | @personal_pass_options]}
+            label="Tipus"
+            options={[{"Valassz tipust", ""}, {"Szemelyi", "personal"}, {"Cross", "cross"}]}
           />
           <.input
-            field={@admin_booking_selection_form[:cross_pass_id]}
-            id="admin-booking-cross-pass-id"
+            field={@admin_booking_selection_form[:pass_id]}
+            id="admin-booking-pass-id"
             type="select"
-            label="Cross aktiv berlet"
-            options={[{"Valassz berletet", ""} | @cross_pass_options]}
+            label="Aktiv berlet"
+            options={[{"Valassz berletet", ""} | @pass_options]}
           />
-          <button
-            type="submit"
-            class="mt-6 inline-flex h-10 items-center justify-center rounded-full bg-neutral-900 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800"
-          >
-            Frissites
-          </button>
         </.form>
       </div>
 
@@ -159,7 +154,7 @@
                             <% end %>
                           <% end %>
 
-                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_personal_pass_id do %>
+                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_booking_type == "personal" && @selected_pass_id do %>
                             <.form
                               for={@admin_booking_create_form}
                               id={"admin-book-personal-slot-#{slot.id}"}
@@ -180,7 +175,7 @@
                               <.input
                                 field={@admin_booking_create_form[:pass_id]}
                                 type="hidden"
-                                value={@selected_personal_pass_id}
+                                value={@selected_pass_id}
                               />
                               <.input
                                 field={@admin_booking_create_form[:start_time]}
@@ -198,20 +193,15 @@
                                 value={@week_offset}
                               />
                               <.input
-                                field={@admin_booking_create_form[:personal_pass_id]}
+                                field={@admin_booking_create_form[:selected_type]}
                                 type="hidden"
-                                value={@selected_personal_pass_id}
-                              />
-                              <.input
-                                field={@admin_booking_create_form[:cross_pass_id]}
-                                type="hidden"
-                                value={@selected_cross_pass_id}
+                                value="personal"
                               />
                               <button
                                 type="submit"
-                                class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
+                                class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
                               >
-                                Foglalas ehhez a felhasznalohoz
+                                Foglalas
                               </button>
                             </.form>
                           <% end %>
@@ -296,7 +286,7 @@
                             <p>Szabad helyek: {slot_info.remaining}</p>
                           <% end %>
 
-                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_cross_pass_id do %>
+                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_booking_type == "cross" && @selected_pass_id do %>
                             <.form
                               for={@admin_booking_create_form}
                               id={"admin-book-cross-slot-#{slot.id}"}
@@ -317,7 +307,7 @@
                               <.input
                                 field={@admin_booking_create_form[:pass_id]}
                                 type="hidden"
-                                value={@selected_cross_pass_id}
+                                value={@selected_pass_id}
                               />
                               <.input
                                 field={@admin_booking_create_form[:start_time]}
@@ -335,20 +325,15 @@
                                 value={@week_offset}
                               />
                               <.input
-                                field={@admin_booking_create_form[:personal_pass_id]}
+                                field={@admin_booking_create_form[:selected_type]}
                                 type="hidden"
-                                value={@selected_personal_pass_id}
-                              />
-                              <.input
-                                field={@admin_booking_create_form[:cross_pass_id]}
-                                type="hidden"
-                                value={@selected_cross_pass_id}
+                                value="cross"
                               />
                               <button
                                 type="submit"
-                                class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
+                                class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
                               >
-                                Foglalas ehhez a felhasznalohoz
+                                Foglalas
                               </button>
                             </.form>
                           <% end %>

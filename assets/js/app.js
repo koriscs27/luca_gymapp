@@ -264,6 +264,102 @@ const initAszfPurchaseForms = () => {
 document.addEventListener("DOMContentLoaded", initAszfPurchaseForms)
 window.addEventListener("phx:page-loading-stop", initAszfPurchaseForms)
 
+const initAdminBookingPassRefresh = () => {
+  const form = document.querySelector("#admin-booking-selection-form")
+  if (!form) {
+    return
+  }
+
+  const userSelect = form.querySelector("#admin-booking-user-id")
+  const typeSelect = form.querySelector("#admin-booking-type")
+  const passSelect = form.querySelector("#admin-booking-pass-id")
+  const endpoint = form.dataset.passOptionsUrl
+
+  if (!userSelect || !typeSelect || !passSelect || !endpoint) {
+    return
+  }
+
+  if (form.dataset.passRefreshBound === "true") {
+    return
+  }
+
+  const defaultOptionLabel = "Valassz berletet"
+
+  const setPassOptions = (options, selectedValue) => {
+    passSelect.innerHTML = ""
+
+    const placeholder = document.createElement("option")
+    placeholder.value = ""
+    placeholder.textContent = defaultOptionLabel
+    passSelect.appendChild(placeholder)
+
+    options.forEach(({label, value}) => {
+      const option = document.createElement("option")
+      option.value = value
+      option.textContent = label
+      if (selectedValue && value === selectedValue) {
+        option.selected = true
+      }
+      passSelect.appendChild(option)
+    })
+
+    if (!selectedValue) {
+      passSelect.value = ""
+    }
+  }
+
+  const refreshPasses = () => {
+    const userId = userSelect.value
+    const type = typeSelect.value
+    const selectedPassId = passSelect.value
+
+    if (!userId || !type) {
+      setPassOptions([], "")
+      return
+    }
+
+    const query = new URLSearchParams({
+      user_id: userId,
+      type,
+      selected_pass_id: selectedPassId,
+    })
+
+    fetch(`${endpoint}?${query.toString()}`, {
+      credentials: "same-origin",
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to load passes")
+        }
+        return response.json()
+      })
+      .then(data => {
+        const options = Array.isArray(data.options) ? data.options : []
+        const selected = typeof data.selected_pass_id === "string" ? data.selected_pass_id : ""
+        setPassOptions(options, selected)
+
+        // If exactly one pass is available, it is auto-selected by the API response.
+        // Submit selection so server-rendered slot action buttons can appear immediately.
+        if (userId && type && selected && options.length === 1) {
+          form.requestSubmit()
+        }
+      })
+      .catch(() => {
+        setPassOptions([], "")
+      })
+  }
+
+  userSelect.addEventListener("change", refreshPasses)
+  typeSelect.addEventListener("change", refreshPasses)
+  passSelect.addEventListener("change", () => {
+    form.requestSubmit()
+  })
+  form.dataset.passRefreshBound = "true"
+}
+
+document.addEventListener("DOMContentLoaded", initAdminBookingPassRefresh)
+window.addEventListener("phx:page-loading-stop", initAdminBookingPassRefresh)
+
 // The lines below enable quality of life phoenix_live_reload
 // development features:
 //

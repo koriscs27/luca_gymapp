@@ -26,6 +26,7 @@ defmodule LucaGymappWeb.Router do
     get "/barion/return", BarionController, :return
     get "/barion/check/:payment_id", BarionController, :check
     get "/admin/foglalas", PageController, :admin_bookings
+    get "/admin/foglalas/pass-options", PageController, :admin_booking_pass_options
     post "/foglalas/personal", PageController, :create_personal_booking
     post "/foglalas/cross", PageController, :create_cross_booking
     post "/foglalas/personal/cancel", PageController, :cancel_personal_booking

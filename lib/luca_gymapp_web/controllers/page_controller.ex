@@ -205,33 +205,43 @@ defmodule LucaGymappWeb.PageController do
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
          true <- admin_user.admin do
-      week_offset = parse_week_offset(params["week"])
+      selection_params = Map.get(params, "admin_booking_selection", %{})
+
+      week_offset =
+        parse_week_offset(admin_booking_selection_param(params, selection_params, "week"))
+
       base_date = Date.add(Date.utc_today(), week_offset * 7)
       {week_start, week_end} = Booking.week_range(base_date)
       admin_users = Accounts.list_users_for_admin_select()
-      selected_user_id = parse_optional_integer(params["user_id"])
+
+      selected_user_id =
+        parse_optional_integer(admin_booking_selection_param(params, selection_params, "user_id"))
+
       selected_user = selected_admin_user(selected_user_id)
 
-      {personal_passes, cross_passes} =
+      selected_booking_type =
+        parse_admin_booking_type(admin_booking_selection_param(params, selection_params, "type"))
+
+      passes =
         case selected_user do
           nil ->
-            {[], []}
+            []
 
           user ->
-            {
-              SeasonPasses.active_passes_by_type(user.id, "personal"),
-              SeasonPasses.active_passes_by_type(user.id, "cross")
-            }
+            case selected_booking_type do
+              "personal" -> SeasonPasses.active_passes_by_type(user.id, "personal")
+              "cross" -> SeasonPasses.active_passes_by_type(user.id, "cross")
+              _ -> []
+            end
         end
 
-      personal_selected_pass_id =
-        selected_pass_id(params["personal_pass_id"], personal_passes)
+      selected_pass_id =
+        selected_pass_id(
+          admin_booking_selection_param(params, selection_params, "pass_id"),
+          passes
+        )
 
-      cross_selected_pass_id =
-        selected_pass_id(params["cross_pass_id"], cross_passes)
-
-      personal_pass_options = Enum.map(personal_passes, &admin_pass_option/1)
-      cross_pass_options = Enum.map(cross_passes, &admin_pass_option/1)
+      pass_options = Enum.map(passes, &admin_pass_option/1)
 
       personal_calendar = build_admin_calendar(:personal, week_start, week_end)
       cross_calendar = build_admin_calendar(:cross, week_start, week_end)
@@ -243,8 +253,8 @@ defmodule LucaGymappWeb.PageController do
           %{
             "week" => Integer.to_string(week_offset),
             "user_id" => selected_user_id && Integer.to_string(selected_user_id),
-            "personal_pass_id" => personal_selected_pass_id,
-            "cross_pass_id" => cross_selected_pass_id
+            "type" => selected_booking_type,
+            "pass_id" => selected_pass_id
           },
           as: :admin_booking_selection
         )
@@ -262,10 +272,9 @@ defmodule LucaGymappWeb.PageController do
         admin_booking_selection_form: admin_booking_selection_form,
         admin_users: admin_users,
         selected_admin_user_id: selected_user_id,
-        selected_personal_pass_id: personal_selected_pass_id,
-        selected_cross_pass_id: cross_selected_pass_id,
-        personal_pass_options: personal_pass_options,
-        cross_pass_options: cross_pass_options
+        selected_booking_type: selected_booking_type,
+        selected_pass_id: selected_pass_id,
+        pass_options: pass_options
       )
     else
       false ->
@@ -289,8 +298,7 @@ defmodule LucaGymappWeb.PageController do
     pass_id = Map.get(booking_params, "pass_id")
     start_time = Map.get(booking_params, "start_time")
     end_time = Map.get(booking_params, "end_time")
-    personal_pass_id = Map.get(booking_params, "personal_pass_id")
-    cross_pass_id = Map.get(booking_params, "cross_pass_id")
+    selected_type = parse_admin_booking_type(Map.get(booking_params, "selected_type"))
 
     with true <- current_user_id != nil,
          {:ok, admin_user} <- fetch_user(current_user_id),
@@ -308,8 +316,8 @@ defmodule LucaGymappWeb.PageController do
           admin_booking_path_with_selection(
             week,
             user_id,
-            personal_pass_id,
-            cross_pass_id
+            selected_type || type,
+            pass_id
           )
       )
     else
@@ -328,8 +336,8 @@ defmodule LucaGymappWeb.PageController do
             admin_booking_path_with_selection(
               week,
               user_id,
-              personal_pass_id,
-              cross_pass_id
+              selected_type || type,
+              pass_id
             )
         )
 
@@ -341,8 +349,8 @@ defmodule LucaGymappWeb.PageController do
             admin_booking_path_with_selection(
               week,
               user_id,
-              personal_pass_id,
-              cross_pass_id
+              selected_type || type,
+              pass_id
             )
         )
 
@@ -354,8 +362,8 @@ defmodule LucaGymappWeb.PageController do
             admin_booking_path_with_selection(
               week,
               user_id,
-              personal_pass_id,
-              cross_pass_id
+              selected_type || type,
+              pass_id
             )
         )
 
@@ -367,10 +375,50 @@ defmodule LucaGymappWeb.PageController do
           admin_booking_path_with_selection(
             week,
             user_id,
-            personal_pass_id,
-            cross_pass_id
+            selected_type || type,
+            pass_id
           )
         )
+    end
+  end
+
+  def admin_booking_pass_options(conn, params) do
+    current_user_id = get_session(conn, :user_id)
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin do
+      user_id = parse_optional_integer(params["user_id"])
+      type = parse_admin_booking_type(params["type"])
+      selected_pass_id_param = Map.get(params, "selected_pass_id")
+
+      passes =
+        case {selected_admin_user(user_id), type} do
+          {nil, _} ->
+            []
+
+          {_user, nil} ->
+            []
+
+          {user, "personal"} ->
+            SeasonPasses.active_passes_by_type(user.id, "personal")
+
+          {user, "cross"} ->
+            SeasonPasses.active_passes_by_type(user.id, "cross")
+        end
+
+      selected_pass_id = selected_pass_id(selected_pass_id_param, passes)
+
+      options =
+        Enum.map(passes, fn pass ->
+          {label, value} = admin_pass_option(pass)
+          %{label: label, value: value}
+        end)
+
+      json(conn, %{options: options, selected_pass_id: selected_pass_id})
+    else
+      _ ->
+        json(conn, %{options: [], selected_pass_id: nil})
     end
   end
 
@@ -1085,6 +1133,19 @@ defmodule LucaGymappWeb.PageController do
   defp parse_booking_type("cross"), do: {:cross, :cross}
   defp parse_booking_type(_), do: {:personal, :personal}
 
+  defp parse_admin_booking_type("personal"), do: "personal"
+  defp parse_admin_booking_type("szemelyi"), do: "personal"
+  defp parse_admin_booking_type("szemelyi edzes"), do: "personal"
+  defp parse_admin_booking_type("cross"), do: "cross"
+  defp parse_admin_booking_type(_), do: nil
+
+  defp admin_booking_selection_param(params, selection_params, key) do
+    case Map.get(selection_params, key) do
+      nil -> Map.get(params, key)
+      value -> value
+    end
+  end
+
   defp parse_optional_integer(value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} -> int
@@ -1171,13 +1232,13 @@ defmodule LucaGymappWeb.PageController do
   defp booking_week_path(type, nil), do: ~p"/foglalas?type=#{type}&view=week"
   defp booking_week_path(type, week), do: ~p"/foglalas?type=#{type}&view=week&week=#{week}"
 
-  defp admin_booking_path_with_selection(week, user_id, personal_pass_id, cross_pass_id) do
+  defp admin_booking_path_with_selection(week, user_id, type, pass_id) do
     "/admin/foglalas?" <>
       URI.encode_query(%{
         "week" => to_string(week || "0"),
         "user_id" => to_string(user_id || ""),
-        "personal_pass_id" => to_string(personal_pass_id || ""),
-        "cross_pass_id" => to_string(cross_pass_id || "")
+        "type" => to_string(type || ""),
+        "pass_id" => to_string(pass_id || "")
       })
   end
 
