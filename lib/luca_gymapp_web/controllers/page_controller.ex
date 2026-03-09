@@ -43,7 +43,7 @@ defmodule LucaGymappWeb.PageController do
       if current_user_id do
         SeasonPasses.latest_passes_by_type(current_user_id)
       else
-        %{personal: nil, cross: nil, other: nil}
+        %{personal: nil, paros: nil, cross: nil, other: nil}
       end
 
     admin_users =
@@ -152,12 +152,21 @@ defmodule LucaGymappWeb.PageController do
     current_passes =
       if current_user_id do
         case type do
-          :personal -> SeasonPasses.active_passes_by_type(current_user_id, "personal")
+          :personal -> SeasonPasses.active_passes_for_booking_type(current_user_id, "personal")
           :cross -> SeasonPasses.active_passes_by_type(current_user_id, "cross")
         end
       else
         []
       end
+
+    personal_booking_pass_options =
+      current_passes
+      |> Enum.map(fn pass ->
+        {
+          "#{SeasonPasses.display_name(pass.pass_name)} - #{pass.occasions} alkalom - lejarat: #{Booking.format_date(pass.expiry_date)}",
+          pass.pass_id
+        }
+      end)
 
     render(conn, :booking,
       current_user: current_user_id,
@@ -177,6 +186,7 @@ defmodule LucaGymappWeb.PageController do
       admin_delete_form: admin_delete_form,
       admin_upload_form: admin_upload_form,
       current_passes: current_passes,
+      personal_booking_pass_options: personal_booking_pass_options,
       draft_add_keys: draft_add_keys,
       admin_draft_changes: draft_change_count
     )
@@ -219,8 +229,21 @@ defmodule LucaGymappWeb.PageController do
 
       selected_user = selected_admin_user(selected_user_id)
 
+      selected_pass_param = admin_booking_selection_param(params, selection_params, "pass_id")
+
+      selected_active_pass =
+        selected_active_admin_booking_pass(selected_user, selected_pass_param)
+
+      inferred_booking_type =
+        case selected_active_pass do
+          %{pass_type: "cross"} -> "cross"
+          %{pass_type: pass_type} when pass_type in ["personal", "paros"] -> "personal"
+          _ -> nil
+        end
+
       selected_booking_type =
-        parse_admin_booking_type(admin_booking_selection_param(params, selection_params, "type"))
+        parse_admin_booking_type(admin_booking_selection_param(params, selection_params, "type")) ||
+          inferred_booking_type
 
       passes =
         case selected_user do
@@ -229,7 +252,7 @@ defmodule LucaGymappWeb.PageController do
 
           user ->
             case selected_booking_type do
-              "personal" -> SeasonPasses.active_passes_by_type(user.id, "personal")
+              "personal" -> SeasonPasses.active_passes_for_booking_type(user.id, "personal")
               "cross" -> SeasonPasses.active_passes_by_type(user.id, "cross")
               _ -> []
             end
@@ -237,9 +260,17 @@ defmodule LucaGymappWeb.PageController do
 
       selected_pass_id =
         selected_pass_id(
-          admin_booking_selection_param(params, selection_params, "pass_id"),
+          selected_pass_param,
           passes
-        )
+        ) || (selected_active_pass && selected_active_pass.pass_id)
+
+      selected_pass_booking_type =
+        passes
+        |> Enum.find(&(&1.pass_id == selected_pass_id))
+        |> case do
+          nil -> selected_active_pass && selected_active_pass.pass_type
+          pass -> pass.pass_type
+        end
 
       pass_options = Enum.map(passes, &admin_pass_option/1)
 
@@ -274,6 +305,7 @@ defmodule LucaGymappWeb.PageController do
         selected_admin_user_id: selected_user_id,
         selected_booking_type: selected_booking_type,
         selected_pass_id: selected_pass_id,
+        selected_pass_booking_type: selected_pass_booking_type,
         pass_options: pass_options
       )
     else
@@ -401,7 +433,7 @@ defmodule LucaGymappWeb.PageController do
             []
 
           {user, "personal"} ->
-            SeasonPasses.active_passes_by_type(user.id, "personal")
+            SeasonPasses.active_passes_for_booking_type(user.id, "personal")
 
           {user, "cross"} ->
             SeasonPasses.active_passes_by_type(user.id, "cross")
@@ -427,6 +459,7 @@ defmodule LucaGymappWeb.PageController do
         %{"start_time" => start_time, "end_time" => end_time} = params
       ) do
     current_user_id = get_session(conn, :user_id)
+    selected_pass_id = normalize_optional_pass_id(Map.get(params, "pass_id"))
     week = normalize_optional_week_param(Map.get(params, "week"))
     redirect_path = booking_week_path(:personal, week)
 
@@ -434,7 +467,8 @@ defmodule LucaGymappWeb.PageController do
          {:ok, user} <- fetch_user(current_user_id),
          {:ok, start_dt, _} <- DateTime.from_iso8601(start_time),
          {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
-         {:ok, booking} <- Bookings.book_personal_training(user, start_dt, end_dt) do
+         {:ok, booking} <-
+           Bookings.book_personal_training(user, start_dt, end_dt, selected_pass_id) do
       Logger.info(
         "booking_success type=personal user_id=#{user.id} pass_id=#{booking.pass_id} booking_id=#{booking.id}"
       )
@@ -1174,6 +1208,26 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
+  defp selected_active_admin_booking_pass(nil, _pass_id), do: nil
+
+  defp selected_active_admin_booking_pass(_user, pass_id)
+       when not is_binary(pass_id) or pass_id == "" do
+    nil
+  end
+
+  defp selected_active_admin_booking_pass(user, pass_id) do
+    today = Date.utc_today()
+
+    user.id
+    |> SeasonPasses.list_user_passes()
+    |> Enum.find(fn pass ->
+      pass.pass_id == pass_id and
+        Date.compare(pass.expiry_date, today) in [:gt, :eq] and
+        pass.occasions > 0 and
+        pass.pass_type in ["personal", "paros", "cross"]
+    end)
+  end
+
   defp admin_pass_option(pass) do
     label =
       "#{SeasonPasses.display_name(pass.pass_name)} - #{pass.occasions} alkalom - lejarat: #{Booking.format_date(pass.expiry_date)}"
@@ -1228,6 +1282,15 @@ defmodule LucaGymappWeb.PageController do
 
   defp normalize_optional_week_param(value) when is_integer(value), do: Integer.to_string(value)
   defp normalize_optional_week_param(_), do: nil
+
+  defp normalize_optional_pass_id(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_optional_pass_id(_), do: nil
 
   defp booking_week_path(type, nil), do: ~p"/foglalas?type=#{type}&view=week"
   defp booking_week_path(type, week), do: ~p"/foglalas?type=#{type}&view=week&week=#{week}"

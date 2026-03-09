@@ -9,7 +9,8 @@ defmodule LucaGymapp.SeasonPasses do
     "berlet" => "bérlet",
     "kezdo" => "kezdő",
     "honapos" => "hónapos",
-    "etrend" => "étrend"
+    "etrend" => "étrend",
+    "paros" => "páros"
   }
 
   def season_pass_types do
@@ -44,12 +45,15 @@ defmodule LucaGymapp.SeasonPasses do
     season_pass_types()
     |> Enum.map(fn {key, config} ->
       type = Atom.to_string(key)
+      category = definition_category(type, config)
+      booking_pass_type = definition_booking_pass_type(type, config, category)
 
       %{
         key: key,
         type: type,
         name: display_name(type),
-        category: category_for_type(type),
+        category: category,
+        booking_pass_type: booking_pass_type,
         price_huf: Map.fetch!(config, :price_huf),
         occasions: Map.get(config, :occasions, 0),
         once_per_user: Map.get(config, :once_per_user, false)
@@ -118,9 +122,18 @@ defmodule LucaGymapp.SeasonPasses do
     |> Repo.all()
   end
 
+  def active_passes_for_booking_type(user_id, "personal") do
+    active_passes_by_types(user_id, ["personal", "paros"])
+  end
+
+  def active_passes_for_booking_type(user_id, pass_type) when is_binary(pass_type) do
+    active_passes_by_types(user_id, [pass_type])
+  end
+
   def latest_passes_by_type(user_id) do
     %{
       personal: latest_pass_by_type(user_id, "personal"),
+      paros: latest_pass_by_type(user_id, "paros"),
       cross: latest_pass_by_type(user_id, "cross"),
       other: latest_pass_by_type(user_id, "other")
     }
@@ -139,7 +152,7 @@ defmodule LucaGymapp.SeasonPasses do
         attrs = %{
           pass_id: Ecto.UUID.generate(),
           pass_name: type_def.type,
-          pass_type: pass_type_for_category(type_def.category),
+          pass_type: type_def.booking_pass_type,
           payment_id: payment_id,
           payment_method: payment_method,
           occasions: type_def.occasions,
@@ -199,20 +212,18 @@ defmodule LucaGymapp.SeasonPasses do
 
   defp enforce_once_per_user(_user_id, _type_def), do: :ok
 
-  defp enforce_no_active_pass(user_id, %{category: category}) do
-    pass_type = pass_type_for_category(category)
-
-    if pass_type in ["personal", "cross"] do
+  defp enforce_no_active_pass(user_id, %{booking_pass_type: pass_type}) do
+    if pass_type in ["personal", "cross", "paros"] do
       today = Date.utc_today()
 
       active_exists? =
         SeasonPass
         |> where([pass], pass.user_id == ^user_id)
+        |> where(^active_pass_type_filter(pass_type))
         |> where([pass], pass.occasions > 0)
         |> where([pass], pass.expiry_date >= ^today)
         |> lock("FOR UPDATE")
-        |> Repo.all()
-        |> Enum.any?(&same_category_active_pass?(&1, category, pass_type))
+        |> Repo.exists?()
 
       if active_exists? do
         {:error, :active_pass_exists}
@@ -224,24 +235,62 @@ defmodule LucaGymapp.SeasonPasses do
     end
   end
 
-  defp same_category_active_pass?(%SeasonPass{} = pass, category, pass_type) do
-    pass.pass_type == pass_type or category_for_type(pass.pass_name) == category
+  defp active_passes_by_types(user_id, pass_types) when is_list(pass_types) do
+    today = Date.utc_today()
+
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> where([pass], pass.pass_type in ^pass_types)
+    |> where([pass], pass.expiry_date >= ^today)
+    |> where([pass], pass.occasions > 0)
+    |> order_by([pass], desc: pass.purchase_timestamp)
+    |> Repo.all()
   end
 
-  defp category_for_type(type) do
+  defp definition_category(type, config) do
+    case Map.get(config, :display_category) do
+      value when value in [:cross, :szemelyi_edzes, :egyeb] ->
+        value
+
+      _ ->
+        inferred_category_for_type(type)
+    end
+  end
+
+  defp definition_booking_pass_type(type, config, category) do
+    case Map.get(config, :booking_pass_type) do
+      value when value in ["cross", "personal", "paros", "other"] ->
+        value
+
+      _ ->
+        inferred_booking_pass_type(type, category)
+    end
+  end
+
+  defp inferred_category_for_type(type) do
     cond do
       String.contains?(type, "cross") -> :cross
+      String.contains?(type, "paros") -> :szemelyi_edzes
       String.contains?(type, "alkalmas") -> :szemelyi_edzes
       true -> :egyeb
     end
   end
 
-  defp pass_type_for_category(category) do
-    case category do
-      :cross -> "cross"
-      :szemelyi_edzes -> "personal"
-      _ -> "other"
+  defp inferred_booking_pass_type(type, category) do
+    cond do
+      String.contains?(type, "cross") -> "cross"
+      String.contains?(type, "paros") -> "paros"
+      category == :szemelyi_edzes -> "personal"
+      true -> "other"
     end
+  end
+
+  defp active_pass_type_filter("cross") do
+    dynamic([pass], pass.pass_type == "cross" or like(pass.pass_type, "cross_%"))
+  end
+
+  defp active_pass_type_filter(pass_type) when is_binary(pass_type) do
+    dynamic([pass], pass.pass_type == ^pass_type)
   end
 
   defp add_months(%Date{} = date, months) when is_integer(months) and months >= 0 do

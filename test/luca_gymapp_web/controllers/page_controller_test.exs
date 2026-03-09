@@ -131,7 +131,10 @@ defmodule LucaGymappWeb.PageControllerTest do
            )
   end
 
-  test "berletek shows only latest valid pass per category and no empty-state text", %{conn: conn} do
+  test "berletek shows latest valid personal and paros passes separately and no empty-state text",
+       %{
+         conn: conn
+       } do
     user =
       %User{
         email: "passes@example.com",
@@ -166,6 +169,14 @@ defmodule LucaGymappWeb.PageControllerTest do
       expiry_date: Date.add(Date.utc_today(), 20)
     })
 
+    insert_pass(user.id, %{
+      pass_name: "paros_valid_latest",
+      pass_type: "paros",
+      occasions: 2,
+      purchase_timestamp: DateTime.add(now, -2, :day),
+      expiry_date: Date.add(Date.utc_today(), 20)
+    })
+
     conn = conn |> init_test_session(%{user_id: user.id}) |> get(~p"/berletek")
     html = html_response(conn, 200)
     doc = LazyHTML.from_document(html)
@@ -176,6 +187,7 @@ defmodule LucaGymappWeb.PageControllerTest do
       |> Enum.map(fn node -> node |> LazyHTML.text() |> String.trim() end)
 
     assert "Personal valid older" in recent_titles
+    assert "Páros valid latest" in recent_titles
     assert "Other valid latest" in recent_titles
     refute "Personal invalid newest" in recent_titles
 
@@ -183,6 +195,21 @@ defmodule LucaGymappWeb.PageControllerTest do
              LazyHTML.text(doc),
              "Nincs meg berlet ebben a kategoriaban."
            )
+  end
+
+  test "berletek shows paros passes in personal section", %{conn: conn} do
+    conn = get(conn, ~p"/berletek")
+    html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
+
+    personal_text =
+      doc
+      |> LazyHTML.query_by_id("passes-personal-section")
+      |> LazyHTML.text()
+
+    assert String.contains?(personal_text, "8 000 Ft")
+    assert String.contains?(personal_text, "18 000 Ft")
+    assert String.contains?(personal_text, "33 000 Ft")
   end
 
   test "purchase shows specific error when user already has active pass in category", %{
@@ -377,7 +404,7 @@ defmodule LucaGymappWeb.PageControllerTest do
 
     insert_pass(user.id, %{
       pass_name: "beta_pass",
-      pass_type: "personal",
+      pass_type: "paros",
       occasions: 2,
       purchase_timestamp: DateTime.utc_now() |> DateTime.truncate(:second)
     })
@@ -389,6 +416,90 @@ defmodule LucaGymappWeb.PageControllerTest do
 
     assert html =~ "Alpha pass"
     assert html =~ "Beta pass"
+  end
+
+  test "personal booking confirm modal shows pass selector when user has personal and paros passes",
+       %{
+         conn: conn
+       } do
+    user =
+      %User{
+        email: "personal-paros-selector@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    insert_pass(user.id, %{
+      pass_name: "personal_selector_pass",
+      pass_type: "personal",
+      occasions: 2
+    })
+
+    insert_pass(user.id, %{pass_name: "paros_selector_pass", pass_type: "paros", occasions: 2})
+
+    {start_time, end_time, week_offset} = future_slot_and_week()
+    insert_calendar_slot("personal", start_time, end_time)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> get(~p"/foglalas?type=personal&week=#{week_offset}")
+
+    html = html_response(conn, 200)
+    assert html =~ "Berlet kivalasztasa"
+    assert html =~ ~s(name="pass_id")
+    assert html =~ "Personal selector pass"
+    assert Regex.match?(~r/selector pass/i, html)
+  end
+
+  test "personal booking uses selected paros pass and decrements only that pass", %{conn: conn} do
+    user =
+      %User{
+        email: "personal-paros-selected-booking@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    personal_pass =
+      insert_pass(user.id, %{
+        pass_name: "selected_personal_pass",
+        pass_type: "personal",
+        occasions: 2
+      })
+
+    paros_pass =
+      insert_pass(user.id, %{pass_name: "selected_paros_pass", pass_type: "paros", occasions: 2})
+
+    slot_date = Date.add(Date.utc_today(), 2)
+    start_time = DateTime.new!(slot_date, ~T[10:00:00], "Etc/UTC")
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    insert_calendar_slot("personal", start_time, end_time)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/foglalas/personal", %{
+        "start_time" => DateTime.to_iso8601(start_time),
+        "end_time" => DateTime.to_iso8601(end_time),
+        "pass_id" => paros_pass.pass_id
+      })
+
+    assert redirected_to(conn) == ~p"/foglalas?type=personal&view=week"
+
+    booking =
+      PersonalBooking
+      |> Repo.all()
+      |> Enum.find(&(&1.user_id == user.id))
+
+    assert booking
+    assert booking.pass_id == paros_pass.pass_id
+
+    updated_personal = Repo.get_by!(SeasonPass, pass_id: personal_pass.pass_id)
+    updated_paros = Repo.get_by!(SeasonPass, pass_id: paros_pass.pass_id)
+    assert updated_personal.occasions == 2
+    assert updated_paros.occasions == 1
   end
 
   test "users cannot navigate to previous week and week offset is clamped at current week", %{
@@ -1019,6 +1130,14 @@ defmodule LucaGymappWeb.PageControllerTest do
         expiry_date: Date.add(Date.utc_today(), 15)
       })
 
+    _active_paros =
+      insert_pass(user.id, %{
+        pass_name: "paros_active_for_selector",
+        pass_type: "paros",
+        occasions: 2,
+        expiry_date: Date.add(Date.utc_today(), 15)
+      })
+
     _expired_personal =
       insert_pass(user.id, %{
         pass_name: "personal_expired_for_selector",
@@ -1063,6 +1182,8 @@ defmodule LucaGymappWeb.PageControllerTest do
              &String.contains?(&1, "Personal active for selector")
            )
 
+    assert length(personal_option_labels) == 3
+
     refute Enum.any?(
              personal_option_labels,
              &String.contains?(&1, "Personal expired for selector")
@@ -1088,9 +1209,10 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert Enum.any?(cross_option_labels, &String.contains?(&1, "Cross active for selector"))
     refute Enum.any?(cross_option_labels, &String.contains?(&1, "Cross zero for selector"))
     refute Enum.any?(cross_option_labels, &String.contains?(&1, "Personal active for selector"))
+    refute Enum.any?(cross_option_labels, &Regex.match?(~r/ros active for selector/i, &1))
   end
 
-  test "admin booking button appears on free slots for personal and cross", %{conn: conn} do
+  test "admin booking button appears on free slots for personal, paros and cross", %{conn: conn} do
     admin =
       %User{
         email: "admin-free-slot-book-button@example.com",
@@ -1122,6 +1244,13 @@ defmodule LucaGymappWeb.PageControllerTest do
         occasions: 2
       })
 
+    paros_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "free_slot_paros_pass",
+        pass_type: "paros",
+        occasions: 2
+      })
+
     monday = Date.beginning_of_week(Date.utc_today(), :monday)
     personal_start = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
     personal_end = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
@@ -1142,6 +1271,17 @@ defmodule LucaGymappWeb.PageControllerTest do
 
     assert personal_html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
     refute personal_html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+
+    paros_conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&type=personal&pass_id=#{paros_pass.pass_id}"
+      )
+
+    paros_html = html_response(paros_conn, 200)
+    assert paros_html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+    refute paros_html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
 
     cross_conn =
       conn
@@ -1196,6 +1336,53 @@ defmodule LucaGymappWeb.PageControllerTest do
           "user_id" => Integer.to_string(target_user.id),
           "type" => "personal",
           "pass_id" => personal_pass.pass_id
+        }
+      })
+
+    html = html_response(conn, 200)
+    assert html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+  end
+
+  test "admin booking infers personal calendar from selected paros pass when type is missing", %{
+    conn: conn
+  } do
+    admin =
+      %User{
+        email: "admin-infer-paros-type@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "infer-paros-type-target@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    paros_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "infer_paros_type_pass",
+        pass_type: "paros",
+        occasions: 2
+      })
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    personal_start = DateTime.new!(monday, ~T[13:00:00], "Etc/UTC")
+    personal_end = DateTime.new!(monday, ~T[14:00:00], "Etc/UTC")
+    personal_slot = insert_calendar_slot("personal", personal_start, personal_end)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(~p"/admin/foglalas", %{
+        "admin_booking_selection" => %{
+          "week" => "0",
+          "user_id" => Integer.to_string(target_user.id),
+          "pass_id" => paros_pass.pass_id
         }
       })
 

@@ -306,6 +306,7 @@ const initAdminBookingPassRefresh = () => {
     if (!selectedValue) {
       passSelect.value = ""
     }
+
   }
 
   const refreshPasses = () => {
@@ -338,9 +339,9 @@ const initAdminBookingPassRefresh = () => {
         const selected = typeof data.selected_pass_id === "string" ? data.selected_pass_id : ""
         setPassOptions(options, selected)
 
-        // If exactly one pass is available, it is auto-selected by the API response.
-        // Submit selection so server-rendered slot action buttons can appear immediately.
-        if (userId && type && selected && options.length === 1) {
+        // Submit whenever API resolved a valid selected pass so server-rendered
+        // booking buttons appear even when multiple options exist.
+        if (userId && type && selected) {
           form.requestSubmit()
         }
       })

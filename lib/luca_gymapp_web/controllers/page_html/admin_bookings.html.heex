@@ -154,7 +154,7 @@
                             <% end %>
                           <% end %>
 
-                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_booking_type == "personal" && @selected_pass_id do %>
+                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_pass_id && @selected_pass_booking_type in ["personal", "paros"] do %>
                             <.form
                               for={@admin_booking_create_form}
                               id={"admin-book-personal-slot-#{slot.id}"}
@@ -286,7 +286,7 @@
                             <p>Szabad helyek: {slot_info.remaining}</p>
                           <% end %>
 
-                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_booking_type == "cross" && @selected_pass_id do %>
+                          <%= if slot_info.remaining > 0 && @selected_admin_user_id && @selected_pass_id && @selected_pass_booking_type == "cross" do %>
                             <.form
                               for={@admin_booking_create_form}
                               id={"admin-book-cross-slot-#{slot.id}"}

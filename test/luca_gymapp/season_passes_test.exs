@@ -33,6 +33,22 @@ defmodule LucaGymapp.SeasonPassesTest do
              SeasonPasses.purchase_season_pass(user, "10_alkalmas_berlet")
   end
 
+  test "can buy one personal and one paros pass together" do
+    user = create_user()
+
+    assert {:ok, _personal_pass} = SeasonPasses.purchase_season_pass(user, "10_alkalmas_berlet")
+    assert {:ok, _paros_pass} = SeasonPasses.purchase_season_pass(user, "paros_5_alkalmas_berlet")
+  end
+
+  test "cannot buy two active paros passes" do
+    user = create_user()
+
+    assert {:ok, _pass} = SeasonPasses.purchase_season_pass(user, "paros_1_alkalmas_berlet")
+
+    assert {:error, :active_pass_exists} =
+             SeasonPasses.purchase_season_pass(user, "paros_10_alkalmas_berlet")
+  end
+
   test "cannot buy cross pass when active cross exists with legacy pass_type" do
     user = create_user()
 
@@ -112,6 +128,7 @@ defmodule LucaGymapp.SeasonPassesTest do
   test "display_name returns accented Hungarian labels" do
     assert SeasonPasses.display_name("10_alkalmas_berlet") == "10 alkalmas bérlet"
     assert SeasonPasses.display_name("cross_8_alkalmas_berlet") == "Cross 8 alkalmas bérlet"
+    assert SeasonPasses.display_name("paros_5_alkalmas_berlet") == "Páros 5 alkalmas bérlet"
     assert SeasonPasses.display_name("1_honapos_etrend") == "1 hónapos étrend"
     assert SeasonPasses.display_name("egyedi_berlet") == "Egyedi bérlet"
   end

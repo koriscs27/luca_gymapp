@@ -522,6 +522,34 @@
                     method="post"
                     class="mt-6"
                   >
+                                <%= if @booking_type == :personal && length(@current_passes) > 1 do %>
+                                  <label
+                      for={"personal-pass-select-#{slot_id}"}
+                      class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500"
+                    >
+                                    Berlet kivalasztasa
+                                  </label>
+                                  <select
+                      id={"personal-pass-select-#{slot_id}"}
+                      name="pass_id"
+                      class="mb-3 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                      required
+                    >
+                                    <option value="">Valassz berletet</option>
+                                    <%= for {label, pass_id} <- @personal_booking_pass_options do %>
+                                      <option value={
+                      pass_id
+                    }>{label}</option>
+                                    <% end %>
+                                  </select>
+                                <% end %>
+                                <%= if @booking_type == :personal && length(@current_passes) == 1 do %>
+                                  <.input
+                      type="hidden"
+                      name="pass_id"
+                      value={List.first(@current_passes).pass_id}
+                    />
+                                <% end %>
                                 <.input
                       type="hidden"
                       name="start_time"

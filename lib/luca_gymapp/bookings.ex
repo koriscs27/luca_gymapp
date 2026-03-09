@@ -15,12 +15,17 @@ defmodule LucaGymapp.Bookings do
     cross: 1 * 60 * 60
   }
 
-  def book_personal_training(%User{} = user, %DateTime{} = start_time, %DateTime{} = end_time) do
+  def book_personal_training(
+        %User{} = user,
+        %DateTime{} = start_time,
+        %DateTime{} = end_time,
+        selected_pass_id \\ nil
+      ) do
     Repo.transaction(fn ->
       enforce_booking_window!(:personal, start_time, end_time)
       enforce_slot_exists!("personal", start_time, end_time)
       lock_personal_bookings_table!()
-      pass = get_valid_personal_pass!(user.id)
+      pass = get_valid_personal_pass!(user.id, selected_pass_id)
       enforce_personal_capacity!(start_time, end_time)
       booking = create_personal_booking!(user, pass, start_time, end_time)
       decrement_pass_occasions!(pass)
@@ -432,7 +437,7 @@ defmodule LucaGymapp.Bookings do
         "personal" ->
           enforce_slot_exists!("personal", start_time, end_time)
           lock_personal_bookings_table!()
-          pass = get_admin_pass_for_update!(user.id, pass_id, "personal")
+          pass = get_admin_pass_for_update!(user.id, pass_id, ["personal", "paros"])
           enforce_personal_capacity!(start_time, end_time)
           booking = create_personal_booking!(user, pass, start_time, end_time)
           decrement_pass_occasions!(pass)
@@ -588,16 +593,33 @@ defmodule LucaGymapp.Bookings do
     end
   end
 
-  defp get_valid_personal_pass!(user_id) do
+  defp get_valid_personal_pass!(user_id, selected_pass_id) when selected_pass_id in [nil, ""] do
     today = Date.utc_today()
 
     SeasonPass
     |> where([pass], pass.user_id == ^user_id)
-    |> where([pass], pass.pass_type == "personal")
+    |> where([pass], pass.pass_type in ["personal", "paros"])
     |> where([pass], pass.occasions > 0)
     |> where([pass], pass.expiry_date >= ^today)
     |> order_by([pass], asc: pass.expiry_date, asc: pass.purchase_timestamp)
     |> limit(1)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      nil -> Repo.rollback(:no_valid_pass)
+      pass -> pass
+    end
+  end
+
+  defp get_valid_personal_pass!(user_id, selected_pass_id) when is_binary(selected_pass_id) do
+    today = Date.utc_today()
+
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> where([pass], pass.pass_id == ^selected_pass_id)
+    |> where([pass], pass.pass_type in ["personal", "paros"])
+    |> where([pass], pass.occasions > 0)
+    |> where([pass], pass.expiry_date >= ^today)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
@@ -624,17 +646,31 @@ defmodule LucaGymapp.Bookings do
     end
   end
 
-  defp get_admin_pass_for_update!(user_id, pass_id, pass_type)
-       when is_integer(user_id) and is_binary(pass_id) and is_binary(pass_type) do
+  defp get_admin_pass_for_update!(user_id, pass_id, pass_types)
+       when is_integer(user_id) and is_binary(pass_id) do
     today = Date.utc_today()
 
-    SeasonPass
-    |> where([pass], pass.user_id == ^user_id)
-    |> where([pass], pass.pass_id == ^pass_id)
-    |> where([pass], pass.pass_type == ^pass_type)
-    |> where([pass], pass.occasions > 0)
-    |> where([pass], pass.expiry_date >= ^today)
-    |> lock("FOR UPDATE")
+    query =
+      SeasonPass
+      |> where([pass], pass.user_id == ^user_id)
+      |> where([pass], pass.pass_id == ^pass_id)
+      |> where([pass], pass.occasions > 0)
+      |> where([pass], pass.expiry_date >= ^today)
+      |> lock("FOR UPDATE")
+
+    query =
+      cond do
+        is_binary(pass_types) ->
+          where(query, [pass], pass.pass_type == ^pass_types)
+
+        is_list(pass_types) ->
+          where(query, [pass], pass.pass_type in ^pass_types)
+
+        true ->
+          query
+      end
+
+    query
     |> Repo.one()
     |> case do
       nil -> Repo.rollback(:no_valid_pass)
