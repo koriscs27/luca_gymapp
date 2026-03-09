@@ -208,10 +208,46 @@ defmodule LucaGymappWeb.PageController do
       week_offset = parse_week_offset(params["week"])
       base_date = Date.add(Date.utc_today(), week_offset * 7)
       {week_start, week_end} = Booking.week_range(base_date)
+      admin_users = Accounts.list_users_for_admin_select()
+      selected_user_id = parse_optional_integer(params["user_id"])
+      selected_user = selected_admin_user(selected_user_id)
+
+      {personal_passes, cross_passes} =
+        case selected_user do
+          nil ->
+            {[], []}
+
+          user ->
+            {
+              SeasonPasses.active_passes_by_type(user.id, "personal"),
+              SeasonPasses.active_passes_by_type(user.id, "cross")
+            }
+        end
+
+      personal_selected_pass_id =
+        selected_pass_id(params["personal_pass_id"], personal_passes)
+
+      cross_selected_pass_id =
+        selected_pass_id(params["cross_pass_id"], cross_passes)
+
+      personal_pass_options = Enum.map(personal_passes, &admin_pass_option/1)
+      cross_pass_options = Enum.map(cross_passes, &admin_pass_option/1)
 
       personal_calendar = build_admin_calendar(:personal, week_start, week_end)
       cross_calendar = build_admin_calendar(:cross, week_start, week_end)
       admin_booking_delete_form = Phoenix.Component.to_form(%{}, as: :admin_booking_delete)
+      admin_booking_create_form = Phoenix.Component.to_form(%{}, as: :admin_booking_create)
+
+      admin_booking_selection_form =
+        Phoenix.Component.to_form(
+          %{
+            "week" => Integer.to_string(week_offset),
+            "user_id" => selected_user_id && Integer.to_string(selected_user_id),
+            "personal_pass_id" => personal_selected_pass_id,
+            "cross_pass_id" => cross_selected_pass_id
+          },
+          as: :admin_booking_selection
+        )
 
       render(conn, :admin_bookings,
         current_user: current_user_id,
@@ -221,7 +257,15 @@ defmodule LucaGymappWeb.PageController do
         week_end: week_end,
         personal_calendar: personal_calendar,
         cross_calendar: cross_calendar,
-        admin_booking_delete_form: admin_booking_delete_form
+        admin_booking_delete_form: admin_booking_delete_form,
+        admin_booking_create_form: admin_booking_create_form,
+        admin_booking_selection_form: admin_booking_selection_form,
+        admin_users: admin_users,
+        selected_admin_user_id: selected_user_id,
+        selected_personal_pass_id: personal_selected_pass_id,
+        selected_cross_pass_id: cross_selected_pass_id,
+        personal_pass_options: personal_pass_options,
+        cross_pass_options: cross_pass_options
       )
     else
       false ->
@@ -234,6 +278,99 @@ defmodule LucaGymappWeb.PageController do
       _ ->
         Logger.error("admin_bookings_error reason=unknown admin_user_id=#{current_user_id}")
         generic_error(conn, ~p"/")
+    end
+  end
+
+  def admin_create_booking(conn, %{"admin_booking_create" => booking_params}) do
+    current_user_id = get_session(conn, :user_id)
+    type = Map.get(booking_params, "type")
+    week = Map.get(booking_params, "week", "0")
+    user_id = Map.get(booking_params, "user_id")
+    pass_id = Map.get(booking_params, "pass_id")
+    start_time = Map.get(booking_params, "start_time")
+    end_time = Map.get(booking_params, "end_time")
+    personal_pass_id = Map.get(booking_params, "personal_pass_id")
+    cross_pass_id = Map.get(booking_params, "cross_pass_id")
+
+    with true <- current_user_id != nil,
+         {:ok, admin_user} <- fetch_user(current_user_id),
+         true <- admin_user.admin,
+         {type, _} <- parse_booking_type(type),
+         {user_id, _} <- Integer.parse(user_id),
+         true <- is_binary(pass_id) and pass_id != "",
+         {:ok, start_dt, _} <- DateTime.from_iso8601(start_time),
+         {:ok, end_dt, _} <- DateTime.from_iso8601(end_time),
+         {:ok, _booking} <- Bookings.admin_book_training(type, user_id, pass_id, start_dt, end_dt) do
+      conn
+      |> put_flash(:info, "A foglalas sikeresen letrehozva.")
+      |> redirect(
+        to:
+          admin_booking_path_with_selection(
+            week,
+            user_id,
+            personal_pass_id,
+            cross_pass_id
+          )
+      )
+    else
+      false ->
+        Logger.warning(
+          "admin_create_booking_error reason=unauthorized admin_user_id=#{current_user_id}"
+        )
+
+        generic_error(conn, ~p"/admin/foglalas")
+
+      {:error, :capacity_reached} ->
+        conn
+        |> put_flash(:error, "A kivalasztott idopont mar megtelt.")
+        |> redirect(
+          to:
+            admin_booking_path_with_selection(
+              week,
+              user_id,
+              personal_pass_id,
+              cross_pass_id
+            )
+        )
+
+      {:error, :no_valid_pass} ->
+        conn
+        |> put_flash(:error, "Nincs ervenyes berlet a kivalasztott felhasznalonak.")
+        |> redirect(
+          to:
+            admin_booking_path_with_selection(
+              week,
+              user_id,
+              personal_pass_id,
+              cross_pass_id
+            )
+        )
+
+      {:error, :slot_not_available} ->
+        conn
+        |> put_flash(:error, "A kivalasztott idopont nem erheto el.")
+        |> redirect(
+          to:
+            admin_booking_path_with_selection(
+              week,
+              user_id,
+              personal_pass_id,
+              cross_pass_id
+            )
+        )
+
+      _ ->
+        Logger.error("admin_create_booking_error reason=unknown admin_user_id=#{current_user_id}")
+
+        generic_error(
+          conn,
+          admin_booking_path_with_selection(
+            week,
+            user_id,
+            personal_pass_id,
+            cross_pass_id
+          )
+        )
     end
   end
 
@@ -948,6 +1085,41 @@ defmodule LucaGymappWeb.PageController do
   defp parse_booking_type("cross"), do: {:cross, :cross}
   defp parse_booking_type(_), do: {:personal, :personal}
 
+  defp parse_optional_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> int
+      _ -> nil
+    end
+  end
+
+  defp parse_optional_integer(value) when is_integer(value), do: value
+  defp parse_optional_integer(_), do: nil
+
+  defp selected_admin_user(nil), do: nil
+  defp selected_admin_user(user_id), do: Accounts.get_user(user_id)
+
+  defp selected_pass_id(param_value, passes) when is_list(passes) do
+    pass_ids = MapSet.new(Enum.map(passes, & &1.pass_id))
+
+    cond do
+      is_binary(param_value) and MapSet.member?(pass_ids, param_value) ->
+        param_value
+
+      passes == [] ->
+        nil
+
+      true ->
+        List.first(passes).pass_id
+    end
+  end
+
+  defp admin_pass_option(pass) do
+    label =
+      "#{SeasonPasses.display_name(pass.pass_name)} - #{pass.occasions} alkalom - lejarat: #{Booking.format_date(pass.expiry_date)}"
+
+    {label, pass.pass_id}
+  end
+
   defp load_adatkezelesi_tajekoztato_draft_content do
     path = Path.join(:code.priv_dir(:luca_gymapp), "legal/adatkezelesi_tajekoztato_draft.md")
 
@@ -998,6 +1170,16 @@ defmodule LucaGymappWeb.PageController do
 
   defp booking_week_path(type, nil), do: ~p"/foglalas?type=#{type}&view=week"
   defp booking_week_path(type, week), do: ~p"/foglalas?type=#{type}&view=week&week=#{week}"
+
+  defp admin_booking_path_with_selection(week, user_id, personal_pass_id, cross_pass_id) do
+    "/admin/foglalas?" <>
+      URI.encode_query(%{
+        "week" => to_string(week || "0"),
+        "user_id" => to_string(user_id || ""),
+        "personal_pass_id" => to_string(personal_pass_id || ""),
+        "cross_pass_id" => to_string(cross_pass_id || "")
+      })
+  end
 
   defp normalize_week_offset(week_offset, true), do: week_offset
   defp normalize_week_offset(week_offset, false), do: max(week_offset, 0)

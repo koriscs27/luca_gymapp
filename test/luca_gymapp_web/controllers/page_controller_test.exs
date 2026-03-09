@@ -950,6 +950,352 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert late_idx < open_idx
   end
 
+  test "admin bookings page shows user selector", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-selector-visible@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "selector-user@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(~p"/admin/foglalas?week=0")
+
+    html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
+    selector = LazyHTML.query_by_id(doc, "admin-booking-user-id")
+    option_labels = selector |> LazyHTML.query("option") |> Enum.map(&LazyHTML.text/1)
+
+    assert LazyHTML.tag(selector) == ["select"]
+    assert Enum.any?(option_labels, &String.contains?(&1, target_user.email))
+  end
+
+  test "admin bookings pass selectors show only active appropriate passes", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-pass-filter@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    user =
+      %User{
+        email: "pass-filter-user@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    active_personal =
+      insert_pass(user.id, %{
+        pass_name: "personal_active_for_selector",
+        pass_type: "personal",
+        occasions: 2,
+        expiry_date: Date.add(Date.utc_today(), 15)
+      })
+
+    _expired_personal =
+      insert_pass(user.id, %{
+        pass_name: "personal_expired_for_selector",
+        pass_type: "personal",
+        occasions: 2,
+        expiry_date: Date.add(Date.utc_today(), -1)
+      })
+
+    active_cross =
+      insert_pass(user.id, %{
+        pass_name: "cross_active_for_selector",
+        pass_type: "cross",
+        occasions: 2,
+        expiry_date: Date.add(Date.utc_today(), 15)
+      })
+
+    _zero_cross =
+      insert_pass(user.id, %{
+        pass_name: "cross_zero_for_selector",
+        pass_type: "cross",
+        occasions: 0,
+        expiry_date: Date.add(Date.utc_today(), 15)
+      })
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{user.id}&personal_pass_id=#{active_personal.pass_id}&cross_pass_id=#{active_cross.pass_id}"
+      )
+
+    html = html_response(conn, 200)
+    doc = LazyHTML.from_document(html)
+
+    personal_option_labels =
+      doc
+      |> LazyHTML.query("#admin-booking-personal-pass-id option")
+      |> Enum.map(&LazyHTML.text/1)
+
+    cross_option_labels =
+      doc
+      |> LazyHTML.query("#admin-booking-cross-pass-id option")
+      |> Enum.map(&LazyHTML.text/1)
+
+    assert Enum.any?(
+             personal_option_labels,
+             &String.contains?(&1, "Personal active for selector")
+           )
+
+    refute Enum.any?(
+             personal_option_labels,
+             &String.contains?(&1, "Personal expired for selector")
+           )
+
+    refute Enum.any?(personal_option_labels, &String.contains?(&1, "Cross active for selector"))
+
+    assert Enum.any?(cross_option_labels, &String.contains?(&1, "Cross active for selector"))
+    refute Enum.any?(cross_option_labels, &String.contains?(&1, "Cross zero for selector"))
+    refute Enum.any?(cross_option_labels, &String.contains?(&1, "Personal active for selector"))
+  end
+
+  test "admin booking button appears on free slots for personal and cross", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-free-slot-book-button@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "free-slot-target@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    personal_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "free_slot_personal_pass",
+        pass_type: "personal",
+        occasions: 2
+      })
+
+    cross_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "free_slot_cross_pass",
+        pass_type: "cross",
+        occasions: 2
+      })
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    personal_start = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
+    personal_end = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    cross_start = DateTime.new!(monday, ~T[17:00:00], "Etc/UTC")
+    cross_end = DateTime.new!(monday, ~T[18:00:00], "Etc/UTC")
+
+    personal_slot = insert_calendar_slot("personal", personal_start, personal_end)
+    cross_slot = insert_calendar_slot("cross", cross_start, cross_end)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&personal_pass_id=#{personal_pass.pass_id}&cross_pass_id=#{cross_pass.pass_id}"
+      )
+
+    html = html_response(conn, 200)
+
+    assert html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+    assert html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+  end
+
+  test "admin booking button does not appear on fully booked personal and cross slots", %{
+    conn: conn
+  } do
+    admin =
+      %User{
+        email: "admin-full-slot-no-button@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "full-slot-target@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    personal_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "full_slot_personal_pass",
+        pass_type: "personal",
+        occasions: 2
+      })
+
+    cross_pass =
+      insert_pass(target_user.id, %{
+        pass_name: "full_slot_cross_pass",
+        pass_type: "cross",
+        occasions: 2
+      })
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    personal_start = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+    personal_end = DateTime.new!(monday, ~T[11:00:00], "Etc/UTC")
+    cross_start = DateTime.new!(monday, ~T[18:00:00], "Etc/UTC")
+    cross_end = DateTime.new!(monday, ~T[19:00:00], "Etc/UTC")
+
+    personal_slot = insert_calendar_slot("personal", personal_start, personal_end)
+    cross_slot = insert_calendar_slot("cross", cross_start, cross_end)
+
+    personal_booked_user =
+      %User{
+        email: "full-slot-personal-booked@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    personal_booked_pass =
+      insert_pass(personal_booked_user.id, %{
+        pass_name: "full_slot_personal_booked_pass",
+        pass_type: "personal",
+        occasions: 1
+      })
+
+    insert_personal_booking(
+      personal_booked_user.id,
+      personal_booked_pass.pass_id,
+      personal_start,
+      personal_end
+    )
+
+    cross_capacity = Application.get_env(:luca_gymapp, :cross_max_overlap, 8)
+
+    Enum.each(1..cross_capacity, fn idx ->
+      booked_user =
+        %User{
+          email: "full-slot-cross-booked-#{idx}@example.com",
+          password_hash: "hash",
+          email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        }
+        |> Repo.insert!()
+
+      booked_pass =
+        insert_pass(booked_user.id, %{
+          pass_name: "full_slot_cross_booked_pass_#{idx}",
+          pass_type: "cross",
+          occasions: 1
+        })
+
+      insert_cross_booking(booked_user.id, booked_pass.pass_id, cross_start, cross_end)
+    end)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> get(
+        ~p"/admin/foglalas?week=0&user_id=#{target_user.id}&personal_pass_id=#{personal_pass.pass_id}&cross_pass_id=#{cross_pass.pass_id}"
+      )
+
+    html = html_response(conn, 200)
+
+    refute html =~ ~s(id="admin-book-personal-slot-#{personal_slot.id}")
+    refute html =~ ~s(id="admin-book-cross-slot-#{cross_slot.id}")
+  end
+
+  test "admin can book past near and far personal slots and pass loses occasions", %{conn: conn} do
+    admin =
+      %User{
+        email: "admin-time-window-bypass@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    target_user =
+      %User{
+        email: "time-window-target@example.com",
+        password_hash: "hash",
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    pass =
+      insert_pass(target_user.id, %{
+        pass_name: "admin_time_window_bypass_pass",
+        pass_type: "personal",
+        occasions: 3,
+        expiry_date: Date.add(Date.utc_today(), 20)
+      })
+
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    past_start = DateTime.add(now, -2 * 60 * 60, :second)
+    near_start = DateTime.add(now, 2 * 60 * 60, :second)
+    far_start = DateTime.add(now, 24 * 60 * 60, :second)
+
+    past_end = DateTime.add(past_start, 60 * 60, :second)
+    near_end = DateTime.add(near_start, 60 * 60, :second)
+    far_end = DateTime.add(far_start, 60 * 60, :second)
+
+    insert_calendar_slot("personal", past_start, past_end)
+    insert_calendar_slot("personal", near_start, near_end)
+    insert_calendar_slot("personal", far_start, far_end)
+
+    Enum.each(
+      [{past_start, past_end}, {near_start, near_end}, {far_start, far_end}],
+      fn {start_time, end_time} ->
+        conn =
+          conn
+          |> init_test_session(%{user_id: admin.id})
+          |> post(~p"/foglalas/admin/booking/create", %{
+            "admin_booking_create" => %{
+              "type" => "personal",
+              "user_id" => Integer.to_string(target_user.id),
+              "pass_id" => pass.pass_id,
+              "start_time" => DateTime.to_iso8601(start_time),
+              "end_time" => DateTime.to_iso8601(end_time),
+              "week" => "0",
+              "personal_pass_id" => pass.pass_id,
+              "cross_pass_id" => ""
+            }
+          })
+
+        assert redirected_to(conn) ==
+                 "/admin/foglalas?cross_pass_id=&personal_pass_id=#{pass.pass_id}&user_id=#{target_user.id}&week=0"
+      end
+    )
+
+    booking_count =
+      PersonalBooking
+      |> Repo.all()
+      |> Enum.count(&(&1.user_id == target_user.id and &1.status == "booked"))
+
+    assert booking_count == 3
+
+    updated_pass = Repo.get_by!(SeasonPass, pass_id: pass.pass_id)
+    assert updated_pass.occasions == 0
+  end
+
   test "admin can cancel cross booking and user receives email", %{conn: conn} do
     admin =
       %User{

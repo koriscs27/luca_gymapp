@@ -413,6 +413,50 @@ defmodule LucaGymapp.Bookings do
     end)
   end
 
+  def admin_book_training(
+        type,
+        user_id,
+        pass_id,
+        %DateTime{} = start_time,
+        %DateTime{} = end_time
+      )
+      when is_integer(user_id) and is_binary(pass_id) do
+    Repo.transaction(fn ->
+      user =
+        case Repo.get(User, user_id) do
+          nil -> Repo.rollback(:user_not_found)
+          user -> user
+        end
+
+      case slot_type_from_booking(type) do
+        "personal" ->
+          enforce_slot_exists!("personal", start_time, end_time)
+          lock_personal_bookings_table!()
+          pass = get_admin_pass_for_update!(user.id, pass_id, "personal")
+          enforce_personal_capacity!(start_time, end_time)
+          booking = create_personal_booking!(user, pass, start_time, end_time)
+          decrement_pass_occasions!(pass)
+          booking
+
+        "cross" ->
+          enforce_slot_exists!("cross", start_time, end_time)
+          lock_cross_bookings_table!()
+          pass = get_admin_pass_for_update!(user.id, pass_id, "cross")
+          enforce_cross_capacity!(start_time, end_time)
+          booking = create_cross_booking!(user, pass, start_time, end_time)
+          decrement_pass_occasions!(pass)
+          booking
+
+        _ ->
+          Repo.rollback(:invalid_type)
+      end
+    end)
+    |> case do
+      {:ok, booking} -> {:ok, booking}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp slot_type_from_booking(:personal), do: "personal"
   defp slot_type_from_booking(:cross), do: "cross"
   defp slot_type_from_booking(value) when is_binary(value), do: value
@@ -572,6 +616,24 @@ defmodule LucaGymapp.Bookings do
     |> where([pass], pass.expiry_date >= ^today)
     |> order_by([pass], asc: pass.expiry_date, asc: pass.purchase_timestamp)
     |> limit(1)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      nil -> Repo.rollback(:no_valid_pass)
+      pass -> pass
+    end
+  end
+
+  defp get_admin_pass_for_update!(user_id, pass_id, pass_type)
+       when is_integer(user_id) and is_binary(pass_id) and is_binary(pass_type) do
+    today = Date.utc_today()
+
+    SeasonPass
+    |> where([pass], pass.user_id == ^user_id)
+    |> where([pass], pass.pass_id == ^pass_id)
+    |> where([pass], pass.pass_type == ^pass_type)
+    |> where([pass], pass.occasions > 0)
+    |> where([pass], pass.expiry_date >= ^today)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
