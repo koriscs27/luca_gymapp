@@ -79,6 +79,15 @@ config :luca_gymapp,
 config :luca_gymapp, turnstile_required: false
 config :luca_gymapp, billing_client: LucaGymapp.Payments.SzamlazzClient
 config :luca_gymapp, :szamlazz, agent_key: "test-agent-key"
+config :luca_gymapp, :google_calendar_client, LucaGymapp.GoogleCalendar.StubClient
+config :luca_gymapp, :google_calendar_sync_runner, LucaGymapp.GoogleCalendar.InlineRunner
+
+config :luca_gymapp, :google_calendar,
+  oauth_mode: "test",
+  default_calendar_id: "primary",
+  client_id: "test-google-calendar-client-id",
+  client_secret: "test-google-calendar-client-secret",
+  redirect_uri: "http://www.example.com/admin/google-calendar/callback"
 
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,

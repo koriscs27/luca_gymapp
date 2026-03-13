@@ -9,12 +9,20 @@
             Heti attekintes szemelyi es cross foglalasokhoz. A coach minden foglalast torolhet.
           </p>
         </div>
-        <.link
-          href={~p"/"}
-          class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
-        >
-          Vissza a fooldalra
-        </.link>
+        <div class="flex flex-wrap gap-3">
+          <.link
+            href={~p"/admin/google-calendar"}
+            class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+          >
+            Google naptár
+          </.link>
+          <.link
+            href={~p"/"}
+            class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+          >
+            Vissza a fooldalra
+          </.link>
+        </div>
       </div>
     </div>
   </section>

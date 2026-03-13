@@ -27,6 +27,7 @@ defmodule LucaGymappWeb.Router do
     get "/barion/check/:payment_id", BarionController, :check
     get "/admin/foglalas", PageController, :admin_bookings
     get "/admin/foglalas/pass-options", PageController, :admin_booking_pass_options
+    get "/admin/google-calendar", GoogleCalendarController, :show
     post "/foglalas/personal", PageController, :create_personal_booking
     post "/foglalas/cross", PageController, :create_cross_booking
     post "/foglalas/personal/cancel", PageController, :cancel_personal_booking
@@ -40,6 +41,9 @@ defmodule LucaGymappWeb.Router do
     post "/foglalas/admin/upload-next-month", PageController, :admin_upload_next_month
     post "/berletek/purchase", PageController, :purchase_season_pass
     post "/berletek/admin/purchase", PageController, :admin_purchase_season_pass
+    post "/admin/google-calendar/connect", GoogleCalendarController, :connect
+    get "/admin/google-calendar/callback", GoogleCalendarController, :callback
+    delete "/admin/google-calendar/disconnect", GoogleCalendarController, :disconnect
     get "/auth/:provider", OAuthController, :request
     get "/auth/:provider/callback", OAuthController, :callback
     get "/confirm-email", EmailConfirmationController, :show

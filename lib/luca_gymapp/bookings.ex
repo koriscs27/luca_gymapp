@@ -6,6 +6,7 @@ defmodule LucaGymapp.Bookings do
   alias LucaGymapp.Bookings.CalendarSlot
   alias LucaGymapp.Bookings.CrossBooking
   alias LucaGymapp.Bookings.PersonalBooking
+  alias LucaGymapp.GoogleCalendar.Sync, as: GoogleCalendarSync
   alias LucaGymapp.Notifications
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
@@ -34,6 +35,7 @@ defmodule LucaGymapp.Bookings do
     |> case do
       {:ok, booking} = ok ->
         _ = Notifications.deliver_booking_notification(user, :personal, booking)
+        _ = GoogleCalendarSync.enqueue_booking_created(:personal, booking)
         ok
 
       {:error, _} = error ->
@@ -55,6 +57,7 @@ defmodule LucaGymapp.Bookings do
     |> case do
       {:ok, booking} = ok ->
         _ = Notifications.deliver_booking_notification(user, :cross, booking)
+        _ = GoogleCalendarSync.enqueue_booking_created(:cross, booking)
         ok
 
       {:error, _} = error ->
@@ -168,6 +171,7 @@ defmodule LucaGymapp.Bookings do
     |> case do
       {:ok, booking} = ok ->
         _ = Notifications.deliver_booking_cancellation_notification(user, :personal, booking)
+        _ = GoogleCalendarSync.enqueue_booking_cancelled(:personal, booking)
         ok
 
       {:error, _} = error ->
@@ -207,6 +211,7 @@ defmodule LucaGymapp.Bookings do
     |> case do
       {:ok, booking} = ok ->
         _ = Notifications.deliver_booking_cancellation_notification(user, :cross, booking)
+        _ = GoogleCalendarSync.enqueue_booking_cancelled(:cross, booking)
         ok
 
       {:error, _} = error ->
@@ -416,6 +421,14 @@ defmodule LucaGymapp.Bookings do
       increment_pass_occasions!(booking.pass_id)
       booking
     end)
+    |> case do
+      {:ok, booking} = ok ->
+        _ = GoogleCalendarSync.enqueue_booking_cancelled(type, booking)
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   def admin_book_training(
@@ -457,14 +470,42 @@ defmodule LucaGymapp.Bookings do
       end
     end)
     |> case do
-      {:ok, booking} -> {:ok, booking}
-      {:error, reason} -> {:error, reason}
+      {:ok, booking} = ok ->
+        _ = GoogleCalendarSync.enqueue_booking_created(type, booking)
+        ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def get_google_sync_booking(type, booking_id) when is_integer(booking_id) do
+    type
+    |> booking_schema_for_type()
+    |> where([booking], booking.id == ^booking_id)
+    |> preload(:user)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :not_found}
+      booking -> {:ok, booking}
+    end
+  end
+
+  def set_google_event_id(type, booking_id, event_id)
+      when is_integer(booking_id) and is_binary(event_id) do
+    with {:ok, booking} <- get_google_sync_booking(type, booking_id) do
+      booking
+      |> Ecto.Changeset.change(google_event_id: event_id)
+      |> Repo.update()
     end
   end
 
   defp slot_type_from_booking(:personal), do: "personal"
   defp slot_type_from_booking(:cross), do: "cross"
   defp slot_type_from_booking(value) when is_binary(value), do: value
+
+  defp booking_schema_for_type(type) when type in [:personal, "personal"], do: PersonalBooking
+  defp booking_schema_for_type(type) when type in [:cross, "cross"], do: CrossBooking
 
   defp publish_default_next_month_for_type(type, week_starts) do
     slot_type = slot_type_from_booking(type)

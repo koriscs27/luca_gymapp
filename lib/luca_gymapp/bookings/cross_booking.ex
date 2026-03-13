@@ -11,6 +11,7 @@ defmodule LucaGymapp.Bookings.CrossBooking do
     field :end_time, :utc_datetime
     field :booking_timestamp, :utc_datetime
     field :status, :string
+    field :google_event_id, :string
 
     belongs_to :user, User
 
@@ -30,6 +31,7 @@ defmodule LucaGymapp.Bookings.CrossBooking do
       :end_time,
       :booking_timestamp,
       :status,
+      :google_event_id,
       :pass_id
     ])
     |> validate_required([

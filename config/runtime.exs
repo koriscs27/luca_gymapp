@@ -49,6 +49,13 @@ config :luca_gymapp, :turnstile,
   site_key: System.get_env("TURNSTILE_SITE_KEY"),
   secret_key: System.get_env("TURNSTILE_SECRET_KEY")
 
+config :luca_gymapp, :google_calendar,
+  oauth_mode: trimmed_env.("GOOGLE_CALENDAR_OAUTH_MODE") || "test",
+  default_calendar_id: trimmed_env.("GOOGLE_CALENDAR_DEFAULT_ID") || "primary",
+  client_id: trimmed_env.("GOOGLE_CALENDAR_CLIENT_ID"),
+  client_secret: trimmed_env.("GOOGLE_CALENDAR_CLIENT_SECRET"),
+  redirect_uri: trimmed_env.("GOOGLE_CALENDAR_REDIRECT_URI")
+
 config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")
 config :luca_gymapp, :barion_pixel_id, trimmed_env.("BARION_PIXEL_ID")
 config :luca_gymapp, :billing_enabled, bool_env.("BILLING_ENABLED", false)

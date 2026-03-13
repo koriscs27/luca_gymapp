@@ -2,8 +2,13 @@ defmodule LucaGymapp.BookingsTest do
   use LucaGymapp.DataCase
 
   alias LucaGymapp.Accounts
+  alias LucaGymapp.Accounts.User
   alias LucaGymapp.Bookings
   alias LucaGymapp.Bookings.CalendarSlot
+  alias LucaGymapp.Bookings.PersonalBooking
+  alias LucaGymapp.GoogleCalendar
+  alias LucaGymapp.GoogleCalendar.Connection
+  alias LucaGymapp.GoogleCalendar.TokenCipher
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
 
@@ -282,10 +287,177 @@ defmodule LucaGymapp.BookingsTest do
     assert Bookings.cancellation_window_seconds(:cross) == 1_800
   end
 
+  test "personal booking succeeds when google event creation fails" do
+    user = create_user()
+    create_pass(user, "personal", 1, Date.add(Date.utc_today(), 30))
+    create_google_calendar_connection()
+
+    previous_stub = Application.get_env(:luca_gymapp, :google_calendar_stub, %{})
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :google_calendar_stub, previous_stub)
+    end)
+
+    Application.put_env(:luca_gymapp, :google_calendar_stub, %{
+      create_event: {:error, :calendar_down}
+    })
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:ok, booking} = Bookings.book_personal_training(user, start_time, end_time)
+
+    booking = Repo.get!(PersonalBooking, booking.id)
+    pass = Repo.one!(from pass in SeasonPass, where: pass.user_id == ^user.id)
+
+    assert is_nil(booking.google_event_id)
+    assert pass.occasions == 0
+  end
+
+  test "personal booking uses configured calendar id without reconnect" do
+    user = create_user()
+    create_pass(user, "personal", 1, Date.add(Date.utc_today(), 30))
+    create_google_calendar_connection()
+
+    previous_calendar_config = Application.get_env(:luca_gymapp, :google_calendar, [])
+    previous_stub = Application.get_env(:luca_gymapp, :google_calendar_stub, %{})
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :google_calendar, previous_calendar_config)
+      Application.put_env(:luca_gymapp, :google_calendar_stub, previous_stub)
+    end)
+
+    Application.put_env(
+      :luca_gymapp,
+      :google_calendar,
+      Keyword.put(previous_calendar_config, :default_calendar_id, "coach-calendar@example.com")
+    )
+
+    Application.put_env(:luca_gymapp, :google_calendar_stub, %{notify_pid: self()})
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+    :ok = ensure_slot("personal", start_time, end_time)
+
+    assert {:ok, _booking} = Bookings.book_personal_training(user, start_time, end_time)
+
+    assert_receive {:google_calendar_create_event, "coach-calendar@example.com", attrs}
+    assert attrs.id =~ "lgp"
+  end
+
+  test "cancelling old personal booking without google event id still works" do
+    user = create_user()
+    pass = create_pass(user, "personal", 0, Date.add(Date.utc_today(), 30))
+    create_google_calendar_connection()
+
+    previous_stub = Application.get_env(:luca_gymapp, :google_calendar_stub, %{})
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :google_calendar_stub, previous_stub)
+    end)
+
+    Application.put_env(:luca_gymapp, :google_calendar_stub, %{notify_pid: self()})
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+
+    booking =
+      %PersonalBooking{}
+      |> PersonalBooking.changeset(%{
+        user_name: "Booking User",
+        start_time: start_time,
+        end_time: end_time,
+        booking_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
+        status: "booked",
+        pass_id: pass.pass_id
+      })
+      |> Ecto.Changeset.put_change(:user_id, user.id)
+      |> Repo.insert!()
+
+    assert {:ok, cancelled_booking} = Bookings.cancel_personal_booking(user, start_time, end_time)
+
+    cancelled_booking = Repo.get!(PersonalBooking, cancelled_booking.id)
+    updated_pass = Repo.get_by!(SeasonPass, pass_id: pass.pass_id)
+
+    assert booking.id == cancelled_booking.id
+    assert cancelled_booking.status == "cancelled"
+    assert is_nil(cancelled_booking.google_event_id)
+    assert updated_pass.occasions == 1
+    refute_receive {:google_calendar_delete_event, _, _}
+  end
+
+  test "personal cancellation succeeds when google event deletion fails" do
+    user = create_user()
+    pass = create_pass(user, "personal", 0, Date.add(Date.utc_today(), 30))
+    create_google_calendar_connection()
+
+    previous_stub = Application.get_env(:luca_gymapp, :google_calendar_stub, %{})
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :google_calendar_stub, previous_stub)
+    end)
+
+    Application.put_env(:luca_gymapp, :google_calendar_stub, %{
+      delete_event: {:error, :calendar_delete_failed}
+    })
+
+    start_time =
+      DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(8 * 60 * 60, :second)
+
+    end_time = DateTime.add(start_time, 60 * 60, :second)
+
+    booking =
+      %PersonalBooking{}
+      |> PersonalBooking.changeset(%{
+        user_name: "Booking User",
+        start_time: start_time,
+        end_time: end_time,
+        booking_timestamp: DateTime.utc_now() |> DateTime.truncate(:second),
+        status: "booked",
+        google_event_id: "lgptestdelete",
+        pass_id: pass.pass_id
+      })
+      |> Ecto.Changeset.put_change(:user_id, user.id)
+      |> Repo.insert!()
+
+    assert {:ok, cancelled_booking} = Bookings.cancel_personal_booking(user, start_time, end_time)
+
+    cancelled_booking = Repo.get!(PersonalBooking, cancelled_booking.id)
+    updated_pass = Repo.get_by!(SeasonPass, pass_id: pass.pass_id)
+
+    assert booking.id == cancelled_booking.id
+    assert cancelled_booking.status == "cancelled"
+    assert updated_pass.occasions == 1
+  end
+
   defp create_user do
     email = "booking-user-#{System.unique_integer([:positive])}@example.com"
     {:ok, user} = Accounts.create_user(%{email: email, name: "Booking User"})
     user
+  end
+
+  defp create_google_calendar_connection do
+    %User{email: "calendar-admin-#{System.unique_integer([:positive])}@example.com", admin: true}
+    |> Ecto.Changeset.change(email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second))
+    |> Repo.insert!()
+    |> then(fn user ->
+      %Connection{}
+      |> Connection.changeset(%{
+        user_id: user.id,
+        google_email: "coach@example.com",
+        refresh_token_encrypted: TokenCipher.encrypt("refresh-token"),
+        oauth_mode: GoogleCalendar.current_oauth_mode(),
+        sync_enabled: true
+      })
+      |> Repo.insert!()
+    end)
   end
 
   defp create_personal_pass(user, occasions) do
