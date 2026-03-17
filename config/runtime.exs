@@ -52,8 +52,8 @@ config :luca_gymapp, :turnstile,
 config :luca_gymapp, :google_calendar,
   oauth_mode: trimmed_env.("GOOGLE_CALENDAR_OAUTH_MODE") || "test",
   default_calendar_id: trimmed_env.("GOOGLE_CALENDAR_DEFAULT_ID") || "primary",
-  client_id: trimmed_env.("GOOGLE_CALENDAR_CLIENT_ID"),
-  client_secret: trimmed_env.("GOOGLE_CALENDAR_CLIENT_SECRET"),
+  client_id: trimmed_env.("GOOGLE_CLIENT_ID"),
+  client_secret: trimmed_env.("GOOGLE_CLIENT_SECRET"),
   redirect_uri: trimmed_env.("GOOGLE_CALENDAR_REDIRECT_URI")
 
 config :luca_gymapp, :support_email, trimmed_env.("SUPPORT_EMAIL")

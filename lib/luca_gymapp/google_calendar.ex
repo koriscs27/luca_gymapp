@@ -36,8 +36,8 @@ defmodule LucaGymapp.GoogleCalendar do
 
   def missing_config_fields do
     [
-      {"GOOGLE_CALENDAR_CLIENT_ID", configured_client_id()},
-      {"GOOGLE_CALENDAR_CLIENT_SECRET", configured_client_secret()},
+      {"GOOGLE_CLIENT_ID", configured_client_id()},
+      {"GOOGLE_CLIENT_SECRET", configured_client_secret()},
       {"GOOGLE_CALENDAR_REDIRECT_URI", configured_redirect_uri()}
     ]
     |> Enum.reduce([], fn
