@@ -4,9 +4,9 @@
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p class="text-xs uppercase tracking-[0.3em] text-white/60">Admin</p>
-          <h1 class="mt-3 text-3xl font-semibold">Foglalasok</h1>
+          <h1 class="mt-3 text-3xl font-semibold">Foglalások</h1>
           <p class="mt-3 max-w-2xl text-white/70">
-            Heti attekintes szemelyi es cross foglalasokhoz. A coach minden foglalast torolhet.
+            Heti áttekintés személyi és cross foglalásokhoz. A coach minden foglalást törölhet.
           </p>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -20,7 +20,7 @@
             href={~p"/"}
             class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
           >
-            Vissza a fooldalra
+            Vissza a főoldalra
           </.link>
         </div>
       </div>
@@ -30,7 +30,7 @@
     <div class="mx-auto flex w-full max-w-[94rem] flex-col gap-12">
       <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
         <div>
-          <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Het</p>
+          <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Hét</p>
           <p class="mt-1 text-sm font-semibold text-neutral-900">
             {LucaGymapp.Booking.format_date(@week_start)} - {LucaGymapp.Booking.format_date(
               @week_end
@@ -42,20 +42,20 @@
             href={~p"/admin/foglalas?week=#{@week_offset - 1}"}
             class="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-600 transition-transform duration-150 hover:border-neutral-300 active:scale-95"
           >
-            Elozo het
+            Előző hét
           </.link>
           <.link
             href={~p"/admin/foglalas?week=#{@week_offset + 1}"}
             class="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-600 transition-transform duration-150 hover:border-neutral-300 active:scale-95"
           >
-            Kovetkezo het
+            Következő hét
           </.link>
         </div>
       </div>
 
       <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
         <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">
-          Admin foglalas letrehozasa
+          Admin foglalás létrehozása
         </p>
         <.form
           for={@admin_booking_selection_form}
@@ -74,22 +74,22 @@
             field={@admin_booking_selection_form[:user_id]}
             id="admin-booking-user-id"
             type="select"
-            label="Felhasznalo"
-            options={[{"Valassz felhasznalot", ""} | @admin_users]}
+            label="Felhasználó"
+            options={[{"Válassz felhasználót", ""} | @admin_users]}
           />
           <.input
             field={@admin_booking_selection_form[:type]}
             id="admin-booking-type"
             type="select"
-            label="Tipus"
-            options={[{"Valassz tipust", ""}, {"Szemelyi", "personal"}, {"Cross", "cross"}]}
+            label="Típus"
+            options={[{"Válassz típust", ""}, {"Személyi", "personal"}, {"Cross", "cross"}]}
           />
           <.input
             field={@admin_booking_selection_form[:pass_id]}
             id="admin-booking-pass-id"
             type="select"
-            label="Aktiv berlet"
-            options={[{"Valassz berletet", ""} | @pass_options]}
+            label="Aktív bérlet"
+            options={[{"Válassz bérletet", ""} | @pass_options]}
           />
         </.form>
       </div>
@@ -97,9 +97,9 @@
       <div class="space-y-12">
         <div class="space-y-5">
           <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-semibold">Szemelyi naptar</h2>
+            <h2 class="text-2xl font-semibold">Személyi naptár</h2>
             <span class="text-xs uppercase tracking-[0.3em] text-neutral-400">
-              Kapacitas: {@personal_calendar.capacity}
+              Kapacitás: {@personal_calendar.capacity}
             </span>
           </div>
           <div class="rounded-2xl border border-neutral-200 bg-white p-4 lg:p-5">
@@ -124,7 +124,7 @@
                         </div>
                         <div class="mt-2 space-y-1 text-[11px] text-neutral-500">
                           <%= if slot_info.bookings == [] do %>
-                            <p>Szabad idopont</p>
+                            <p>Szabad időpont</p>
                           <% else %>
                             <%= for booking <- slot_info.bookings do %>
                               <div class="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1.5">
@@ -155,7 +155,7 @@
                                     type="submit"
                                     class="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 transition hover:border-rose-300"
                                   >
-                                    Torles
+                                    Törlés
                                   </button>
                                 </.form>
                               </div>
@@ -209,7 +209,7 @@
                                 type="submit"
                                 class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
                               >
-                                Foglalas
+                                Foglalás
                               </button>
                             </.form>
                           <% end %>
@@ -217,7 +217,7 @@
                       </div>
                     <% end %>
                     <%= if day.hour_slots == [] do %>
-                      <p class="text-xs text-neutral-400">Nincs idopont</p>
+                      <p class="text-xs text-neutral-400">Nincs időpont</p>
                     <% end %>
                   </div>
                 </div>
@@ -228,9 +228,9 @@
 
         <div class="space-y-5">
           <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-semibold">Cross naptar</h2>
+            <h2 class="text-2xl font-semibold">Cross naptár</h2>
             <span class="text-xs uppercase tracking-[0.3em] text-neutral-400">
-              Kapacitas: {@cross_calendar.capacity}
+              Kapacitás: {@cross_calendar.capacity}
             </span>
           </div>
           <div class="rounded-2xl border border-neutral-200 bg-white p-4 lg:p-5">
@@ -284,7 +284,7 @@
                                     type="submit"
                                     class="w-full rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 transition hover:border-rose-300"
                                   >
-                                    Torles
+                                    Törlés
                                   </button>
                                 </.form>
                               </div>
@@ -341,7 +341,7 @@
                                 type="submit"
                                 class="w-full rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:border-emerald-300"
                               >
-                                Foglalas
+                                Foglalás
                               </button>
                             </.form>
                           <% end %>
@@ -349,7 +349,7 @@
                       </div>
                     <% end %>
                     <%= if day.hour_slots == [] do %>
-                      <p class="text-xs text-neutral-400">Nincs idopont</p>
+                      <p class="text-xs text-neutral-400">Nincs időpont</p>
                     <% end %>
                   </div>
                 </div>

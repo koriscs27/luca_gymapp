@@ -6,14 +6,14 @@
           <p class="text-xs uppercase tracking-[0.3em] text-white/60">Admin</p>
           <h1 class="mt-3 text-3xl font-semibold">Google Calendar Sync</h1>
           <p class="mt-3 max-w-2xl text-white/70">
-            Itt lehet osszekotni a coach Google Calendarjat a foglalasi rendszerrel.
+            Itt lehet összekötni a coach Google Calendarját a foglalási rendszerrel.
           </p>
         </div>
         <.link
           href={~p"/admin/foglalas"}
           class="inline-flex rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
         >
-          Vissza az admin foglalasokhoz
+          Vissza az admin foglalásokhoz
         </.link>
       </div>
     </div>
@@ -22,7 +22,7 @@
   <section class="bg-white px-5 py-12 text-neutral-900 sm:px-8 lg:px-10">
     <div class="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <div class="rounded-3xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm">
-        <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Kapcsolat allapota</p>
+        <p class="text-xs uppercase tracking-[0.3em] text-neutral-400">Kapcsolat állapota</p>
         <div class="mt-4 grid gap-4 sm:grid-cols-2">
           <div class="rounded-2xl border border-neutral-200 bg-white p-4">
             <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Google email</p>
@@ -35,36 +35,36 @@
           </div>
 
           <div class="rounded-2xl border border-neutral-200 bg-white p-4">
-            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">OAuth mod</p>
+            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">OAuth mód</p>
             <p class="mt-2 text-sm font-semibold text-neutral-900">{@oauth_mode}</p>
           </div>
 
           <div class="rounded-2xl border border-neutral-200 bg-white p-4">
-            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Cel calendar</p>
+            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Cél calendar</p>
             <p class="mt-2 text-sm font-semibold text-neutral-900">{@effective_calendar_id}</p>
           </div>
 
           <div class="rounded-2xl border border-neutral-200 bg-white p-4">
-            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Sync statusz</p>
+            <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Sync státusz</p>
             <p class="mt-2 text-sm font-semibold text-neutral-900">
               {if(@connection && @connection.sync_enabled && @connection.refresh_token_encrypted,
-                do: "Aktiv",
-                else: "Nincs aktiv kapcsolat"
+                do: "Aktív",
+                else: "Nincs aktív kapcsolat"
               )}
             </p>
           </div>
         </div>
 
         <div class="mt-6 rounded-2xl border border-neutral-200 bg-white p-4">
-          <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Utolso allapot</p>
+          <p class="text-xs uppercase tracking-[0.25em] text-neutral-400">Utolsó állapot</p>
           <%= if @connection && @connection.last_sync_error do %>
             <p class="mt-2 text-sm font-semibold text-red-700">{@connection.last_sync_error}</p>
           <% else %>
             <p class="mt-2 text-sm text-neutral-600">
               {if(@connection && @connection.last_synced_at,
                 do:
-                  "Utolso sikeres sync: #{Calendar.strftime(@connection.last_synced_at, "%Y-%m-%d %H:%M UTC")}",
-                else: "Meg nem volt sikeres Google Calendar sync."
+                  "Utolsó sikeres sync: #{Calendar.strftime(@connection.last_synced_at, "%Y-%m-%d %H:%M UTC")}",
+                else: "Még nem volt sikeres Google Calendar sync."
               )}
             </p>
           <% end %>
@@ -104,20 +104,20 @@
       </div>
 
       <div class="rounded-3xl border border-[#d6c2a1] bg-[#f7efe3] p-6 shadow-sm">
-        <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/55">Szukseges beallitasok</p>
+        <p class="text-xs uppercase tracking-[0.3em] text-[#7a1c1c]/55">Szükséges beállítások</p>
         <ul class="mt-4 space-y-3 text-sm text-[#7a1c1c]">
-          <li>A coach a Google belepteto ablakban egyszer jovahagyja a calendar hozzaferest.</li>
-          <li>Az app a refresh tokent tarolja, az access tokeneket utana magatol frissiti.</li>
-          <li>A foglalas sikeret nem blokkolja, ha a Google sync atmenetileg hibazik.</li>
+          <li>A coach a Google beléptető ablakban egyszer jóváhagyja a calendar hozzáférést.</li>
+          <li>Az app a refresh tokent tárolja, az access tokeneket utána magától frissíti.</li>
+          <li>A foglalás sikerét nem blokkolja, ha a Google sync átmenetileg hibázik.</li>
         </ul>
 
         <%= if @missing_config_fields != [] do %>
           <div class="mt-6 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm text-red-700">
-            Hianyzo env valtozok: {Enum.join(@missing_config_fields, ", ")}
+            Hiányzó env változók: {Enum.join(@missing_config_fields, ", ")}
           </div>
         <% else %>
           <div class="mt-6 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm text-emerald-700">
-            A szukseges Google Calendar env valtozok be vannak allitva.
+            A szükséges Google Calendar env változók be vannak állítva.
           </div>
         <% end %>
       </div>
