@@ -17,7 +17,12 @@ defmodule LucaGymappWeb.PageControllerTest do
     html = html_response(conn, 200)
 
     assert html =~ "PL logo"
+    assert html =~ "Luca GymApp"
     assert html =~ "home-video-personal"
+    assert html =~ ~s(id="homepage-terms-link")
+    assert html =~ ~s(href="/aszf?return_to=%2F")
+    assert html =~ ~s(id="homepage-privacy-link")
+    assert html =~ ~s(href="/adatkezelesi-tajekoztato?return_to=%2F")
   end
 
   test "GET / renders Barion Pixel base code when pixel id is configured", %{conn: conn} do
