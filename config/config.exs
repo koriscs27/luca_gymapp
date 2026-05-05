@@ -55,13 +55,13 @@ config :luca_gymapp,
       booking_pass_type: "paros"
     },
     paros_5_alkalmas_berlet: %{
-      price_huf: 18_000,
+      price_huf: 36_000,
       occasions: 5,
       display_category: :szemelyi_edzes,
       booking_pass_type: "paros"
     },
     paros_10_alkalmas_berlet: %{
-      price_huf: 33_000,
+      price_huf: 66_000,
       occasions: 10,
       display_category: :szemelyi_edzes,
       booking_pass_type: "paros"
