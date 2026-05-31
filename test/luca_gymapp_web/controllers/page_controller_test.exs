@@ -671,6 +671,58 @@ defmodule LucaGymappWeb.PageControllerTest do
     assert Repo.get!(PersonalBooking, booking.id).status == "booked"
   end
 
+  test "admin upload ignores stale deleted slots and still applies remaining drafts", %{
+    conn: conn
+  } do
+    admin =
+      %User{
+        email: "stale-delete-upload-admin@example.com",
+        password_hash: "hash",
+        admin: true,
+        email_confirmed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      }
+      |> Repo.insert!()
+
+    monday = Date.beginning_of_week(Date.utc_today(), :monday)
+    deleted_start = DateTime.new!(monday, ~T[08:00:00], "Etc/UTC")
+    deleted_end = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
+    added_start = DateTime.new!(monday, ~T[09:00:00], "Etc/UTC")
+    added_end = DateTime.new!(monday, ~T[10:00:00], "Etc/UTC")
+
+    deleted_slot = insert_calendar_slot("personal", deleted_start, deleted_end)
+
+    added_slot = %CalendarSlot{
+      slot_type: "personal",
+      start_time: added_start,
+      end_time: added_end
+    }
+
+    :ok = AdminDraftStore.mark_delete(admin.id, :personal, deleted_slot.id)
+    {:ok, _} = Repo.delete(deleted_slot)
+    :ok = AdminDraftStore.add_slot(admin.id, :personal, added_slot)
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: admin.id})
+      |> post(~p"/foglalas/admin/upload", %{
+        "admin_upload" => %{
+          "type" => "personal",
+          "week" => "0"
+        }
+      })
+
+    assert redirected_to(conn) == ~p"/admin/foglalas?week=0"
+    assert Phoenix.Flash.get(conn.assigns.flash, :info)
+
+    assert Repo.get(CalendarSlot, deleted_slot.id) == nil
+
+    assert Repo.get_by(CalendarSlot,
+             slot_type: "personal",
+             start_time: added_start,
+             end_time: added_end
+           )
+  end
+
   test "admin upload next month fills both types and skips already occupied days", %{conn: conn} do
     admin =
       %User{

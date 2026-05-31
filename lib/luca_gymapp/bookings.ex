@@ -353,6 +353,7 @@ defmodule LucaGymapp.Bookings do
       Enum.each(deletions, fn slot_id ->
         case delete_calendar_slot(slot_id) do
           {:ok, _slot} -> :ok
+          {:error, :not_found} -> :ok
           {:error, reason} -> Repo.rollback(reason)
         end
       end)
