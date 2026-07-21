@@ -87,8 +87,8 @@ config :luca_gymapp,
         tuesday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
         wednesday: [%{from: ~T[08:00:00], to: ~T[18:00:00]}],
         thursday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}],
-        friday: [%{from: ~T[11:00:00], to: ~T[14:00:00]}],
-        saturday: [%{from: ~T[08:00:00], to: ~T[12:00:00]}]
+        friday: [%{from: ~T[08:00:00], to: ~T[14:00:00]}],
+        saturday: [%{from: ~T[08:00:00], to: ~T[10:00:00]}]
       }
     },
     cross: %{
