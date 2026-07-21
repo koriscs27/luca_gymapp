@@ -213,8 +213,8 @@ defmodule LucaGymappWeb.PageControllerTest do
       |> LazyHTML.text()
 
     assert String.contains?(personal_text, "8 000 Ft")
-    assert String.contains?(personal_text, "18 000 Ft")
-    assert String.contains?(personal_text, "33 000 Ft")
+    assert String.contains?(personal_text, "36 000 Ft")
+    assert String.contains?(personal_text, "66 000 Ft")
   end
 
   test "purchase shows specific error when user already has active pass in category", %{
