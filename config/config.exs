@@ -24,56 +24,56 @@ config :luca_gymapp,
   },
   season_pass_types: %{
     :"1_alkalmas_jegy" => %{
-      price_huf: 6_000,
+      price_huf: 7_000,
       occasions: 1,
       display_category: :szemelyi_edzes,
       booking_pass_type: "personal"
     },
     :"5_alkalmas_kezdo" => %{
-      price_huf: 15_000,
+      price_huf: 20_000,
       occasions: 5,
       once_per_user: true,
       display_category: :szemelyi_edzes,
       booking_pass_type: "personal"
     },
     :"5_alkalmas_berlet" => %{
-      price_huf: 25_000,
+      price_huf: 32_500,
       occasions: 5,
       display_category: :szemelyi_edzes,
       booking_pass_type: "personal"
     },
     :"10_alkalmas_berlet" => %{
-      price_huf: 45_000,
+      price_huf: 60_000,
       occasions: 10,
       display_category: :szemelyi_edzes,
       booking_pass_type: "personal"
     },
     paros_1_alkalmas_berlet: %{
-      price_huf: 8_000,
+      price_huf: 10_000,
       occasions: 1,
       display_category: :szemelyi_edzes,
       booking_pass_type: "paros"
     },
     paros_5_alkalmas_berlet: %{
-      price_huf: 36_000,
+      price_huf: 45_000,
       occasions: 5,
       display_category: :szemelyi_edzes,
       booking_pass_type: "paros"
     },
     paros_10_alkalmas_berlet: %{
-      price_huf: 66_000,
+      price_huf: 80_000,
       occasions: 10,
       display_category: :szemelyi_edzes,
       booking_pass_type: "paros"
     },
     cross_1_alkalmas_jegy: %{
-      price_huf: 2_500,
+      price_huf: 3_000,
       occasions: 1,
       display_category: :cross,
       booking_pass_type: "cross"
     },
     cross_10_alkalmas_berlet: %{
-      price_huf: 23_000,
+      price_huf: 28_000,
       occasions: 10,
       display_category: :cross,
       booking_pass_type: "cross"
