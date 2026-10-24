@@ -12,6 +12,61 @@ defmodule LucaGymappWeb.PageControllerTest do
   alias LucaGymapp.SeasonPasses
   alias LucaGymapp.SeasonPasses.SeasonPass
 
+  test "coupon verification returns discounted HUF price and normalizes the code", %{conn: conn} do
+    previous_codes = Application.get_env(:luca_gymapp, :coupon_codes)
+    on_exit(fn -> Application.put_env(:luca_gymapp, :coupon_codes, previous_codes) end)
+    Application.put_env(:luca_gymapp, :coupon_codes, [%{name: "  HALFOFF ", discount: 0.5}])
+
+    conn =
+      conn
+      |> put_req_header("accept", "text/html")
+      |> get(~p"/berletek/verify-coupon?pass_name=10_alkalmas_berlet&coupon_code=halfoff")
+
+    assert json_response(conn, 200) == %{
+             "valid" => true,
+             "price_huf" => 30_000,
+             "message" => "Kuponkód elfogadva."
+           }
+  end
+
+  test "discounted pass purchase persists the discounted price", %{conn: conn} do
+    previous_codes = Application.get_env(:luca_gymapp, :coupon_codes)
+    on_exit(fn -> Application.put_env(:luca_gymapp, :coupon_codes, previous_codes) end)
+    Application.put_env(:luca_gymapp, :coupon_codes, [%{name: "HALFOFF", discount: 0.5}])
+
+    {:ok, user} =
+      LucaGymapp.Accounts.create_user(%{
+        email: "coupon-#{System.unique_integer([:positive])}@example.com",
+        name: "Coupon User",
+        billing_country: "HU",
+        billing_zip: "1111",
+        billing_city: "Budapest",
+        billing_address: "Main street 1"
+      })
+
+    conn =
+      conn
+      |> init_test_session(%{user_id: user.id})
+      |> post(~p"/berletek/purchase", %{
+        "pass_name" => "10_alkalmas_berlet",
+        "coupon_code" => " halfoff ",
+        "accept_aszf" => "true"
+      })
+
+    assert redirected_to(conn) == ~p"/berletek"
+    pass = Repo.get_by!(SeasonPass, user_id: user.id)
+    assert pass.purchase_price == 30_000
+  end
+
+  test "pass modal contains coupon verification and price targets", %{conn: conn} do
+    user = %User{email: "coupon-modal@example.com", name: "Coupon Modal"} |> Repo.insert!()
+    conn = conn |> init_test_session(%{user_id: user.id}) |> get(~p"/berletek")
+    html = html_response(conn, 200)
+    assert html =~ "Kuponkód"
+    assert html =~ "data-verify-coupon"
+    assert html =~ "data-original-price=\"60000\""
+  end
+
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
     html = html_response(conn, 200)
@@ -212,9 +267,9 @@ defmodule LucaGymappWeb.PageControllerTest do
       |> LazyHTML.query_by_id("passes-personal-section")
       |> LazyHTML.text()
 
-    assert String.contains?(personal_text, "8 000 Ft")
-    assert String.contains?(personal_text, "36 000 Ft")
-    assert String.contains?(personal_text, "66 000 Ft")
+    assert String.contains?(personal_text, "10 000 Ft")
+    assert String.contains?(personal_text, "45 000 Ft")
+    assert String.contains?(personal_text, "80 000 Ft")
   end
 
   test "purchase shows specific error when user already has active pass in category", %{

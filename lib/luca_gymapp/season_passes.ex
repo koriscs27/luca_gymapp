@@ -70,6 +70,37 @@ defmodule LucaGymapp.SeasonPasses do
     end
   end
 
+  def coupon_discount(coupon_code) when is_binary(coupon_code) do
+    normalized_code = coupon_code |> String.trim() |> String.downcase()
+
+    Application.get_env(:luca_gymapp, :coupon_codes, [])
+    |> Enum.find_value(fn
+      %{name: code, discount: discount} ->
+        if is_binary(code) and String.downcase(String.trim(code)) == normalized_code and
+             is_number(discount) and discount > 0 and discount < 1 do
+          discount
+        end
+
+      {code, discount} ->
+        if is_binary(code) and String.downcase(String.trim(code)) == normalized_code and
+             is_number(discount) and discount > 0 and discount < 1 do
+          discount
+        end
+
+      _ ->
+        nil
+    end)
+  end
+
+  def coupon_discount(_), do: nil
+
+  def discounted_price(price_huf, coupon_code) when is_integer(price_huf) do
+    case coupon_discount(coupon_code) do
+      discount when is_number(discount) -> round(price_huf * (1 - discount))
+      _ -> price_huf
+    end
+  end
+
   def group_by_category(type_definitions) do
     Enum.group_by(type_definitions, & &1.category)
   end
@@ -157,7 +188,7 @@ defmodule LucaGymapp.SeasonPasses do
           payment_method: payment_method,
           occasions: type_def.occasions,
           purchase_timestamp: now,
-          purchase_price: type_def.price_huf,
+          purchase_price: Keyword.get(opts, :price_huf, type_def.price_huf),
           expiry_date: expiry_date,
           user_id: user.id
         }

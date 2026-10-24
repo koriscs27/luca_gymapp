@@ -192,6 +192,29 @@ defmodule LucaGymappWeb.PageController do
     )
   end
 
+  def verify_coupon(conn, %{"pass_name" => pass_name, "coupon_code" => coupon_code}) do
+    case SeasonPasses.list_type_definitions() |> Enum.find(&(&1.type == pass_name)) do
+      nil ->
+        json(conn, %{valid: false, message: "Érvénytelen kuponkód."})
+
+      pass ->
+        case SeasonPasses.coupon_discount(coupon_code) do
+          nil ->
+            json(conn, %{valid: false, message: "Érvénytelen kuponkód."})
+
+          _discount ->
+            json(conn, %{
+              valid: true,
+              price_huf: SeasonPasses.discounted_price(pass.price_huf, coupon_code),
+              message: "Kuponkód elfogadva."
+            })
+        end
+    end
+  end
+
+  def verify_coupon(conn, _params),
+    do: json(conn, %{valid: false, message: "Érvénytelen kuponkód."})
+
   def aszf(conn, params) do
     return_to = params |> Map.get("return_to") |> normalize_return_to()
     aszf_content = load_aszf_draft_content()
@@ -672,7 +695,10 @@ defmodule LucaGymappWeb.PageController do
 
             true ->
               case SeasonPasses.validate_purchase(user, pass_name) do
-                {:ok, _type_def} ->
+                {:ok, type_def} ->
+                  amount_huf =
+                    SeasonPasses.discounted_price(type_def.price_huf, params["coupon_code"])
+
                   redirect_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/return"
                   callback_url = LucaGymappWeb.Endpoint.url() <> ~p"/barion/callback"
 
@@ -680,10 +706,11 @@ defmodule LucaGymappWeb.PageController do
                          user,
                          pass_name,
                          redirect_url,
-                         callback_url
+                         callback_url,
+                         amount_huf: amount_huf
                        ) do
                     {:ok, :skipped} ->
-                      complete_pass_purchase(conn, user, pass_name)
+                      complete_pass_purchase(conn, user, pass_name, amount_huf)
 
                     {:ok, %{gateway_url: gateway_url}} when is_binary(gateway_url) ->
                       redirect(conn, external: gateway_url)
@@ -762,8 +789,8 @@ defmodule LucaGymappWeb.PageController do
     end
   end
 
-  defp complete_pass_purchase(conn, user, pass_name) do
-    case SeasonPasses.purchase_season_pass(user, pass_name) do
+  defp complete_pass_purchase(conn, user, pass_name, amount_huf) do
+    case SeasonPasses.purchase_season_pass(user, pass_name, price_huf: amount_huf) do
       {:ok, pass} ->
         Logger.info(
           "purchase_success user_id=#{user.id} pass_id=#{pass.pass_id} pass_name=#{pass_name}"

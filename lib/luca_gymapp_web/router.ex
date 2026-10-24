@@ -20,6 +20,7 @@ defmodule LucaGymappWeb.Router do
     get "/", PageController, :home
     get "/rolam", PageController, :rolam
     get "/berletek", PageController, :berletek
+    get "/berletek/verify-coupon", PageController, :verify_coupon
     get "/aszf", PageController, :aszf
     get "/adatkezelesi-tajekoztato", PageController, :adatkezelesi_tajekoztato
     get "/foglalas", PageController, :booking

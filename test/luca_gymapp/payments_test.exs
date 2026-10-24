@@ -4,8 +4,115 @@ defmodule LucaGymapp.PaymentsTest do
   alias LucaGymapp.Accounts
   alias LucaGymapp.Payments
   alias LucaGymapp.Payments.Payment
+  alias LucaGymapp.Payments.SzamlazzClient
   alias LucaGymapp.Repo
   alias LucaGymapp.SeasonPasses.SeasonPass
+
+  test "discounted amount is sent to Barion, persisted, and used for the invoice" do
+    previous_needed = Application.get_env(:luca_gymapp, :payment_needed)
+    previous_barion = Application.get_env(:luca_gymapp, :barion)
+
+    on_exit(fn ->
+      Application.put_env(:luca_gymapp, :payment_needed, previous_needed)
+      Application.put_env(:luca_gymapp, :barion, previous_barion)
+    end)
+
+    Application.put_env(:luca_gymapp, :payment_needed, true)
+    {:ok, listener} = :gen_tcp.listen(0, [:binary, packet: :raw, active: false, reuseaddr: true])
+    {:ok, {_address, port}} = :inet.sockname(listener)
+    parent = self()
+
+    start_supervised!({Task, fn -> serve_barion_request(listener, parent) end})
+
+    Application.put_env(:luca_gymapp, :barion,
+      api_base_url: "http://localhost:#{port}",
+      pos_key: "test-key",
+      payee_email: "merchant@example.com"
+    )
+
+    user = create_user()
+
+    assert {:ok, %{gateway_url: "https://barion.test/pay"}} =
+             Payments.start_season_pass_payment(
+               user,
+               "10_alkalmas_berlet",
+               "https://app.test/return",
+               "https://app.test/callback",
+               amount_huf: 30_000
+             )
+
+    assert_receive {:barion_payload,
+                    %{
+                      "Total" => 30_000,
+                      "Items" => [%{"UnitPrice" => 30_000, "ItemTotal" => 30_000}]
+                    }}
+
+    payment = Repo.get_by!(Payment, payment_id: "coupon-payment")
+    assert payment.amount_huf == 30_000
+
+    xml = SzamlazzClient.invoice_xml(payment, user, item_name: "Season pass")
+    assert xml =~ "<nettoEgysegar>30000</nettoEgysegar>"
+    assert xml =~ "<bruttoErtek>30000</bruttoErtek>"
+  end
+
+  defp serve_barion_request(listener, parent) do
+    {:ok, socket} = :gen_tcp.accept(listener)
+    request = receive_http_request(socket, "")
+    [headers, body] = String.split(request, "\r\n\r\n", parts: 2)
+    payload = Jason.decode!(body)
+    transaction = payload |> Map.fetch!("Transactions") |> hd()
+    send(parent, {:barion_payload, transaction})
+
+    response =
+      Jason.encode!(%{"PaymentId" => "coupon-payment", "GatewayUrl" => "https://barion.test/pay"})
+
+    :ok =
+      :gen_tcp.send(
+        socket,
+        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: #{byte_size(response)}\r\nconnection: close\r\n\r\n#{response}"
+      )
+
+    :ok = :gen_tcp.close(socket)
+    :ok = :gen_tcp.close(listener)
+    headers
+  end
+
+  defp receive_http_request(socket, buffer) do
+    case :gen_tcp.recv(socket, 0) do
+      {:ok, data} ->
+        request = buffer <> data
+
+        case String.split(request, "\r\n\r\n", parts: 2) do
+          [headers, body] ->
+            content_length =
+              headers
+              |> String.split("\r\n")
+              |> Enum.find_value(0, fn line ->
+                case String.split(line, ":", parts: 2) do
+                  [name, value] ->
+                    if String.downcase(name) == "content-length" do
+                      value |> String.trim() |> String.to_integer()
+                    end
+
+                  _ ->
+                    nil
+                end
+              end)
+
+            if byte_size(body) >= content_length do
+              request
+            else
+              receive_http_request(socket, request)
+            end
+
+          _ ->
+            receive_http_request(socket, request)
+        end
+
+      {:error, reason} ->
+        raise "failed to receive Barion test request: #{inspect(reason)}"
+    end
+  end
 
   defmodule FakeBillingClient do
     @behaviour LucaGymapp.Payments.BillingClient

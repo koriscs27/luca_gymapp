@@ -15,9 +15,9 @@ defmodule LucaGymapp.Payments do
     Application.get_env(:luca_gymapp, :payment_needed, true)
   end
 
-  def start_season_pass_payment(%User{} = user, pass_name, redirect_url, callback_url) do
+  def start_season_pass_payment(%User{} = user, pass_name, redirect_url, callback_url, opts \\ []) do
     if payment_needed?() do
-      do_start_barion_payment(user, pass_name, redirect_url, callback_url)
+      do_start_barion_payment(user, pass_name, redirect_url, callback_url, opts)
     else
       {:ok, :skipped}
     end
@@ -110,16 +110,17 @@ defmodule LucaGymapp.Payments do
     end
   end
 
-  defp do_start_barion_payment(%User{} = user, pass_name, redirect_url, callback_url) do
+  defp do_start_barion_payment(%User{} = user, pass_name, redirect_url, callback_url, opts) do
     with {:ok, type_def} <- SeasonPasses.validate_purchase(user, pass_name),
          :ok <- validate_barion_config(),
-         {:ok, payment} <- create_payment(user, type_def, "barion") do
+         amount_huf = Keyword.get(opts, :amount_huf, type_def.price_huf),
+         {:ok, payment} <- create_payment(user, type_def, "barion", amount_huf) do
       case Barion.start_payment(%{
              pos_key: barion_pos_key(),
              payee_email: barion_payee_email(),
              payment_request_id: payment.payment_request_id,
              pass_name: type_def.name,
-             amount_huf: type_def.price_huf,
+             amount_huf: amount_huf,
              payer_email: user.email,
              redirect_url: redirect_url,
              callback_url: callback_url
@@ -149,13 +150,15 @@ defmodule LucaGymapp.Payments do
     end
   end
 
-  defp create_payment(%User{} = user, type_def, payment_method) do
+  defp create_payment(%User{} = user, type_def, payment_method, amount_huf \\ nil) do
+    amount_huf = amount_huf || type_def.price_huf
+
     %Payment{}
     |> Payment.changeset(%{
       user_id: user.id,
       payment_method: payment_method,
       pass_name: type_def.type,
-      amount_huf: type_def.price_huf,
+      amount_huf: amount_huf,
       currency: "HUF",
       payment_request_id: Ecto.UUID.generate(),
       status: "pending"
@@ -171,7 +174,8 @@ defmodule LucaGymapp.Payments do
              user,
              payment.pass_name,
              payment_id: payment.payment_id,
-             payment_method: payment.payment_method
+             payment_method: payment.payment_method,
+             price_huf: payment.amount_huf
            ) do
         {:ok, pass} ->
           payment

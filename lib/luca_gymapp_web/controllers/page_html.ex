@@ -68,7 +68,11 @@ defmodule LucaGymappWeb.PageHTML do
           <p class="text-sm font-semibold text-neutral-900">{@pass.name}</p>
 
           <div class="mt-2 flex flex-wrap gap-3 text-xs text-neutral-600">
-            <span class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm">
+            <span
+              id={"purchase-price-#{@pass.key}"}
+              data-original-price={@pass.price_huf}
+              class="rounded-full bg-white px-3 py-1 text-neutral-700 shadow-sm"
+            >
               Ár: {format_huf(@pass.price_huf)} Ft
             </span>
             <%= if @pass.occasions > 0 do %>
@@ -93,6 +97,29 @@ defmodule LucaGymappWeb.PageHTML do
           >
             <.input type="hidden" name="pass_name" value={@pass.type} />
             <.input type="hidden" name="payment_method" value="barion" />
+            <div class="flex items-end gap-2">
+              <div class="min-w-0 flex-1">
+                <.input
+                  id={"coupon-code-#{@pass.key}"}
+                  name="coupon_code"
+                  type="text"
+                  value=""
+                  label="Kuponkód"
+                  autocomplete="off"
+                  data-coupon-code
+                  class="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                />
+              </div>
+              <button
+                type="button"
+                data-verify-coupon
+                data-pass-name={@pass.type}
+                class="mb-2 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100"
+              >
+                Ellenőrzés
+              </button>
+            </div>
+            <p data-coupon-message aria-live="polite" class="min-h-5 text-sm text-neutral-600"></p>
             <label
               for={"accept-aszf-#{@pass.key}"}
               class="flex items-start gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700"
@@ -135,7 +162,7 @@ defmodule LucaGymappWeb.PageHTML do
               type="submit"
               data-aszf-submit
               disabled
-              class="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm transition duration-150 hover:-translate-y-px hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:border-neutral-200 disabled:hover:bg-white disabled:hover:shadow-sm"
+              class="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-neutral-700 hover:bg-neutral-800 hover:shadow-lg active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-100 disabled:shadow-none disabled:hover:translate-y-0 disabled:hover:border-neutral-200 disabled:hover:bg-neutral-100 disabled:hover:shadow-none"
               aria-label="Fizetés Barionnal"
             >
               Fizetes Barionnal

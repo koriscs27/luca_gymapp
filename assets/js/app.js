@@ -253,6 +253,43 @@ const initAszfPurchaseForms = () => {
       return
     }
 
+    const verifyButton = form.querySelector("[data-verify-coupon]")
+    const couponInput = form.querySelector("[data-coupon-code]")
+    const message = form.querySelector("[data-coupon-message]")
+    const price = document.querySelector(`#purchase-price-${form.id.replace("confirm-purchase-barion-", "")}`)
+
+    verifyButton?.addEventListener("click", async () => {
+      const code = couponInput.value.trim()
+      if (!code) {
+        message.textContent = "Adj meg egy kuponkódot."
+        return
+      }
+
+      verifyButton.disabled = true
+      message.textContent = "Ellenőrzés..."
+
+      try {
+        const query = new URLSearchParams({ pass_name: verifyButton.dataset.passName, coupon_code: code })
+        const response = await fetch(`/berletek/verify-coupon?${query}`, { headers: { Accept: "text/html" } })
+        const result = await response.json()
+
+        if (result.valid) {
+          price.textContent = `Ár: ${new Intl.NumberFormat("hu-HU").format(result.price_huf)} Ft`
+          message.textContent = result.message
+          message.className = "min-h-5 text-sm text-emerald-700"
+        } else {
+          price.textContent = `Ár: ${new Intl.NumberFormat("hu-HU").format(Number(price.dataset.originalPrice))} Ft`
+          message.textContent = result.message
+          message.className = "min-h-5 text-sm text-rose-700"
+        }
+      } catch (_error) {
+        message.textContent = "A kuponkód ellenőrzése nem sikerült. Próbáld újra."
+        message.className = "min-h-5 text-sm text-rose-700"
+      } finally {
+        verifyButton.disabled = false
+      }
+    })
+
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener("change", setSubmitState)
     })

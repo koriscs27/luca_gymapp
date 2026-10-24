@@ -18,6 +18,30 @@ bool_env = fn key, default ->
   end
 end
 
+coupon_codes =
+  case trimmed_env.("COUPON_CODES") do
+    nil ->
+      []
+
+    json ->
+      case Jason.decode(json) do
+        {:ok, codes} when is_list(codes) ->
+          Enum.flat_map(codes, fn
+            %{"name" => name, "discount" => discount}
+            when is_binary(name) and is_number(discount) and discount > 0 and discount < 1 ->
+              [%{name: name, discount: discount}]
+
+            _ ->
+              []
+          end)
+
+        _ ->
+          raise "COUPON_CODES must be a JSON list of objects with name and discount fields"
+      end
+  end
+
+config :luca_gymapp, :coupon_codes, coupon_codes
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration
