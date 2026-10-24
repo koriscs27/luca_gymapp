@@ -42,7 +42,7 @@ defmodule LucaGymapp.MixProject do
     [
       {:phoenix, "~> 1.8.3"},
       {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
+      {:ecto_sql, "~> 3.14"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
@@ -61,7 +61,7 @@ defmodule LucaGymapp.MixProject do
       {:swoosh, "~> 1.16"},
       {:multipart, "~> 0.4"},
       {:plug, "~> 1.16"},
-      {:req, "~> 0.5"},
+      {:req, "~> 0.6.1"},
       {:castore, "~> 1.0"},
       {:ueberauth, "~> 0.10.8"},
       {:ueberauth_google, "~> 0.12.1"},

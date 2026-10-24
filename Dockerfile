@@ -1,4 +1,4 @@
-ARG BUILDER_IMAGE="hexpm/elixir:1.15.8-erlang-25.3.2.5-debian-bookworm-20260406-slim"
+ARG BUILDER_IMAGE="hexpm/elixir:1.19.5-erlang-28.3.1-debian-bookworm-20260202-slim"
 ARG RUNNER_IMAGE="debian:bookworm-20260406-slim"
 
 FROM ${BUILDER_IMAGE} AS builder
@@ -41,8 +41,8 @@ WORKDIR /app
 
 ENV MIX_ENV=prod
 ENV LANG=C.UTF-8
-ENV ECTO_IPV6 true
-ENV ERL_AFLAGS "-proto_dist inet6_tcp"
+ENV ECTO_IPV6=true
+ENV ERL_AFLAGS="-proto_dist inet6_tcp"
 
 COPY --from=builder /app/_build/prod/rel/luca_gymapp ./
 
