@@ -21,6 +21,12 @@ config :luca_gymapp, LucaGymappWeb.Endpoint,
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
 
+# OAuth2 defaults to Erlang's :httpc adapter, which relies on OS CA
+# certificates. Use Mint with Castore's bundled CA store so Google OAuth
+# works in production containers without a system certificate bundle.
+config :oauth2,
+  adapter: {Tesla.Adapter.Mint, transport_opts: [cacertfile: CAStore.file_path()]}
+
 # Disable Swoosh Local Memory Storage
 config :swoosh, local: false
 
