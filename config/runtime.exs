@@ -110,6 +110,12 @@ if config_env() in [:dev, :prod] do
 end
 
 if config_env() == :prod do
+  # OAuth2 defaults to Erlang's :httpc adapter, which relies on OS CA
+  # certificates. Use Mint with Castore's bundled CA store so Google OAuth
+  # works in production containers without a system certificate bundle.
+  config :oauth2,
+    adapter: {Tesla.Adapter.Mint, transport_opts: [cacertfile: CAStore.file_path()]}
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
